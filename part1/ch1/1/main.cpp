@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <print>
 
 int
 max(int const a, int const b)
@@ -48,23 +49,21 @@ quicksort(void *arr, int const low, int const high, compare_fn cmp, swap_fn swap
 void
 swap_int(void *arr, int const i, int const j)
 {
-    int *iarr = (int *)arr;
+    int *iarr = static_cast<int *>(arr);
     int  t    = iarr[i];
     iarr[i]   = iarr[j];
     iarr[j]   = t;
 }
 
 bool
-less_int(void *arr, int const i, int const j)
+cmp_int(void *arr, int const i, int const j)
 {
-    int *iarr = (int *)arr;
+    int *iarr = static_cast<int *>(arr);
     return iarr[i] <= iarr[j];
 }
 
 struct int_vector
 {
-    int_vector();
-
     bool   empty() const;
     int    at(size_t const index) const;
     int    operator[](size_t const index) const;
@@ -93,5 +92,6 @@ main()
 
     int arr[] = {13, 1, 8, 3, 5, 2, 1};
     int n     = sizeof(arr) / sizeof(arr[0]);
-    quicksort(arr, 0, n - 1, less_int, swap_int);
+    quicksort(arr, 0, n - 1, cmp_int, swap_int);
+    std::println("first: {}, last: {}", arr[0], arr[n - 1]);
 }
