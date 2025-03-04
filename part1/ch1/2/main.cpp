@@ -50,7 +50,8 @@ quicksort(T arr[], int const low, int const high)
     }
 }
 
-template <typename T> struct vector
+template <typename T>
+struct vector
 {
     T      at(size_t const index) const;
     T      operator[](size_t const index) const;
@@ -68,7 +69,8 @@ template <typename T> struct vector
     size_t capacity_;
 };
 
-template <typename T> constexpr T NewLine = T('\n');
+template <typename T>
+constexpr T NewLine = T('\n');
 
 int
 main()

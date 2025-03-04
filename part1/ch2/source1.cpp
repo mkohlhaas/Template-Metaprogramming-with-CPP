@@ -1,15 +1,15 @@
 #include "wrapper.h"
-#include <iostream>
+#include <print>
 
 namespace ext
 {
-template struct wrapper<int>;
+    template struct wrapper<int>;
 
-void
-f()
-{
-    ext::wrapper<int> a{42};
+    void
+    f()
+    {
+        ext::wrapper<int> a{42};
 
-    std::cout << a.data << '\n';
-}
+        std::println("{}", a.data);
+    }
 } // namespace ext

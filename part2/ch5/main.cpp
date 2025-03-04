@@ -5,519 +5,541 @@
 #include <string>
 #include <vector>
 
-template <class T> constexpr bool always_false = std::false_type::value;
+template <class T>
+constexpr bool always_false = std::false_type::value;
 
 namespace n501
 {
-template <typename T> struct is_floating_point
-{
-    static const bool value = false;
-};
+    template <typename T>
+    struct is_floating_point
+    {
+        static const bool value = false;
+    };
 
-template <> struct is_floating_point<float>
-{
-    static const bool value = true;
-};
+    template <>
+    struct is_floating_point<float>
+    {
+        static const bool value = true;
+    };
 
-template <> struct is_floating_point<double>
-{
-    static const bool value = true;
-};
+    template <>
+    struct is_floating_point<double>
+    {
+        static const bool value = true;
+    };
 
-template <> struct is_floating_point<long double>
-{
-    static const bool value = true;
-};
+    template <>
+    struct is_floating_point<long double>
+    {
+        static const bool value = true;
+    };
 
-template <typename T>
-void
-process_real_number(T const value)
-{
-    static_assert(is_floating_point<T>::value);
+    template <typename T>
+    void
+    process_real_number(T const value)
+    {
+        static_assert(is_floating_point<T>::value);
 
-    std::cout << "processing a real number: " << value << '\n';
-}
+        std::cout << "processing a real number: " << value << '\n';
+    }
 } // namespace n501
 
 namespace n502
 {
-struct widget
-{
-    int         id;
-    std::string name;
+    struct widget
+    {
+        int         id;
+        std::string name;
+
+        std::ostream &
+        write(std::ostream &os) const
+        {
+            os << id << ',' << name << '\n';
+            return os;
+        }
+    };
+
+    struct gadget
+    {
+        int         id;
+        std::string name;
+
+        friend std::ostream &operator<<(std::ostream &os, gadget const &o);
+    };
 
     std::ostream &
-    write(std::ostream &os) const
+    operator<<(std::ostream &os, gadget const &o)
     {
-        os << id << ',' << name << '\n';
+        os << o.id << ',' << o.name << '\n';
         return os;
     }
-};
 
-struct gadget
-{
-    int         id;
-    std::string name;
-
-    friend std::ostream &operator<<(std::ostream &os, gadget const &o);
-};
-
-std::ostream &
-operator<<(std::ostream &os, gadget const &o)
-{
-    os << o.id << ',' << o.name << '\n';
-    return os;
-}
-
-template <typename T> struct uses_write
-{
-    static constexpr bool value = false;
-};
-
-template <> struct uses_write<widget>
-{
-    static constexpr bool value = true;
-};
-
-template <typename T> inline constexpr bool uses_write_v = uses_write<T>::value;
-
-template <bool> struct serializer
-{
     template <typename T>
-    static void
+    struct uses_write
+    {
+        static constexpr bool value = false;
+    };
+
+    template <>
+    struct uses_write<widget>
+    {
+        static constexpr bool value = true;
+    };
+
+    template <typename T>
+    inline constexpr bool uses_write_v = uses_write<T>::value;
+
+    template <bool>
+    struct serializer
+    {
+        template <typename T>
+        static void
+        serialize(std::ostream &os, T const &value)
+        {
+            os << value;
+        }
+    };
+
+    template <>
+    struct serializer<true>
+    {
+        template <typename T>
+        static void
+        serialize(std::ostream &os, T const &value)
+        {
+            value.write(os);
+        }
+    };
+
+    template <typename T>
+    void
     serialize(std::ostream &os, T const &value)
     {
-        os << value;
+        serializer<uses_write_v<T>>::serialize(os, value);
     }
-};
-
-template <> struct serializer<true>
-{
-    template <typename T>
-    static void
-    serialize(std::ostream &os, T const &value)
-    {
-        value.write(os);
-    }
-};
-
-template <typename T>
-void
-serialize(std::ostream &os, T const &value)
-{
-    serializer<uses_write_v<T>>::serialize(os, value);
-}
 } // namespace n502
 
 namespace n503
 {
-template <typename T>
-auto
-begin(T &c)
-{
-    return c.begin();
-}
+    template <typename T>
+    auto
+    begin(T &c)
+    {
+        return c.begin();
+    }
 
-template <typename T, size_t N>
-T *
-begin(T (&arr)[N])
-{
-    return arr;
-}
+    template <typename T, size_t N>
+    T *
+    begin(T (&arr)[N])
+    {
+        return arr;
+    }
 
-template <typename T>
-void
-increment(T &val)
-{
-    val++;
-}
+    template <typename T>
+    void
+    increment(T &val)
+    {
+        val++;
+    }
 
-template <typename T, size_t N>
-void
-handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 0] = 0)
-{
-    std::cout << "handle even array\n";
-}
+    template <typename T, size_t N>
+    void
+    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 0] = 0)
+    {
+        std::cout << "handle even array\n";
+    }
 
-template <typename T, size_t N>
-void
-handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 1] = 0)
-{
-    std::cout << "handle odd array\n";
-}
+    template <typename T, size_t N>
+    void
+    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 1] = 0)
+    {
+        std::cout << "handle odd array\n";
+    }
 } // namespace n503
 
 namespace n504
 {
-template <typename T> struct foo
-{
-    using foo_type = T;
-};
+    template <typename T>
+    struct foo
+    {
+        using foo_type = T;
+    };
 
-template <typename T> struct bar
-{
-    using bar_type = T;
-};
+    template <typename T>
+    struct bar
+    {
+        using bar_type = T;
+    };
 
-struct int_foo : foo<int>
-{
-};
-struct int_bar : bar<int>
-{
-};
+    struct int_foo : foo<int>
+    {
+    };
+    struct int_bar : bar<int>
+    {
+    };
 
-template <typename T>
-decltype(typename T::foo_type(), void())
-handle(T const &v [[maybe_unused]])
-{
-    std::cout << "handle a foo\n";
-}
+    template <typename T>
+    decltype(typename T::foo_type(), void())
+    handle(T const &v [[maybe_unused]])
+    {
+        std::cout << "handle a foo\n";
+    }
 
-template <typename T>
-decltype(typename T::bar_type(), void())
-handle(T const &v [[maybe_unused]])
-{
-    std::cout << "handle a bar\n";
-}
+    template <typename T>
+    decltype(typename T::bar_type(), void())
+    handle(T const &v [[maybe_unused]])
+    {
+        std::cout << "handle a bar\n";
+    }
 } // namespace n504
 
 namespace n505
 {
-template <bool B, typename T = void> struct enable_if
-{
-};
+    template <bool B, typename T = void>
+    struct enable_if
+    {
+    };
 
-template <typename T> struct enable_if<true, T>
-{
-    using type = T;
-};
+    template <typename T>
+    struct enable_if<true, T>
+    {
+        using type = T;
+    };
 
-template <typename T, typename enable_if<n502::uses_write_v<T>>::type * = nullptr>
-void
-serialize(std::ostream &os, T const &value)
-{
-    value.write(os);
-}
+    template <typename T, typename enable_if<n502::uses_write_v<T>>::type * = nullptr>
+    void
+    serialize(std::ostream &os, T const &value)
+    {
+        value.write(os);
+    }
 
-template <typename T, typename enable_if<!n502::uses_write_v<T>>::type * = nullptr>
-void
-serialize(std::ostream &os, T const &value)
-{
-    os << value;
-}
+    template <typename T, typename enable_if<!n502::uses_write_v<T>>::type * = nullptr>
+    void
+    serialize(std::ostream &os, T const &value)
+    {
+        os << value;
+    }
 } // namespace n505
 
 namespace n506
 {
-template <typename T>
-typename std::enable_if<n502::uses_write_v<T>>::type
-serialize(std::ostream &os, T const &value)
-{
-    value.write(os);
-}
+    template <typename T>
+    typename std::enable_if<n502::uses_write_v<T>>::type
+    serialize(std::ostream &os, T const &value)
+    {
+        value.write(os);
+    }
 
-template <typename T>
-typename std::enable_if<!n502::uses_write_v<T>>::type
-serialize(std::ostream &os, T const &value)
-{
-    os << value;
-}
+    template <typename T>
+    typename std::enable_if<!n502::uses_write_v<T>>::type
+    serialize(std::ostream &os, T const &value)
+    {
+        os << value;
+    }
 } // namespace n506
 
 namespace n507
 {
-template <typename T>
-void
-serialize(std::ostream &os, T const &value, typename std::enable_if<n502::uses_write_v<T>>::type * = nullptr)
-{
-    value.write(os);
-}
+    template <typename T>
+    void
+    serialize(std::ostream &os, T const &value, typename std::enable_if<n502::uses_write_v<T>>::type * = nullptr)
+    {
+        value.write(os);
+    }
 
-template <typename T>
-void
-serialize(std::ostream &os, T const &value, typename std::enable_if<!n502::uses_write_v<T>>::type * = nullptr)
-{
-    os << value;
-}
+    template <typename T>
+    void
+    serialize(std::ostream &os, T const &value, typename std::enable_if<!n502::uses_write_v<T>>::type * = nullptr)
+    {
+        os << value;
+    }
 } // namespace n507
 
 namespace n508
 {
-template <typename T, typename = typename std::enable_if_t<std::is_integral_v<T>>> struct integral_wrapper
-{
-    T value;
-
-    integral_wrapper(T v) : value(v)
+    template <typename T, typename = typename std::enable_if_t<std::is_integral_v<T>>>
+    struct integral_wrapper
     {
-    }
-};
+        T value;
 
-template <typename T, typename = typename std::enable_if_t<std::is_floating_point_v<T>>> struct floating_wrapper
-{
-    T value;
+        integral_wrapper(T v) : value(v)
+        {
+        }
+    };
 
-    floating_wrapper(T v) : value(v)
+    template <typename T, typename = typename std::enable_if_t<std::is_floating_point_v<T>>>
+    struct floating_wrapper
     {
-    }
-};
+        T value;
+
+        floating_wrapper(T v) : value(v)
+        {
+        }
+    };
 } // namespace n508
 
 namespace n509
 {
-template <typename T>
-void
-serialize(std::ostream &os, T const &value)
-{
-    if constexpr (n502::uses_write_v<T>)
+    template <typename T>
+    void
+    serialize(std::ostream &os, T const &value)
     {
-        value.write(os);
+        if constexpr (n502::uses_write_v<T>)
+        {
+            value.write(os);
+        }
+        else
+        {
+            os << value;
+        }
     }
-    else
-    {
-        os << value;
-    }
-}
 } // namespace n509
 
 namespace n510
 {
-template <unsigned int n>
-constexpr unsigned int
-factorial()
-{
-    if constexpr (n > 1)
+    template <unsigned int n>
+    constexpr unsigned int
+    factorial()
     {
-        return n * factorial<n - 1>();
+        if constexpr (n > 1)
+        {
+            return n * factorial<n - 1>();
+        }
+        else
+        {
+            return 1;
+        }
     }
-    else
-    {
-        return 1;
-    }
-}
 } // namespace n510
 
 namespace n511
 {
-template <typename T>
-bool
-are_equal(T const &a, T const &b)
-{
-    if constexpr (std::is_floating_point_v<T>)
+    template <typename T>
+    bool
+    are_equal(T const &a, T const &b)
     {
-        return std::abs(a - b) < 0.001;
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            return std::abs(a - b) < 0.001;
+        }
+        else
+        {
+            return a == b;
+        }
     }
-    else
-    {
-        return a == b;
-    }
-}
 } // namespace n511
 
 namespace n512
 {
-template <typename T>
-void
-f()
-{
-    if constexpr (std::is_arithmetic_v<T>)
+    template <typename T>
+    void
+    f()
     {
+        if constexpr (std::is_arithmetic_v<T>)
+        {
+        }
+        else
+        {
+            static_assert(always_false<T>, "Must be arithmetic"); // ill-formed: invalid for every T
+        }
     }
-    else
-    {
-        static_assert(always_false<T>, "Must be arithmetic"); // ill-formed: invalid for every T
-    }
-}
 } // namespace n512
 
 namespace n513
 {
-template <typename T>
-std::string
-as_string(T value)
-{
-    if constexpr (std::is_null_pointer_v<T>)
+    template <typename T>
+    std::string
+    as_string(T value)
     {
-        return "null";
+        if constexpr (std::is_null_pointer_v<T>)
+        {
+            return "null";
+        }
+        else if constexpr (std::is_arithmetic_v<T>)
+        {
+            return std::to_string(value);
+        }
+        else
+        {
+            static_assert(always_false<T>);
+        }
     }
-    else if constexpr (std::is_arithmetic_v<T>)
-    {
-        return std::to_string(value);
-    }
-    else
-    {
-        static_assert(always_false<T>);
-    }
-}
 } // namespace n513
 
 namespace n514
 {
-struct foo
-{
-    int a;
-};
-
-struct bar
-{
-    int a = 0;
-};
-
-struct tar
-{
-    int a = 0;
-    tar() : a(0)
+    struct foo
     {
-    }
-};
+        int a;
+    };
+
+    struct bar
+    {
+        int a = 0;
+    };
+
+    struct tar
+    {
+        int a = 0;
+        tar() : a(0)
+        {
+        }
+    };
 } // namespace n514
 
 namespace n515
 {
-template <typename T>
-std::string
-as_string(T value)
-{
-    if constexpr (std::is_null_pointer_v<T>)
+    template <typename T>
+    std::string
+    as_string(T value)
     {
-        return "null";
+        if constexpr (std::is_null_pointer_v<T>)
+        {
+            return "null";
+        }
+        else if constexpr (std::is_same_v<T, bool>)
+        {
+            return value ? "true" : "false";
+        }
+        else if constexpr (std::is_arithmetic_v<T>)
+        {
+            return std::to_string(value);
+        }
+        else
+        {
+            static_assert(always_false<T>);
+        }
     }
-    else if constexpr (std::is_same_v<T, bool>)
-    {
-        return value ? "true" : "false";
-    }
-    else if constexpr (std::is_arithmetic_v<T>)
-    {
-        return std::to_string(value);
-    }
-    else
-    {
-        static_assert(always_false<T>);
-    }
-}
 } // namespace n515
 
 namespace n516
 {
-template <typename T>
-std::string
-as_string(T &&value)
-{
-    if constexpr (std::is_null_pointer_v<T>)
+    template <typename T>
+    std::string
+    as_string(T &&value)
     {
-        return "null";
+        if constexpr (std::is_null_pointer_v<T>)
+        {
+            return "null";
+        }
+        else if constexpr (std::is_same_v<T, bool>)
+        {
+            return value ? "true" : "false";
+        }
+        else if constexpr (std::is_arithmetic_v<T>)
+        {
+            return std::to_string(value);
+        }
+        else
+        {
+            static_assert(always_false<T>);
+        }
     }
-    else if constexpr (std::is_same_v<T, bool>)
-    {
-        return value ? "true" : "false";
-    }
-    else if constexpr (std::is_arithmetic_v<T>)
-    {
-        return std::to_string(value);
-    }
-    else
-    {
-        static_assert(always_false<T>);
-    }
-}
 } // namespace n516
 
 namespace n517
 {
-template <typename T>
-std::string
-as_string(T &&value)
-{
-    using value_type = std::decay_t<T>;
+    template <typename T>
+    std::string
+    as_string(T &&value)
+    {
+        using value_type = std::decay_t<T>;
 
-    if constexpr (std::is_null_pointer_v<value_type>)
-    {
-        return "null";
+        if constexpr (std::is_null_pointer_v<value_type>)
+        {
+            return "null";
+        }
+        else if constexpr (std::is_same_v<value_type, bool>)
+        {
+            return value ? "true" : "false";
+        }
+        else if constexpr (std::is_arithmetic_v<value_type>)
+        {
+            return std::to_string(value);
+        }
+        else
+        {
+            static_assert(always_false<T>);
+        }
     }
-    else if constexpr (std::is_same_v<value_type, bool>)
-    {
-        return value ? "true" : "false";
-    }
-    else if constexpr (std::is_arithmetic_v<value_type>)
-    {
-        return std::to_string(value);
-    }
-    else
-    {
-        static_assert(always_false<T>);
-    }
-}
 } // namespace n517
 
 namespace n518
 {
-template <typename T, size_t S> using list_t = typename std::conditional<S == 1, T, std::vector<T>>::type;
+    template <typename T, size_t S>
+    using list_t = typename std::conditional<S == 1, T, std::vector<T>>::type;
 }
 
 namespace n519
 {
-template <typename, typename... Ts> struct has_common_type : std::false_type
-{
-};
+    template <typename, typename... Ts>
+    struct has_common_type : std::false_type
+    {
+    };
 
-template <typename... Ts> struct has_common_type<std::void_t<std::common_type_t<Ts...>>, Ts...> : std::true_type
-{
-};
+    template <typename... Ts>
+    struct has_common_type<std::void_t<std::common_type_t<Ts...>>, Ts...> : std::true_type
+    {
+    };
 
-template <typename... Ts> constexpr bool has_common_type_v = sizeof...(Ts) < 2 || has_common_type<void, Ts...>::value;
+    template <typename... Ts>
+    constexpr bool has_common_type_v = sizeof...(Ts) < 2 || has_common_type<void, Ts...>::value;
 
-template <typename... Ts, typename = std::enable_if_t<has_common_type_v<Ts...>>>
-void
-process(Ts &&...ts [[maybe_unused]])
-{
-    // static_assert(has_common_type_v<Ts...>,
-    //                    "Arguments must have a common type.");
+    template <typename... Ts, typename = std::enable_if_t<has_common_type_v<Ts...>>>
+    void
+    process(Ts &&...ts [[maybe_unused]])
+    {
+        // static_assert(has_common_type_v<Ts...>,
+        //                    "Arguments must have a common type.");
 
-    std::cout << typeid(std::common_type_t<Ts...>).name() << '\n';
-}
+        std::cout << typeid(std::common_type_t<Ts...>).name() << '\n';
+    }
 } // namespace n519
 
 namespace n520
 {
-namespace detail
-{
-template <bool b> struct copy_fn
-{
+    namespace detail
+    {
+        template <bool b>
+        struct copy_fn
+        {
+            template <typename InputIt, typename OutputIt>
+            constexpr static OutputIt
+            copy(InputIt first, InputIt last, OutputIt d_first)
+            {
+                while (first != last)
+                {
+                    *d_first++ = *first++;
+                }
+                return d_first;
+            }
+        };
+
+        template <>
+        struct copy_fn<true>
+        {
+            template <typename InputIt, typename OutputIt>
+            constexpr static OutputIt *
+            copy(InputIt *first, InputIt *last, OutputIt *d_first)
+            {
+                std::memmove(d_first, first, (last - first) * sizeof(InputIt));
+                return d_first + (last - first);
+            }
+        };
+    } // namespace detail
+
     template <typename InputIt, typename OutputIt>
-    constexpr static OutputIt
+    constexpr OutputIt
     copy(InputIt first, InputIt last, OutputIt d_first)
     {
-        while (first != last)
-        {
-            *d_first++ = *first++;
-        }
-        return d_first;
+        using input_type  = std::remove_cv_t<typename std::iterator_traits<InputIt>::value_type>;
+        using output_type = std::remove_cv_t<typename std::iterator_traits<OutputIt>::value_type>;
+
+        constexpr bool opt = std::is_same_v<input_type, output_type> && std::is_pointer_v<InputIt> &&
+                             std::is_pointer_v<OutputIt> && std::is_trivially_copy_assignable_v<input_type>;
+
+        return detail::copy_fn<opt>::copy(first, last, d_first);
     }
-};
-
-template <> struct copy_fn<true>
-{
-    template <typename InputIt, typename OutputIt>
-    constexpr static OutputIt *
-    copy(InputIt *first, InputIt *last, OutputIt *d_first)
-    {
-        std::memmove(d_first, first, (last - first) * sizeof(InputIt));
-        return d_first + (last - first);
-    }
-};
-} // namespace detail
-
-template <typename InputIt, typename OutputIt>
-constexpr OutputIt
-copy(InputIt first, InputIt last, OutputIt d_first)
-{
-    using input_type  = std::remove_cv_t<typename std::iterator_traits<InputIt>::value_type>;
-    using output_type = std::remove_cv_t<typename std::iterator_traits<OutputIt>::value_type>;
-
-    constexpr bool opt = std::is_same_v<input_type, output_type> && std::is_pointer_v<InputIt> &&
-                         std::is_pointer_v<OutputIt> && std::is_trivially_copy_assignable_v<input_type>;
-
-    return detail::copy_fn<opt>::copy(first, last, d_first);
-}
 } // namespace n520
 
 int

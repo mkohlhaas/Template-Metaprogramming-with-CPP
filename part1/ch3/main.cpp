@@ -7,536 +7,560 @@ namespace n301
 {
 #include <stdarg.h>
 
-int
-min(int count, ...)
-{
-    va_list args;
-    va_start(args, count);
-
-    int val = va_arg(args, int);
-    for (int i = 1; i < count; i++)
+    int
+    min(int count, ...)
     {
-        int n = va_arg(args, int);
-        if (n < val)
+        va_list args;
+        va_start(args, count);
+
+        int val = va_arg(args, int);
+        for (int i = 1; i < count; i++)
         {
-            val = n;
+            int n = va_arg(args, int);
+            if (n < val)
+            {
+                val = n;
+            }
         }
+
+        va_end(args);
+
+        return val;
     }
-
-    va_end(args);
-
-    return val;
-}
 } // namespace n301
 
 namespace n302
 {
 #include <stdarg.h>
 
-template <typename T>
-T
-min(int count, ...)
-{
-    va_list args;
-    va_start(args, count);
-
-    T val = va_arg(args, T);
-    for (int i = 1; i < count; i++)
+    template <typename T>
+    T
+    min(int count, ...)
     {
-        T n = va_arg(args, T);
-        if (n < val)
+        va_list args;
+        va_start(args, count);
+
+        T val = va_arg(args, T);
+        for (int i = 1; i < count; i++)
         {
-            val = n;
+            T n = va_arg(args, T);
+            if (n < val)
+            {
+                val = n;
+            }
         }
+
+        va_end(args);
+
+        return val;
     }
-
-    va_end(args);
-
-    return val;
-}
 } // namespace n302
 
 namespace n303
 {
-template <typename T>
-T
-min(T a, T b)
-{
-    return a < b ? a : b;
-}
+    template <typename T>
+    T
+    min(T a, T b)
+    {
+        return a < b ? a : b;
+    }
 
-template <typename T, typename... Args>
-T
-min(T a, Args... args)
-{
-    return min(a, min(args...));
-}
+    template <typename T, typename... Args>
+    T
+    min(T a, Args... args)
+    {
+        return min(a, min(args...));
+    }
 } // namespace n303
 
 namespace n304
 {
-int
-min(int a, int b)
-{
-    return a < b ? a : b;
-}
+    int
+    min(int a, int b)
+    {
+        return a < b ? a : b;
+    }
 
-int
-min(int a, int b, int c)
-{
-    return min(a, min(b, c));
-}
+    int
+    min(int a, int b, int c)
+    {
+        return min(a, min(b, c));
+    }
 
-int
-min(int a, int b, int c, int d)
-{
-    return min(a, min(b, min(c, d)));
-}
+    int
+    min(int a, int b, int c, int d)
+    {
+        return min(a, min(b, min(c, d)));
+    }
 
-int
-min(int a, int b, int c, int d, int e)
-{
-    return min(a, min(b, min(c, min(d, e))));
-}
+    int
+    min(int a, int b, int c, int d, int e)
+    {
+        return min(a, min(b, min(c, min(d, e))));
+    }
 } // namespace n304
 
 namespace n305
 {
-template <typename T>
-T
-min(T a, T b)
-{
+    template <typename T>
+    T
+    min(T a, T b)
+    {
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    std::cout << __PRETTY_FUNCTION__ << "\n";
+        std::cout << __PRETTY_FUNCTION__ << "\n";
 #elif defined(_MSC_VER)
-    std::cout << __FUNCSIG__ << "\n";
+        std::cout << __FUNCSIG__ << "\n";
 #endif
-    return a < b ? a : b;
-}
+        return a < b ? a : b;
+    }
 
-template <typename T, typename... Args>
-T
-min(T a, Args... args)
-{
+    template <typename T, typename... Args>
+    T
+    min(T a, Args... args)
+    {
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    std::cout << __PRETTY_FUNCTION__ << "\n";
+        std::cout << __PRETTY_FUNCTION__ << "\n";
 #elif defined(_MSC_VER)
-    std::cout << __FUNCSIG__ << "\n";
+        std::cout << __FUNCSIG__ << "\n";
 #endif
-    return min(a, min(args...));
-}
+        return min(a, min(args...));
+    }
 } // namespace n305
 
 namespace n306
 {
-template <typename T, typename... Args>
-T
-sum(T a, Args... args)
-{
-    if constexpr (sizeof...(args) == 0)
+    template <typename T, typename... Args>
+    T
+    sum(T a, Args... args)
     {
-        return a;
+        if constexpr (sizeof...(args) == 0)
+        {
+            return a;
+        }
+        else
+        {
+            return a + sum(args...);
+        }
     }
-    else
-    {
-        return a + sum(args...);
-    }
-}
 } // namespace n306
 
 namespace n307
 {
-template <typename T>
-T
-sum(T a)
-{
-    return a;
-}
+    template <typename T>
+    T
+    sum(T a)
+    {
+        return a;
+    }
 
-template <typename T, typename... Args>
-T
-sum(T a, Args... args)
-{
-    return a + sum(args...);
-}
+    template <typename T, typename... Args>
+    T
+    sum(T a, Args... args)
+    {
+        return a + sum(args...);
+    }
 } // namespace n307
 
 namespace n308
 {
-template <typename... Ts>
-constexpr auto
-get_type_sizes()
-{
-    return std::array<std::size_t, sizeof...(Ts)>{sizeof(Ts)...};
-}
+    template <typename... Ts>
+    constexpr auto
+    get_type_sizes()
+    {
+        return std::array<std::size_t, sizeof...(Ts)>{sizeof(Ts)...};
+    }
 } // namespace n308
 
 namespace n309
 {
-template <typename T1, typename T2, typename T3, typename T4>
-constexpr auto
-get_type_sizes()
-{
-    return std::array<std::size_t, 4>{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
-}
+    template <typename T1, typename T2, typename T3, typename T4>
+    constexpr auto
+    get_type_sizes()
+    {
+        return std::array<std::size_t, 4>{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
+    }
 } // namespace n309
 
 namespace n310
 {
-template <typename... Ts, typename... Us>
-constexpr auto
-multipacks(Ts... args1, Us... args2)
-{
-    std::cout << sizeof...(args1) << ',' << sizeof...(args2) << '\n';
-}
+    template <typename... Ts, typename... Us>
+    constexpr auto
+    multipacks(Ts... args1, Us... args2)
+    {
+        std::cout << sizeof...(args1) << ',' << sizeof...(args2) << '\n';
+    }
 } // namespace n310
 
 namespace n311
 {
-template <typename... Ts, typename... Us>
-constexpr auto
-multipacks(Ts... args1, Us... args2)
-{
-    static_assert(sizeof...(args1) == sizeof...(args2), "Packs must be of equal sizes.");
-}
+    template <typename... Ts, typename... Us>
+    constexpr auto
+    multipacks(Ts... args1, Us... args2)
+    {
+        static_assert(sizeof...(args1) == sizeof...(args2), "Packs must be of equal sizes.");
+    }
 } // namespace n311
 
 namespace n312
 {
-bool
-twice_as(int a, int b)
-{
-    return a >= b * 2;
-}
+    bool
+    twice_as(int a, int b)
+    {
+        return a >= b * 2;
+    }
 
-double
-sum_and_div(int a, int b, double c)
-{
-    return (a + b) / c;
-}
+    double
+    sum_and_div(int a, int b, double c)
+    {
+        return (a + b) / c;
+    }
 
-template <typename, typename> struct func_pair;
+    template <typename, typename>
+    struct func_pair;
 
-template <typename R1, typename... A1, typename R2, typename... A2> struct func_pair<R1(A1...), R2(A2...)>
-{
-    std::function<R1(A1...)> f;
-    std::function<R2(A2...)> g;
-};
+    template <typename R1, typename... A1, typename R2, typename... A2>
+    struct func_pair<R1(A1...), R2(A2...)>
+    {
+        std::function<R1(A1...)> f;
+        std::function<R2(A2...)> g;
+    };
 } // namespace n312
 
 namespace n313
 {
-template <typename T, typename... Ts> struct tuple
-{
-    tuple(T const &t, Ts const &...ts) : value(t), rest(ts...)
+    template <typename T, typename... Ts>
+    struct tuple
     {
-    }
+        tuple(T const &t, Ts const &...ts) : value(t), rest(ts...)
+        {
+        }
 
-    constexpr int
-    size() const
+        constexpr int
+        size() const
+        {
+            return 1 + rest.size();
+        }
+
+        T            value;
+        tuple<Ts...> rest;
+    };
+
+    template <typename T>
+    struct tuple<T>
     {
-        return 1 + rest.size();
-    }
+        tuple(const T &t) : value(t)
+        {
+        }
 
-    T            value;
-    tuple<Ts...> rest;
-};
+        constexpr int
+        size() const
+        {
+            return 1;
+        }
 
-template <typename T> struct tuple<T>
-{
-    tuple(const T &t) : value(t)
+        T value;
+    };
+
+    template <size_t N, typename T, typename... Ts>
+    struct nth_type : nth_type<N - 1, Ts...>
     {
-    }
+        static_assert(N < sizeof...(Ts) + 1, "index out of bounds");
+    };
 
-    constexpr int
-    size() const
+    template <typename T, typename... Ts>
+    struct nth_type<0, T, Ts...>
     {
-        return 1;
-    }
+        using value_type = T;
+    };
 
-    T value;
-};
+    template <size_t N>
+    struct getter
+    {
+        template <typename... Ts>
+        static typename nth_type<N, Ts...>::value_type &
+        get(tuple<Ts...> &t)
+        {
+            return getter<N - 1>::get(t.rest);
+        }
+    };
 
-template <size_t N, typename T, typename... Ts> struct nth_type : nth_type<N - 1, Ts...>
-{
-    static_assert(N < sizeof...(Ts) + 1, "index out of bounds");
-};
+    template <>
+    struct getter<0>
+    {
+        template <typename T, typename... Ts>
+        static T &
+        get(tuple<T, Ts...> &t)
+        {
+            return t.value;
+        }
+    };
 
-template <typename T, typename... Ts> struct nth_type<0, T, Ts...>
-{
-    using value_type = T;
-};
-
-template <size_t N> struct getter
-{
-    template <typename... Ts>
-    static typename nth_type<N, Ts...>::value_type &
+    template <size_t N, typename... Ts>
+    typename nth_type<N, Ts...>::value_type &
     get(tuple<Ts...> &t)
     {
-        return getter<N - 1>::get(t.rest);
+        return getter<N>::get(t);
     }
-};
-
-template <> struct getter<0>
-{
-    template <typename T, typename... Ts>
-    static T &
-    get(tuple<T, Ts...> &t)
-    {
-        return t.value;
-    }
-};
-
-template <size_t N, typename... Ts>
-typename nth_type<N, Ts...>::value_type &
-get(tuple<Ts...> &t)
-{
-    return getter<N>::get(t);
-}
 } // namespace n313
 
 namespace n314
 {
-template <typename... T>
-int
-sum(T... args)
-{
-    return (... + args);
-}
+    template <typename... T>
+    int
+    sum(T... args)
+    {
+        return (... + args);
+    }
 
-template <typename... T>
-int
-sum_from_zero(T... args)
-{
-    return (0 + ... + args);
-}
+    template <typename... T>
+    int
+    sum_from_zero(T... args)
+    {
+        return (0 + ... + args);
+    }
 } // namespace n314
 
 namespace n315
 {
-template <typename... T>
-int
-suml(T... args)
-{
-    return (... + args);
-}
+    template <typename... T>
+    int
+    suml(T... args)
+    {
+        return (... + args);
+    }
 
-template <typename... T>
-int
-sumr(T... args)
-{
-    return (args + ...);
-}
+    template <typename... T>
+    int
+    sumr(T... args)
+    {
+        return (args + ...);
+    }
 
-template <typename... T>
-void
-printl(T... args)
-{
-    (..., (std::cout << args)) << '\n';
-}
+    template <typename... T>
+    void
+    printl(T... args)
+    {
+        (..., (std::cout << args)) << '\n';
+    }
 
-template <typename... T>
-void
-printr(T... args)
-{
-    ((std::cout << args), ...) << '\n';
-}
+    template <typename... T>
+    void
+    printr(T... args)
+    {
+        ((std::cout << args), ...) << '\n';
+    }
 
-template <typename... T>
-void
-print(T... args)
-{
-    (std::cout << ... << args) << '\n';
-}
+    template <typename... T>
+    void
+    print(T... args)
+    {
+        (std::cout << ... << args) << '\n';
+    }
 
-template <typename T, typename... Args>
-void
-push_back_many(std::vector<T> &v, Args &&...args)
-{
-    (v.push_back(args), ...);
-}
+    template <typename T, typename... Args>
+    void
+    push_back_many(std::vector<T> &v, Args &&...args)
+    {
+        (v.push_back(args), ...);
+    }
 } // namespace n315
 
 namespace n316
 {
-template <int... R> constexpr int Sum = (... + R);
+    template <int... R>
+    constexpr int Sum = (... + R);
 
-template <int... I> constexpr auto indexes = std::make_index_sequence<5>();
+    template <int... I>
+    constexpr auto indexes = std::make_index_sequence<5>();
 } // namespace n316
 
 namespace n317
 {
-template <typename T, typename... Args> struct foo
-{
-};
+    template <typename T, typename... Args>
+    struct foo
+    {
+    };
 
-template <typename... Args> using int_foo = foo<int, Args...>;
+    template <typename... Args>
+    using int_foo = foo<int, Args...>;
 
-template <typename T, T... Ints> struct integer_sequence
-{
-};
+    template <typename T, T... Ints>
+    struct integer_sequence
+    {
+    };
 
-template <std::size_t... Ints> using index_sequence = integer_sequence<std::size_t, Ints...>;
+    template <std::size_t... Ints>
+    using index_sequence = integer_sequence<std::size_t, Ints...>;
 
-template <typename T, std::size_t N, T... Is>
-struct make_integer_sequence : make_integer_sequence<T, N - 1, N - 1, Is...>
-{
-};
+    template <typename T, std::size_t N, T... Is>
+    struct make_integer_sequence : make_integer_sequence<T, N - 1, N - 1, Is...>
+    {
+    };
 
-template <typename T, T... Is> struct make_integer_sequence<T, 0, Is...> : integer_sequence<T, Is...>
-{
-};
+    template <typename T, T... Is>
+    struct make_integer_sequence<T, 0, Is...> : integer_sequence<T, Is...>
+    {
+    };
 
-template <std::size_t N> using make_index_sequence = make_integer_sequence<std::size_t, N>;
+    template <std::size_t N>
+    using make_index_sequence = make_integer_sequence<std::size_t, N>;
 
-template <typename... T> using index_sequence_for = make_index_sequence<sizeof...(T)>;
+    template <typename... T>
+    using index_sequence_for = make_index_sequence<sizeof...(T)>;
 
-template <typename Tuple, std::size_t... Ints>
-auto
-select_tuple(Tuple &&tuple, index_sequence<Ints...>)
-{
-    return std::make_tuple(std::get<Ints>(std::forward<Tuple>(tuple))...);
-}
+    template <typename Tuple, std::size_t... Ints>
+    auto
+    select_tuple(Tuple &&tuple, index_sequence<Ints...>)
+    {
+        return std::make_tuple(std::get<Ints>(std::forward<Tuple>(tuple))...);
+    }
 } // namespace n317
 
 namespace n318
 {
-template <typename... T> struct outer
-{
-    template <T... args> struct inner
+    template <typename... T>
+    struct outer
+    {
+        template <T... args>
+        struct inner
+        {
+        };
+    };
+
+    template <typename... T>
+    struct tag
     {
     };
-};
 
-template <typename... T> struct tag
-{
-};
-
-template <typename T, typename U, typename... Args>
-void
-tagger()
-{
-    [[maybe_unused]] tag<T, U, Args...> t1;
-    [[maybe_unused]] tag<T, Args..., U> t2;
-    [[maybe_unused]] tag<Args..., T, U> t3;
-    [[maybe_unused]] tag<U, T, Args...> t4;
-}
-
-template <typename... Args>
-void
-make_it(Args... args [[maybe_unused]])
-{
-}
-
-template <typename T>
-T
-step_it(T value)
-{
-    return value + 1;
-}
-
-template <typename... T>
-int
-sum(T... args)
-{
-    return (... + args);
-}
-
-template <typename... T>
-void
-do_sums(T... args)
-{
-    auto s1 [[maybe_unused]] = sum(args...);
-    auto s2 [[maybe_unused]] = sum(42, args...);
-    auto s3 [[maybe_unused]] = sum(step_it(args)...);
-}
-
-template <typename... T> struct sum_wrapper
-{
-    sum_wrapper(T... args)
-    {
-        value = (... + args);
-    }
-
-    std::common_type_t<T...> value;
-};
-
-template <typename... T>
-void
-parenthesized(T... args)
-{
-    std::array<std::common_type_t<T...>, sizeof...(T)> arr [[maybe_unused]]{args...};
-
-    sum_wrapper sw1(args...);   // value = 1 + 2 + 3 + 4
-    sum_wrapper sw2(++args...); // value = 2 + 3 + 4 + 5
-}
-
-template <typename... T>
-void
-brace_enclosed(T... args)
-{
-    int arr1 [[maybe_unused]][sizeof...(args) + 1] = {args..., 0};       // 1,2,3,4,5
-    int arr2 [[maybe_unused]][sizeof...(args)]     = {step_it(args)...}; // 2,3,4,5
-}
-
-struct A
-{
+    template <typename T, typename U, typename... Args>
     void
-    execute()
+    tagger()
     {
-        std::cout << "A::execute\n";
+        [[maybe_unused]] tag<T, U, Args...> t1;
+        [[maybe_unused]] tag<T, Args..., U> t2;
+        [[maybe_unused]] tag<Args..., T, U> t3;
+        [[maybe_unused]] tag<U, T, Args...> t4;
     }
-};
-struct B
-{
+
+    template <typename... Args>
     void
-    execute()
+    make_it(Args... args [[maybe_unused]])
     {
-        std::cout << "B::execute\n";
     }
-};
-struct C
-{
+
+    template <typename T>
+    T
+    step_it(T value)
+    {
+        return value + 1;
+    }
+
+    template <typename... T>
+    int
+    sum(T... args)
+    {
+        return (... + args);
+    }
+
+    template <typename... T>
     void
-    execute()
+    do_sums(T... args)
     {
-        std::cout << "C::execute\n";
-    }
-};
-
-template <typename... Bases> struct X : public Bases...
-{
-    X(Bases const &...args) : Bases(args)...
-    {
+        auto s1 [[maybe_unused]] = sum(args...);
+        auto s2 [[maybe_unused]] = sum(42, args...);
+        auto s3 [[maybe_unused]] = sum(step_it(args)...);
     }
 
-    using Bases::execute...;
-};
+    template <typename... T>
+    struct sum_wrapper
+    {
+        sum_wrapper(T... args)
+        {
+            value = (... + args);
+        }
 
-template <typename... T>
-void
-captures(T... args)
-{
-    auto l                  = [args...] { return sum(step_it(args)...); };
-    auto s [[maybe_unused]] = l();
-}
+        std::common_type_t<T...> value;
+    };
 
-template <typename... T>
-auto
-make_array(T... args)
-{
-    return std::array<std::common_type_t<T...>, sizeof...(T)>{args...};
-};
+    template <typename... T>
+    void
+    parenthesized(T... args)
+    {
+        std::array<std::common_type_t<T...>, sizeof...(T)> arr [[maybe_unused]]{args...};
 
-template <typename... T> struct alignment1
-{
-    alignas(T...) char a;
-};
+        sum_wrapper sw1(args...);   // value = 1 + 2 + 3 + 4
+        sum_wrapper sw2(++args...); // value = 2 + 3 + 4 + 5
+    }
 
-template <int... args> struct alignment2
-{
-    alignas(args...) char a;
-};
+    template <typename... T>
+    void
+    brace_enclosed(T... args)
+    {
+        int arr1 [[maybe_unused]][sizeof...(args) + 1] = {args..., 0};       // 1,2,3,4,5
+        int arr2 [[maybe_unused]][sizeof...(args)]     = {step_it(args)...}; // 2,3,4,5
+    }
+
+    struct A
+    {
+        void
+        execute()
+        {
+            std::cout << "A::execute\n";
+        }
+    };
+    struct B
+    {
+        void
+        execute()
+        {
+            std::cout << "B::execute\n";
+        }
+    };
+    struct C
+    {
+        void
+        execute()
+        {
+            std::cout << "C::execute\n";
+        }
+    };
+
+    template <typename... Bases>
+    struct X : public Bases...
+    {
+        X(Bases const &...args) : Bases(args)...
+        {
+        }
+
+        using Bases::execute...;
+    };
+
+    template <typename... T>
+    void
+    captures(T... args)
+    {
+        auto l                  = [args...] { return sum(step_it(args)...); };
+        auto s [[maybe_unused]] = l();
+    }
+
+    template <typename... T>
+    auto
+    make_array(T... args)
+    {
+        return std::array<std::common_type_t<T...>, sizeof...(T)>{args...};
+    };
+
+    template <typename... T>
+    struct alignment1
+    {
+        alignas(T...) char a;
+    };
+
+    template <int... args>
+    struct alignment2
+    {
+        alignas(args...) char a;
+    };
 } // namespace n318
 
 int

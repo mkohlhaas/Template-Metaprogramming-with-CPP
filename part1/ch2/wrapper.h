@@ -2,13 +2,14 @@
 
 namespace ext
 {
-template <typename T> struct wrapper
-{
-    T data;
-};
+    template <typename T>
+    struct wrapper
+    {
+        T data;
+    };
 
-extern template struct wrapper<int>;
+    extern template struct wrapper<int>;
 
-void f();
-void g();
+    void f();
+    void g();
 } // namespace ext

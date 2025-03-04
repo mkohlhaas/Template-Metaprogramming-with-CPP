@@ -6,1348 +6,1410 @@
 
 namespace n401
 {
-template <typename T> struct parser; // [1] template declaration
+    template <typename T>
+    struct parser;       // [1] template declaration
 
-void
-handle(double value)                 // [2] handle(double) definition
-{
-    std::cout << "processing a double: " << value << '\n';
-}
-
-template <typename T> struct parser // [3] template definition
-{
     void
-    parse()
+    handle(double value) // [2] handle(double) definition
     {
-        handle(42); // [4] non-dependent name
+        std::cout << "processing a double: " << value << '\n';
     }
-};
 
-void
-handle(int value) // [5] handle(int) definition
-{
-    std::cout << "processing an int: " << value << '\n';
-}
+    template <typename T>
+    struct parser // [3] template definition
+    {
+        void
+        parse()
+        {
+            handle(42); // [4] non-dependent name
+        }
+    };
+
+    void
+    handle(int value) // [5] handle(int) definition
+    {
+        std::cout << "processing an int: " << value << '\n';
+    }
 } // namespace n401
 
 namespace n402
 {
-template <typename T> struct handler // [1] template definition
-{
-    void
-    handle(T value)
+    template <typename T>
+    struct handler // [1] template definition
     {
-        std::cout << "handler<T>: " << value << '\n';
-    }
-};
+        void
+        handle(T value)
+        {
+            std::cout << "handler<T>: " << value << '\n';
+        }
+    };
 
-template <typename T> struct parser // [2] template definition
-{
-    void
-    parse(T arg)
+    template <typename T>
+    struct parser // [2] template definition
     {
-        arg.handle(42);         // [3] dependent name
-    }
-};
+        void
+        parse(T arg)
+        {
+            arg.handle(42); // [3] dependent name
+        }
+    };
 
-template <> struct handler<int> // [4] template specialization
-{
-    void
-    handle(int value)
+    template <>
+    struct handler<int> // [4] template specialization
     {
-        std::cout << "handler<int>: " << value << '\n';
-    }
-};
+        void
+        handle(int value)
+        {
+            std::cout << "handler<int>: " << value << '\n';
+        }
+    };
 } // namespace n402
 
 namespace n403
 {
-template <typename T> struct base_parser
-{
-    void
-    init()
+    template <typename T>
+    struct base_parser
     {
-        std::cout << "init\n";
-    }
-};
+        void
+        init()
+        {
+            std::cout << "init\n";
+        }
+    };
 
-template <typename T> struct parser : base_parser<T>
-{
-    void
-    parse()
+    template <typename T>
+    struct parser : base_parser<T>
     {
-        // init();        // error: identifier not found
-        this->init();
+        void
+        parse()
+        {
+            // init();        // error: identifier not found
+            this->init();
 
-        std::cout << "parse\n";
-    }
-};
+            std::cout << "parse\n";
+        }
+    };
 } // namespace n403
 
 namespace n404
 {
-template <typename T> struct base_parser
-{
-    void
-    init()
+    template <typename T>
+    struct base_parser
     {
-        std::cout << "init\n";
-    }
-};
+        void
+        init()
+        {
+            std::cout << "init\n";
+        }
+    };
 
-template <typename T> struct parser : base_parser<T>
-{
-    void
-    parse()
+    template <typename T>
+    struct parser : base_parser<T>
     {
-        this->init();
+        void
+        parse()
+        {
+            this->init();
 
-        std::cout << "parse\n";
-    }
-};
+            std::cout << "parse\n";
+        }
+    };
 
-template <> struct base_parser<int>
-{
-    void
-    init()
+    template <>
+    struct base_parser<int>
     {
-        std::cout << "specialized init\n";
-    }
-};
+        void
+        init()
+        {
+            std::cout << "specialized init\n";
+        }
+    };
 } // namespace n404
 
 namespace n405
 {
-template <typename T> struct base_parser
-{
-    using value_type = T;
-};
-
-template <typename T> struct parser : base_parser<T>
-{
-    void
-    parse()
+    template <typename T>
+    struct base_parser
     {
-        // value_type v{}; //syntax error: unexpected token 'identifier', expected ';'
-        // base_parser<T>::value_type v{};
-        typename base_parser<T>::value_type v [[maybe_unused]]{};
+        using value_type = T;
+    };
 
-        std::cout << "parse\n";
-    }
-};
+    template <typename T>
+    struct parser : base_parser<T>
+    {
+        void
+        parse()
+        {
+            // value_type v{}; //syntax error: unexpected token 'identifier', expected ';'
+            // base_parser<T>::value_type v{};
+            typename base_parser<T>::value_type v [[maybe_unused]]{};
+
+            std::cout << "parse\n";
+        }
+    };
 } // namespace n405
 
 namespace n406
 {
-template <typename T> struct base_parser
-{
-    template <typename U>
-    void
-    init()
+    template <typename T>
+    struct base_parser
     {
-        std::cout << "init\n";
-    }
+        template <typename U>
+        void
+        init()
+        {
+            std::cout << "init\n";
+        }
 
-    template <typename U> struct token
-    {
+        template <typename U>
+        struct token
+        {
+        };
     };
-};
 
-template <typename T> struct parser : base_parser<T>
-{
-    void
-    parse()
+    template <typename T>
+    struct parser : base_parser<T>
     {
-        // base_parser<T>::init<int>(); // error
+        void
+        parse()
+        {
+            // base_parser<T>::init<int>(); // error
 
-        base_parser<T>::template init<int>();
+            base_parser<T>::template init<int>();
 
-        using token_type = base_parser<T>::template token<int>;
-        token_type t1 [[maybe_unused]]{};
+            using token_type = base_parser<T>::template token<int>;
+            token_type t1 [[maybe_unused]]{};
 
-        typename base_parser<T>::template token<int> t2 [[maybe_unused]]{};
+            typename base_parser<T>::template token<int> t2 [[maybe_unused]]{};
 
-        std::cout << "parse\n";
-    }
-};
+            std::cout << "parse\n";
+        }
+    };
 } // namespace n406
 
 namespace n407
 {
-template <typename T> struct parser
-{
-    parser          *p1; // parser is the CI
-    parser<T>       *p2; // parser<T> is the CI
-    n407::parser<T> *p3; // ::parser<T> is the CI
-    // parser<T*> p4;     // parser<T*> is not the CI
-
-    struct token
+    template <typename T>
+    struct parser
     {
-        token            *t1; // token is the CI
-        parser<T>::token *t2; // parser<T>::token is the CI
-                              // typename parser<T*>::token* t3; // parser<T*>::token is not the CI
-    };
-};
+        parser          *p1; // parser is the CI
+        parser<T>       *p2; // parser<T> is the CI
+        n407::parser<T> *p3; // ::parser<T> is the CI
+        // parser<T*> p4;     // parser<T*> is not the CI
 
-template <typename T> struct parser<T *>
-{
-    parser<T *> *p1; // parser<T*> is the CI
-    parser<T>   *p2; // parser<T> is not the CI
-};
+        struct token
+        {
+            token            *t1; // token is the CI
+            parser<T>::token *t2; // parser<T>::token is the CI
+                                  // typename parser<T*>::token* t3; // parser<T*>::token is not the CI
+        };
+    };
+
+    template <typename T>
+    struct parser<T *>
+    {
+        parser<T *> *p1; // parser<T*> is the CI
+        parser<T>   *p2; // parser<T> is not the CI
+    };
 } // namespace n407
 
 namespace n408
 {
-template <unsigned int N> struct factorial
-{
-    static constexpr unsigned int value = N * factorial<N - 1>::value;
-};
+    template <unsigned int N>
+    struct factorial
+    {
+        static constexpr unsigned int value = N * factorial<N - 1>::value;
+    };
 
-template <> struct factorial<0>
-{
-    static constexpr unsigned int value = 1;
-};
+    template <>
+    struct factorial<0>
+    {
+        static constexpr unsigned int value = 1;
+    };
 } // namespace n408
 
 namespace n409
 {
-template <unsigned int N> inline constexpr unsigned int factorial = N * factorial<N - 1>;
+    template <unsigned int N>
+    inline constexpr unsigned int factorial = N * factorial<N - 1>;
 
-template <> inline constexpr unsigned int factorial<0> = 1;
+    template <>
+    inline constexpr unsigned int factorial<0> = 1;
 } // namespace n409
 
 namespace n409b
 {
-template <unsigned int n>
-constexpr unsigned int
-factorial()
-{
-    return n * factorial<n - 1>();
-}
+    template <unsigned int n>
+    constexpr unsigned int
+    factorial()
+    {
+        return n * factorial<n - 1>();
+    }
 
-template <>
-constexpr unsigned int
-factorial<1>()
-{
-    return 1;
-}
-template <>
-constexpr unsigned int
-factorial<0>()
-{
-    return 1;
-}
+    template <>
+    constexpr unsigned int
+    factorial<1>()
+    {
+        return 1;
+    }
+    template <>
+    constexpr unsigned int
+    factorial<0>()
+    {
+        return 1;
+    }
 } // namespace n409b
 
 namespace n410
 {
-constexpr unsigned int
-factorial(unsigned int const n)
-{
-    return n > 1 ? n * factorial(n - 1) : 1;
-}
+    constexpr unsigned int
+    factorial(unsigned int const n)
+    {
+        return n > 1 ? n * factorial(n - 1) : 1;
+    }
 
-template <typename T> struct wrapper
-{
-};
+    template <typename T>
+    struct wrapper
+    {
+    };
 
-template <int N> struct manyfold_wrapper
-{
-    using value_type = wrapper<typename manyfold_wrapper<N - 1>::value_type>;
-};
+    template <int N>
+    struct manyfold_wrapper
+    {
+        using value_type = wrapper<typename manyfold_wrapper<N - 1>::value_type>;
+    };
 
-template <> struct manyfold_wrapper<0>
-{
-    using value_type = unsigned int;
-};
+    template <>
+    struct manyfold_wrapper<0>
+    {
+        using value_type = unsigned int;
+    };
 } // namespace n410
 
 namespace n411
 {
-template <unsigned int N> inline constexpr unsigned int sum = N + sum<N - 1>;
+    template <unsigned int N>
+    inline constexpr unsigned int sum = N + sum<N - 1>;
 
-template <> inline constexpr unsigned int sum<0> = 0;
+    template <>
+    inline constexpr unsigned int sum<0> = 0;
 } // namespace n411
 
 namespace n412
 {
-template <typename T>
-void
-process(T arg)
-{
-    std::cout << "processing " << arg << '\n';
-}
-
-struct account_t
-{
-    int number;
-
-    int
-    get_number()
+    template <typename T>
+    void
+    process(T arg)
     {
-        return number;
+        std::cout << "processing " << arg << '\n';
     }
-    int
-    from_string(std::string text)
-    {
-        return std::atoi(text.c_str());
-    }
-};
 
-struct transaction_t
-{
-    double amount;
-};
-
-struct balance_report_t
-{
-};
-
-struct balance_t
-{
-    account_t account;
-    double    amount;
-
-    account_t
-    get_account()
+    struct account_t
     {
-        return account;
-    }
-    int
-    get_account_number()
-    {
-        return account.number;
-    }
-    bool
-    can_withdraw(double const value)
-    {
-        return amount >= value;
+        int number;
+
+        int
+        get_number()
+        {
+            return number;
+        }
+        int
+        from_string(std::string text)
+        {
+            return std::atoi(text.c_str());
+        }
     };
-    transaction_t
-    withdraw(double const value)
+
+    struct transaction_t
     {
-        amount -= value;
-        return transaction_t{-value};
-    }
-    balance_report_t
-    make_report(int const type [[maybe_unused]])
+        double amount;
+    };
+
+    struct balance_report_t
     {
-        return {};
+    };
+
+    struct balance_t
+    {
+        account_t account;
+        double    amount;
+
+        account_t
+        get_account()
+        {
+            return account;
+        }
+        int
+        get_account_number()
+        {
+            return account.number;
+        }
+        bool
+        can_withdraw(double const value)
+        {
+            return amount >= value;
+        };
+        transaction_t
+        withdraw(double const value)
+        {
+            amount -= value;
+            return transaction_t{-value};
+        }
+        balance_report_t
+        make_report(int const type [[maybe_unused]])
+        {
+            return {};
+        }
+    };
+
+    template <typename T>
+    void
+    process01(T)
+    {
+        std::cout << "T" << '\n';
     }
-};
 
-template <typename T>
-void
-process01(T)
-{
-    std::cout << "T" << '\n';
-}
+    template <typename T>
+    void
+    process02(T const)
+    {
+        std::cout << "T const" << '\n';
+    }
 
-template <typename T>
-void
-process02(T const)
-{
-    std::cout << "T const" << '\n';
-}
+    // template <typename T>
+    // void
+    // process03(T volatile)
+    // {
+    //     std::cout << "T volatile" << '\n';
+    // }
 
-// template <typename T>
-// void
-// process03(T volatile)
-// {
-//     std::cout << "T volatile" << '\n';
-// }
+    template <typename T>
+    void
+    process04(T *)
+    {
+        std::cout << "T*" << '\n';
+    }
 
-template <typename T>
-void
-process04(T *)
-{
-    std::cout << "T*" << '\n';
-}
+    template <typename T>
+    void
+    process04(T &)
+    {
+        std::cout << "T&" << '\n';
+    }
 
-template <typename T>
-void
-process04(T &)
-{
-    std::cout << "T&" << '\n';
-}
+    template <typename T>
+    void
+    process05(T &&)
+    {
+        std::cout << "T&&" << '\n';
+    }
 
-template <typename T>
-void
-process05(T &&)
-{
-    std::cout << "T&&" << '\n';
-}
+    template <typename T>
+    void
+    process06(T[5])
+    {
+        std::cout << "T[5]" << '\n';
+    }
 
-template <typename T>
-void
-process06(T[5])
-{
-    std::cout << "T[5]" << '\n';
-}
+    template <size_t n>
+    void
+    process07(account_t[5][n])
+    {
+        std::cout << "C[5][n]" << '\n';
+    }
 
-template <size_t n>
-void
-process07(account_t[5][n])
-{
-    std::cout << "C[5][n]" << '\n';
-}
+    template <typename T>
+    void
+    process08(T (*)())
+    {
+        std::cout << "T (*)()" << '\n';
+    }
 
-template <typename T>
-void
-process08(T (*)())
-{
-    std::cout << "T (*)()" << '\n';
-}
+    template <typename T>
+    void
+    process08(account_t (*)(T))
+    {
+        std::cout << "C (*)(T)" << '\n';
+    }
 
-template <typename T>
-void
-process08(account_t (*)(T))
-{
-    std::cout << "C (*)(T)" << '\n';
-}
+    template <typename T, typename U>
+    void
+    process08(T (*)(U))
+    {
+        std::cout << "T (*)(U)" << '\n';
+    }
 
-template <typename T, typename U>
-void
-process08(T (*)(U))
-{
-    std::cout << "T (*)(U)" << '\n';
-}
+    template <typename T>
+    void
+    process09(T (account_t::*)())
+    {
+        std::cout << "T (C::*)()" << '\n';
+    }
 
-template <typename T>
-void
-process09(T (account_t::*)())
-{
-    std::cout << "T (C::*)()" << '\n';
-}
+    template <typename T, typename U>
+    void
+    process09(T (account_t::*)(U))
+    {
+        std::cout << "T (C::*)(U)" << '\n';
+    }
 
-template <typename T, typename U>
-void
-process09(T (account_t::*)(U))
-{
-    std::cout << "T (C::*)(U)" << '\n';
-}
+    template <typename T, typename U>
+    void
+    process09(T (U::*)())
+    {
+        std::cout << "T (U::*)()" << '\n';
+    }
 
-template <typename T, typename U>
-void
-process09(T (U::*)())
-{
-    std::cout << "T (U::*)()" << '\n';
-}
+    template <typename T, typename U, typename V>
+    void
+    process09(T (U::*)(V))
+    {
+        std::cout << "T (U::*)(V)" << '\n';
+    }
 
-template <typename T, typename U, typename V>
-void
-process09(T (U::*)(V))
-{
-    std::cout << "T (U::*)(V)" << '\n';
-}
+    template <typename T>
+    void
+    process09(account_t (T::*)())
+    {
+        std::cout << "C (T::*)()" << '\n';
+    }
 
-template <typename T>
-void
-process09(account_t (T::*)())
-{
-    std::cout << "C (T::*)()" << '\n';
-}
+    template <typename T, typename U>
+    void
+    process09(transaction_t (T::*)(U))
+    {
+        std::cout << "C (T::*)(U)" << '\n';
+    }
 
-template <typename T, typename U>
-void
-process09(transaction_t (T::*)(U))
-{
-    std::cout << "C (T::*)(U)" << '\n';
-}
+    template <typename T>
+    void
+    process09(balance_report_t (balance_t::*)(T))
+    {
+        std::cout << "D (C::*)(T)" << '\n';
+    }
 
-template <typename T>
-void
-process09(balance_report_t (balance_t::*)(T))
-{
-    std::cout << "D (C::*)(T)" << '\n';
-}
+    template <typename T>
+    void
+    process10(T account_t::*)
+    {
+        std::cout << "T C::*" << '\n';
+    }
 
-template <typename T>
-void
-process10(T account_t::*)
-{
-    std::cout << "T C::*" << '\n';
-}
+    template <typename T>
+    void
+    process10(account_t T::*)
+    {
+        std::cout << "C T::*" << '\n';
+    }
 
-template <typename T>
-void
-process10(account_t T::*)
-{
-    std::cout << "C T::*" << '\n';
-}
+    template <typename T, typename U>
+    void
+    process10(T U::*)
+    {
+        std::cout << "T U::*" << '\n';
+    }
 
-template <typename T, typename U>
-void
-process10(T U::*)
-{
-    std::cout << "T U::*" << '\n';
-}
+    template <typename T>
+    struct wrapper
+    {
+        T data;
+    };
 
-template <typename T> struct wrapper
-{
-    T data;
-};
+    template <size_t i>
+    struct int_array
+    {
+        int data[i];
+    };
 
-template <size_t i> struct int_array
-{
-    int data[i];
-};
+    template <typename T>
+    void
+    process11(wrapper<T>)
+    {
+        std::cout << "C<T>" << '\n';
+    }
 
-template <typename T>
-void
-process11(wrapper<T>)
-{
-    std::cout << "C<T>" << '\n';
-}
+    template <size_t i>
+    void
+    process12(int_array<i>)
+    {
+        std::cout << "C<i>" << '\n';
+    }
 
-template <size_t i>
-void
-process12(int_array<i>)
-{
-    std::cout << "C<i>" << '\n';
-}
+    template <template <typename> class TT, typename T>
+    void
+    process13(TT<T>)
+    {
+        std::cout << "TT<T>" << '\n';
+    }
 
-template <template <typename> class TT, typename T>
-void
-process13(TT<T>)
-{
-    std::cout << "TT<T>" << '\n';
-}
+    template <template <size_t> typename TT, size_t i>
+    void
+    process14(TT<i>)
+    {
+        std::cout << "TT<i>" << '\n';
+    }
 
-template <template <size_t> typename TT, size_t i>
-void
-process14(TT<i>)
-{
-    std::cout << "TT<i>" << '\n';
-}
-
-template <template <typename> typename TT>
-void
-process15(TT<account_t>)
-{
-    std::cout << "TT<C>" << '\n';
-}
+    template <template <typename> typename TT>
+    void
+    process15(TT<account_t>)
+    {
+        std::cout << "TT<C>" << '\n';
+    }
 } // namespace n412
 
 namespace n413
 {
-template <typename T, T i>
-void
-process(double arr [[maybe_unused]][i])
-{
-    using index_type [[maybe_unused]] = T;
-    std::cout << "processing " << i << " doubles" << '\n';
-    std::cout << "index type is " << typeid(T).name() << '\n';
-}
+    template <typename T, T i>
+    void
+    process(double arr [[maybe_unused]][i])
+    {
+        using index_type [[maybe_unused]] = T;
+        std::cout << "processing " << i << " doubles" << '\n';
+        std::cout << "index type is " << typeid(T).name() << '\n';
+    }
 } // namespace n413
 
 namespace n414
 {
-template <typename T>
-void
-process(T a = 0, T b = 42)
-{
-    std::cout << a << "," << b << '\n';
-}
+    template <typename T>
+    void
+    process(T a = 0, T b = 42)
+    {
+        std::cout << a << "," << b << '\n';
+    }
 } // namespace n414
 
 namespace n415
 {
-template <typename T>
-void
-invoke(void (*pfun)(T, int))
-{
-    pfun(T{}, 42);
-}
+    template <typename T>
+    void
+    invoke(void (*pfun)(T, int))
+    {
+        pfun(T{}, 42);
+    }
 
-template <typename T>
-void
-alpha(T, int)
-{
-    std::cout << "alpha(T,int)" << '\n';
-}
+    template <typename T>
+    void
+    alpha(T, int)
+    {
+        std::cout << "alpha(T,int)" << '\n';
+    }
 
-void
-beta(int, int)
-{
-    std::cout << "beta(int,int)" << '\n';
-}
-void
-beta(short, int)
-{
-    std::cout << "beta(short,int)" << '\n';
-}
+    void
+    beta(int, int)
+    {
+        std::cout << "beta(int,int)" << '\n';
+    }
+    void
+    beta(short, int)
+    {
+        std::cout << "beta(short,int)" << '\n';
+    }
 
-void
-gamma(short, int, long long)
-{
-    std::cout << "gamma(short,int,long long)" << '\n';
-}
-void
-gamma(double, int)
-{
-    std::cout << "gamma(double,int)" << '\n';
-}
+    void
+    gamma(short, int, long long)
+    {
+        std::cout << "gamma(short,int,long long)" << '\n';
+    }
+    void
+    gamma(double, int)
+    {
+        std::cout << "gamma(double,int)" << '\n';
+    }
 } // namespace n415
 
 namespace n416
 {
-template <size_t Size>
-void
-process1(int a [[maybe_unused]][Size])
-{
-    std::cout << "process(int[Size])" << '\n';
-}
+    template <size_t Size>
+    void
+    process1(int a [[maybe_unused]][Size])
+    {
+        std::cout << "process(int[Size])" << '\n';
+    }
 
-template <size_t Size>
-void
-process2(int a [[maybe_unused]][5][Size])
-{
-    std::cout << "process(int[5][Size])" << '\n';
-}
+    template <size_t Size>
+    void
+    process2(int a [[maybe_unused]][5][Size])
+    {
+        std::cout << "process(int[5][Size])" << '\n';
+    }
 
-template <size_t Size>
-void
-process3(int (&a [[maybe_unused]])[Size])
-{
-    std::cout << "process(int[Size]&)" << '\n';
-}
+    template <size_t Size>
+    void
+    process3(int (&a [[maybe_unused]])[Size])
+    {
+        std::cout << "process(int[Size]&)" << '\n';
+    }
 
-template <size_t Size>
-void
-process4(int (*a [[maybe_unused]])[Size])
-{
-    std::cout << "process(int[Size]*)" << '\n';
-}
+    template <size_t Size>
+    void
+    process4(int (*a [[maybe_unused]])[Size])
+    {
+        std::cout << "process(int[Size]*)" << '\n';
+    }
 } // namespace n416
 
 namespace n417
 {
-template <size_t N> struct ncube
-{
-    static constexpr size_t dimensions = N;
-};
+    template <size_t N>
+    struct ncube
+    {
+        static constexpr size_t dimensions = N;
+    };
 
-template <size_t N>
-void
-process(ncube<N - 1> cube)
-{
-    std::cout << cube.dimensions << '\n';
-}
+    template <size_t N>
+    void
+    process(ncube<N - 1> cube)
+    {
+        std::cout << cube.dimensions << '\n';
+    }
 } // namespace n417
 
 namespace n418
 {
-template <typename T> struct wrapper
-{
-    T data;
-};
+    template <typename T>
+    struct wrapper
+    {
+        T data;
+    };
 
-template <typename T>
-constexpr wrapper<T>
-make_wrapper(T &&data)
-{
-    return wrapper{data};
-}
+    template <typename T>
+    constexpr wrapper<T>
+    make_wrapper(T &&data)
+    {
+        return wrapper{data};
+    }
 
-template <typename T> wrapper(T) -> wrapper<T>;
+    template <typename T>
+    wrapper(T) -> wrapper<T>;
 
-template <typename T, typename... Ts, typename Allocator = std::allocator<T>>
-auto
-make_vector(T &&first, Ts &&...args)
-{
-    return std::vector<std::decay_t<T>, Allocator>{std::forward<T>(first), std::forward<Ts>(args)...};
-}
+    template <typename T, typename... Ts, typename Allocator = std::allocator<T>>
+    auto
+    make_vector(T &&first, Ts &&...args)
+    {
+        return std::vector<std::decay_t<T>, Allocator>{std::forward<T>(first), std::forward<Ts>(args)...};
+    }
 } // namespace n418
 
 namespace n419
 {
-template <typename T> struct point_t
-{
-    point_t(T vx, T vy) : x(vx), y(vy)
+    template <typename T>
+    struct point_t
     {
-    }
+        point_t(T vx, T vy) : x(vx), y(vy)
+        {
+        }
 
-  private:
-    T x;
-    T y;
-};
+      private:
+        T x;
+        T y;
+    };
 } // namespace n419
 
 namespace n420
 {
-template <typename T> struct range_t
-{
-    template <typename Iter> range_t(Iter first, Iter last)
+    template <typename T>
+    struct range_t
     {
-        std::copy(first, last, std::back_inserter(data));
-    }
+        template <typename Iter>
+        range_t(Iter first, Iter last)
+        {
+            std::copy(first, last, std::back_inserter(data));
+        }
 
-  private:
-    std::vector<T> data;
-};
+      private:
+        std::vector<T> data;
+    };
 
-template <typename Iter> range_t(Iter first, Iter last) -> range_t<typename std::iterator_traits<Iter>::value_type>;
+    template <typename Iter>
+    range_t(Iter first, Iter last) -> range_t<typename std::iterator_traits<Iter>::value_type>;
 } // namespace n420
 
 namespace n421
 {
-struct foo
-{
-    int data;
-};
+    struct foo
+    {
+        int data;
+    };
 
-void
-f(foo &v [[maybe_unused]])
-{
-    std::cout << "f(foo&)\n";
-}
+    void
+    f(foo &v [[maybe_unused]])
+    {
+        std::cout << "f(foo&)\n";
+    }
 
-void
-g(foo &v [[maybe_unused]])
-{
-    std::cout << "g(foo&)\n";
-}
+    void
+    g(foo &v [[maybe_unused]])
+    {
+        std::cout << "g(foo&)\n";
+    }
 
-void
-g(foo &&v [[maybe_unused]])
-{
-    std::cout << "g(foo&&)\n";
-}
+    void
+    g(foo &&v [[maybe_unused]])
+    {
+        std::cout << "g(foo&&)\n";
+    }
 
-void
-h(foo &&v [[maybe_unused]])
-{
-    std::cout << "h(foo&&)\n";
-}
+    void
+    h(foo &&v [[maybe_unused]])
+    {
+        std::cout << "h(foo&&)\n";
+    }
 } // namespace n421
 
 namespace n422
 {
-struct foo
-{
-    int data;
-};
+    struct foo
+    {
+        int data;
+    };
 
-void
-g(foo &v [[maybe_unused]])
-{
-    std::cout << "g(foo&)\n";
-}
+    void
+    g(foo &v [[maybe_unused]])
+    {
+        std::cout << "g(foo&)\n";
+    }
 
-void
-g(foo &&v [[maybe_unused]])
-{
-    std::cout << "g(foo&&)\n";
-}
+    void
+    g(foo &&v [[maybe_unused]])
+    {
+        std::cout << "g(foo&&)\n";
+    }
 
-void
-h(foo &v)
-{
-    g(v);
-}
+    void
+    h(foo &v)
+    {
+        g(v);
+    }
 
-void
-h(foo &&v)
-{
-    g(v);
-}
+    void
+    h(foo &&v)
+    {
+        g(v);
+    }
 } // namespace n422
 
 namespace n423
 {
-struct foo
-{
-    int data;
-};
+    struct foo
+    {
+        int data;
+    };
 
-void
-g(foo &v [[maybe_unused]])
-{
-    std::cout << "g(foo&)\n";
-}
+    void
+    g(foo &v [[maybe_unused]])
+    {
+        std::cout << "g(foo&)\n";
+    }
 
-void
-g(foo &&v [[maybe_unused]])
-{
-    std::cout << "g(foo&&)\n";
-}
+    void
+    g(foo &&v [[maybe_unused]])
+    {
+        std::cout << "g(foo&&)\n";
+    }
 
-void
-h(foo &v)
-{
-    g(std::forward<foo &>(v));
-}
+    void
+    h(foo &v)
+    {
+        g(std::forward<foo &>(v));
+    }
 
-void
-h(foo &&v)
-{
-    g(std::forward<foo &&>(v));
-}
+    void
+    h(foo &&v)
+    {
+        g(std::forward<foo &&>(v));
+    }
 } // namespace n423
 
 namespace n424
 {
-template <typename T>
-void
-f(T &&arg [[maybe_unused]]) // forwarding reference
-{
-    std::cout << "f(T&&)\n";
-}
-
-template <typename T>
-void
-f(T const &&arg [[maybe_unused]]) // rvalue reference
-{
-    std::cout << "f(T const&&)\n";
-}
-
-template <typename T>
-void
-f(std::vector<T> &&arg [[maybe_unused]]) // rvalue reference
-{
-    std::cout << "f(vector<T>&&)\n";
-}
-
-template <typename T> struct S
-{
+    template <typename T>
     void
-    f(T &&arg [[maybe_unused]]) // rvalue reference
+    f(T &&arg [[maybe_unused]]) // forwarding reference
     {
-        std::cout << "S.f(T&&)\n";
+        std::cout << "f(T&&)\n";
     }
-};
+
+    template <typename T>
+    void
+    f(T const &&arg [[maybe_unused]]) // rvalue reference
+    {
+        std::cout << "f(T const&&)\n";
+    }
+
+    template <typename T>
+    void
+    f(std::vector<T> &&arg [[maybe_unused]]) // rvalue reference
+    {
+        std::cout << "f(vector<T>&&)\n";
+    }
+
+    template <typename T>
+    struct S
+    {
+        void
+        f(T &&arg [[maybe_unused]]) // rvalue reference
+        {
+            std::cout << "S.f(T&&)\n";
+        }
+    };
 } // namespace n424
 
 namespace n425
 {
-struct foo
-{
-    int data;
-};
+    struct foo
+    {
+        int data;
+    };
 
-void
-g(foo &v [[maybe_unused]])
-{
-    std::cout << "g(foo&)\n";
-}
+    void
+    g(foo &v [[maybe_unused]])
+    {
+        std::cout << "g(foo&)\n";
+    }
 
-void
-g(foo &&v [[maybe_unused]])
-{
-    std::cout << "g(foo&&)\n";
-}
+    void
+    g(foo &&v [[maybe_unused]])
+    {
+        std::cout << "g(foo&&)\n";
+    }
 
-template <typename T>
-void
-h(T &v)
-{
-    g(v);
-}
+    template <typename T>
+    void
+    h(T &v)
+    {
+        g(v);
+    }
 
-template <typename T>
-void
-h(T &&v)
-{
-    g(v);
-}
+    template <typename T>
+    void
+    h(T &&v)
+    {
+        g(v);
+    }
 } // namespace n425
 
 namespace n426
 {
-struct foo
-{
-    int data;
-};
+    struct foo
+    {
+        int data;
+    };
 
-void
-g(foo &v [[maybe_unused]])
-{
-    std::cout << "g(foo&)\n";
-}
+    void
+    g(foo &v [[maybe_unused]])
+    {
+        std::cout << "g(foo&)\n";
+    }
 
-void
-g(foo &&v [[maybe_unused]])
-{
-    std::cout << "g(foo&&)\n";
-}
+    void
+    g(foo &&v [[maybe_unused]])
+    {
+        std::cout << "g(foo&&)\n";
+    }
 
-template <typename T>
-void
-h(T &&v)
-{
-    g(std::forward<T>(v));
-}
+    template <typename T>
+    void
+    h(T &&v)
+    {
+        g(std::forward<T>(v));
+    }
 } // namespace n426
 
 namespace n428
 {
-int
-f()
-{
-    return 42;
-}
-
-int
-g()
-{
-    return 0;
-}
-int
-g(int a)
-{
-    return a;
-}
-int
-g(int a, int b)
-{
-    return a + b;
-}
-
-struct wrapper
-{
-    int val;
+    int
+    f()
+    {
+        return 42;
+    }
 
     int
-    get() const
+    g()
     {
-        return val;
+        return 0;
     }
-};
+    int
+    g(int a)
+    {
+        return a;
+    }
+    int
+    g(int a, int b)
+    {
+        return a + b;
+    }
+
+    struct wrapper
+    {
+        int val;
+
+        int
+        get() const
+        {
+            return val;
+        }
+    };
 } // namespace n428
 
 namespace n429
 {
-struct foo
-{
-    int          a = 0;
-    volatile int b = 0;
-    const int    c = 42;
-};
+    struct foo
+    {
+        int          a = 0;
+        volatile int b = 0;
+        const int    c = 42;
+    };
 } // namespace n429
 
 namespace n430
 {
-template <typename T>
-T
-minimum(T &&a, T &&b)
-{
-    return a < b ? a : b;
-}
+    template <typename T>
+    T
+    minimum(T &&a, T &&b)
+    {
+        return a < b ? a : b;
+    }
 } // namespace n430
 
 namespace n431
 {
-template <typename T, typename U>
-auto
-minimum(T &&a, U &&b) -> decltype(a < b ? a : b)
-{
-    return a < b ? a : b;
-}
+    template <typename T, typename U>
+    auto
+    minimum(T &&a, U &&b) -> decltype(a < b ? a : b)
+    {
+        return a < b ? a : b;
+    }
 } // namespace n431
 
 namespace n432
 {
-template <typename T, typename U>
-decltype(auto)
-minimum(T &&a, U &&b)
-{
-    return a < b ? a : b;
-}
+    template <typename T, typename U>
+    decltype(auto)
+    minimum(T &&a, U &&b)
+    {
+        return a < b ? a : b;
+    }
 } // namespace n432
 
 namespace n433
 {
-template <typename T, typename U>
-auto
-minimum(T &&a, U &&b)
-{
-    return a < b ? a : b;
-}
+    template <typename T, typename U>
+    auto
+    minimum(T &&a, U &&b)
+    {
+        return a < b ? a : b;
+    }
 } // namespace n433
 
 namespace n434
 {
-template <typename T>
-T const &
-func(T const &ref)
-{
-    return ref;
-}
+    template <typename T>
+    T const &
+    func(T const &ref)
+    {
+        return ref;
+    }
 
-template <typename T>
-auto
-func_caller(T &&ref)
-{
-    return func(std::forward<T>(ref));
-}
+    template <typename T>
+    auto
+    func_caller(T &&ref)
+    {
+        return func(std::forward<T>(ref));
+    }
 } // namespace n434
 
 namespace n435
 {
-template <typename T>
-T const &
-func(T const &ref)
-{
-    return ref;
-}
+    template <typename T>
+    T const &
+    func(T const &ref)
+    {
+        return ref;
+    }
 
-template <typename T>
-decltype(auto)
-func_caller(T &&ref)
-{
-    return func(std::forward<T>(ref));
-}
+    template <typename T>
+    decltype(auto)
+    func_caller(T &&ref)
+    {
+        return func(std::forward<T>(ref));
+    }
 } // namespace n435
 
 namespace n436
 {
-template <typename T, typename U> struct composition
-{
-    using result_type = decltype(T{} + U{});
-};
-
-struct wrapper
-{
-    wrapper(int const v) : value(v)
+    template <typename T, typename U>
+    struct composition
     {
-    }
+        using result_type = decltype(T{} + U{});
+    };
 
-    int value;
-
-    friend wrapper
-    operator+(int const a, wrapper const &w)
+    struct wrapper
     {
-        return wrapper(a + w.value);
-    }
+        wrapper(int const v) : value(v)
+        {
+        }
 
-    friend wrapper
-    operator+(wrapper const &w, int const a)
-    {
-        return wrapper(a + w.value);
-    }
-};
+        int value;
+
+        friend wrapper
+        operator+(int const a, wrapper const &w)
+        {
+            return wrapper(a + w.value);
+        }
+
+        friend wrapper
+        operator+(wrapper const &w, int const a)
+        {
+            return wrapper(a + w.value);
+        }
+    };
 } // namespace n436
 
 namespace n437
 {
-using n436::wrapper;
+    using n436::wrapper;
 
-template <typename T, typename U> struct composition
-{
-    using result_type = decltype(std::declval<T>() + std::declval<U>());
-};
+    template <typename T, typename U>
+    struct composition
+    {
+        using result_type = decltype(std::declval<T>() + std::declval<U>());
+    };
 } // namespace n437
 
 namespace n438
 {
-struct wrapper
-{
-    wrapper(int const v) : value(v)
+    struct wrapper
     {
+        wrapper(int const v) : value(v)
+        {
+        }
+
+      private:
+        int value;
+
+        friend void print(wrapper const &w);
+    };
+
+    void
+    print(wrapper const &w)
+    {
+        std::cout << w.value << '\n';
     }
-
-  private:
-    int value;
-
-    friend void print(wrapper const &w);
-};
-
-void
-print(wrapper const &w)
-{
-    std::cout << w.value << '\n';
-}
 } // namespace n438
 
 namespace n439
 {
-struct wrapper
-{
-    wrapper(int const v) : value(v)
+    struct wrapper
     {
-    }
+        wrapper(int const v) : value(v)
+        {
+        }
 
-  private:
-    int value;
+      private:
+        int value;
 
-    template <typename T> friend void print(wrapper const &);
+        template <typename T>
+        friend void print(wrapper const &);
 
-    template <typename T> friend struct printer;
-};
+        template <typename T>
+        friend struct printer;
+    };
 
-template <typename T>
-void
-print(wrapper const &w)
-{
-    std::cout << w.value << '\n';
-}
-
-template <typename T> struct printer
-{
+    template <typename T>
     void
-    operator()(wrapper const &w)
+    print(wrapper const &w)
     {
         std::cout << w.value << '\n';
     }
-};
+
+    template <typename T>
+    struct printer
+    {
+        void
+        operator()(wrapper const &w)
+        {
+            std::cout << w.value << '\n';
+        }
+    };
 } // namespace n439
 
 namespace n440
 {
-struct wrapper;
+    struct wrapper;
 
-template <typename T> void print(wrapper const &w);
+    template <typename T>
+    void print(wrapper const &w);
 
-template <typename T> struct printer;
+    template <typename T>
+    struct printer;
 
-struct wrapper
-{
-    wrapper(int const v) : value(v)
+    struct wrapper
     {
-    }
+        wrapper(int const v) : value(v)
+        {
+        }
 
-  private:
-    int value;
+      private:
+        int value;
 
-    friend void print<int>(wrapper const &);
-    friend struct printer<int>;
-};
+        friend void print<int>(wrapper const &);
+        friend struct printer<int>;
+    };
 
-template <typename T>
-void
-print(wrapper const &w [[maybe_unused]])
-{
-    // std::cout << w.value << '\n'; // error
-}
-
-template <>
-void
-print<int>(wrapper const &w)
-{
-    std::cout << w.value << '\n';
-}
-
-template <typename T> struct printer
-{
+    template <typename T>
     void
-    operator()(wrapper const &w [[maybe_unused]])
+    print(wrapper const &w [[maybe_unused]])
     {
         // std::cout << w.value << '\n'; // error
     }
-};
 
-template <> struct printer<int>
-{
+    template <>
     void
-    operator()(wrapper const &w)
+    print<int>(wrapper const &w)
     {
         std::cout << w.value << '\n';
     }
-};
+
+    template <typename T>
+    struct printer
+    {
+        void
+        operator()(wrapper const &w [[maybe_unused]])
+        {
+            // std::cout << w.value << '\n'; // error
+        }
+    };
+
+    template <>
+    struct printer<int>
+    {
+        void
+        operator()(wrapper const &w)
+        {
+            std::cout << w.value << '\n';
+        }
+    };
 } // namespace n440
 
 namespace n441
 {
-template <typename T> struct wrapper
-{
-    wrapper(T const v) : value(v)
+    template <typename T>
+    struct wrapper
     {
+        wrapper(T const v) : value(v)
+        {
+        }
+
+      private:
+        T value;
+
+        friend void print(wrapper<int> const &);
+    };
+
+    void
+    print(wrapper<int> const &w)
+    {
+        std::cout << w.value << '\n';
     }
 
-  private:
-    T value;
-
-    friend void print(wrapper<int> const &);
-};
-
-void
-print(wrapper<int> const &w)
-{
-    std::cout << w.value << '\n';
-}
-
-void
-print(wrapper<char> const &w [[maybe_unused]])
-{
-    // std::cout << w.value << '\n'; // error
-}
+    void
+    print(wrapper<char> const &w [[maybe_unused]])
+    {
+        // std::cout << w.value << '\n'; // error
+    }
 } // namespace n441
 
 namespace n442
 {
-template <typename T> struct printer;
+    template <typename T>
+    struct printer;
 
-template <typename T> struct wrapper
-{
-    wrapper(T const v) : value(v)
+    template <typename T>
+    struct wrapper
     {
-    }
+        wrapper(T const v) : value(v)
+        {
+        }
 
-  private:
-    T value;
+      private:
+        T value;
 
-    // friend void print<int>(wrapper<int> const &);
-    friend struct printer<int>;
-};
+        // friend void print<int>(wrapper<int> const &);
+        friend struct printer<int>;
+    };
 
-template <typename T>
-void
-print(wrapper<T> const &w [[maybe_unused]])
-{
-    // std::cout << w.value << '\n'; // error
-}
-
-template <>
-void
-print(wrapper<int> const &w [[maybe_unused]])
-{
-    // std::cout << w.value << '\n';
-}
-
-template <typename T> struct printer
-{
+    template <typename T>
     void
-    operator()(wrapper<T> const &w [[maybe_unused]])
+    print(wrapper<T> const &w [[maybe_unused]])
     {
         // std::cout << w.value << '\n'; // error
     }
-};
 
-template <> struct printer<int>
-{
+    template <>
     void
-    operator()(wrapper<int> const &w)
+    print(wrapper<int> const &w [[maybe_unused]])
     {
-        std::cout << w.value << '\n';
+        // std::cout << w.value << '\n';
     }
-};
+
+    template <typename T>
+    struct printer
+    {
+        void
+        operator()(wrapper<T> const &w [[maybe_unused]])
+        {
+            // std::cout << w.value << '\n'; // error
+        }
+    };
+
+    template <>
+    struct printer<int>
+    {
+        void
+        operator()(wrapper<int> const &w)
+        {
+            std::cout << w.value << '\n';
+        }
+    };
 } // namespace n442
 
 namespace n443
 {
-template <typename T> struct printer;
+    template <typename T>
+    struct printer;
 
-template <typename T> struct wrapper
-{
-    wrapper(T const v) : value(v)
+    template <typename T>
+    struct wrapper
     {
-    }
+        wrapper(T const v) : value(v)
+        {
+        }
 
-  private:
-    T value;
+      private:
+        T value;
 
-    template <typename U> friend void print(wrapper<U> const &);
+        template <typename U>
+        friend void print(wrapper<U> const &);
 
-    template <typename U> friend struct printer;
-};
+        template <typename U>
+        friend struct printer;
+    };
 
-template <typename T>
-void
-print(wrapper<T> const &w)
-{
-    std::cout << w.value << '\n';
-}
-
-template <typename T> struct printer
-{
+    template <typename T>
     void
-    operator()(wrapper<T> const &w)
+    print(wrapper<T> const &w)
     {
         std::cout << w.value << '\n';
     }
-};
+
+    template <typename T>
+    struct printer
+    {
+        void
+        operator()(wrapper<T> const &w)
+        {
+            std::cout << w.value << '\n';
+        }
+    };
 } // namespace n443
 
 namespace n444
 {
-template <typename T> struct printer;
+    template <typename T>
+    struct printer;
 
-template <typename T> struct wrapper
-{
-    wrapper(T const v) : value(v)
+    template <typename T>
+    struct wrapper
     {
-    }
+        wrapper(T const v) : value(v)
+        {
+        }
 
-  private:
-    T value;
+      private:
+        T value;
 
-    // friend void print<T>(wrapper<T> const &);
-    friend struct printer<T>;
-};
+        // friend void print<T>(wrapper<T> const &);
+        friend struct printer<T>;
+    };
 
-template <typename T>
-void
-print(wrapper<T> const &w)
-{
-    std::cout << w.value << '\n';
-}
-
-template <typename T> struct printer
-{
+    template <typename T>
     void
-    operator()(wrapper<T> const &w)
+    print(wrapper<T> const &w)
     {
         std::cout << w.value << '\n';
     }
-};
+
+    template <typename T>
+    struct printer
+    {
+        void
+        operator()(wrapper<T> const &w)
+        {
+            std::cout << w.value << '\n';
+        }
+    };
 } // namespace n444
 
 namespace n445
 {
-template <typename T> struct connection
-{
-    connection(std::string const &host, int const port) : ConnectionString(host + ":" + std::to_string(port))
+    template <typename T>
+    struct connection
     {
-    }
+        connection(std::string const &host, int const port) : ConnectionString(host + ":" + std::to_string(port))
+        {
+        }
 
-  private:
-    std::string ConnectionString;
-    friend T;
-};
+      private:
+        std::string ConnectionString;
+        friend T;
+    };
 
-struct executor
-{
-    void
-    run()
+    struct executor
     {
-        connection<executor> c("localhost", 1234);
+        void
+        run()
+        {
+            connection<executor> c("localhost", 1234);
 
-        std::cout << c.ConnectionString << '\n';
-    }
-};
+            std::cout << c.ConnectionString << '\n';
+        }
+    };
 } // namespace n445
 
 namespace n446
 {
-struct dictionary_traits
-{
-    using key_type                = int;
-    using map_type                = std::map<key_type, std::string>;
-    static constexpr int identity = 1;
-};
-
-template <typename T> struct dictionary : T::map_type
-{
-    int         start_key{T::identity};
-    T::key_type next_key;
-
-    using value_type = T::map_type::mapped_type;
-
-    void
-    add(T::key_type const &, value_type const &)
+    struct dictionary_traits
     {
-    }
-};
+        using key_type                = int;
+        using map_type                = std::map<key_type, std::string>;
+        static constexpr int identity = 1;
+    };
+
+    template <typename T>
+    struct dictionary : T::map_type
+    {
+        int         start_key{T::identity};
+        T::key_type next_key;
+
+        using value_type = T::map_type::mapped_type;
+
+        void
+        add(T::key_type const &, value_type const &)
+        {
+        }
+    };
 } // namespace n446
 
 namespace std
 {
-template <typename T> pair(T &&, char const *) -> pair<T, std::string>;
+    template <typename T>
+    pair(T &&, char const *) -> pair<T, std::string>;
 
-template <typename T> pair(char const *, T &&) -> pair<std::string, T>;
+    template <typename T>
+    pair(char const *, T &&) -> pair<std::string, T>;
 
-pair(char const *, char const *) -> pair<std::string, std::string>;
+    pair(char const *, char const *) -> pair<std::string, std::string>;
 } // namespace std
 
 int

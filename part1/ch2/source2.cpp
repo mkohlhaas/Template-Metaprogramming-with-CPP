@@ -1,13 +1,13 @@
 #include "wrapper.h"
-#include <iostream>
+#include <print>
 
 namespace ext
 {
-void
-g()
-{
-    wrapper<int> a{100};
+    void
+    g()
+    {
+        wrapper<int> a{100};
 
-    std::cout << a.data << '\n';
-}
+        std::println("{}", a.data);
+    }
 } // namespace ext

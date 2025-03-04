@@ -9,3 +9,5 @@ AlignTrailingComments:
   Kind:           Always
   OverEmptyLines: 3
 BreakAfterReturnType:         AllDefinitions
+NamespaceIndentation:         All
+BreakTemplateDeclarations:    true

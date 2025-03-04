@@ -1,501 +1,537 @@
 #include "wrapper.h"
-#include <algorithm>
-#include <array>
-#include <cstring> // Needed for std::strcpy
+#include <cstdio>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <map>
-#include <memory>  // Needed for std::make_unique
+#include <memory>
 #include <numeric>
-#include <string>
-#include <string_view>
-#include <type_traits>
-#include <vector>
+#include <print>
 
 namespace n201
 {
-template <typename T>
-T
-add(T const a, T const b)
-{
-    return a + b;
-}
-
-class foo
-{
-    int value;
-
-  public:
-    explicit foo(int const i) : value(i)
-    {
-    }
-
-    explicit
-    operator int() const
-    {
-        return value;
-    }
-};
-
-foo
-operator+(foo const a, foo const b)
-{
-    return foo((int)a + (int)b);
-}
-
-template <typename Input, typename Predicate>
-int
-count_if(Input start, Input end, Predicate p)
-{
-    int total = 0;
-    for (Input i = start; i != end; i++)
-    {
-        if (p(*i))
-        {
-            total++;
-        }
-    }
-    return total;
-}
-} // namespace n201
-
-namespace n202
-{
-template <typename T> class wrapper
-{
-  public:
-    wrapper(T const v) : value(v)
-    {
-    }
-
-    T const &
-    get() const
-    {
-        return value;
-    }
-
-  private:
-    T value;
-};
-} // namespace n202
-
-namespace n203
-{
-template <typename T> class wrapper;
-
-void use_wrapper(wrapper<int> *ptr);
-} // namespace n203
-
-namespace n203
-{
-template <typename T> class wrapper
-{
-  public:
-    wrapper(T const v) : value(v)
-    {
-    }
-
-    T const &
-    get() const
-    {
-        return value;
-    }
-
-  private:
-    T value;
-};
-
-void
-use_wrapper(wrapper<int> *ptr)
-{
-    std::cout << ptr->get() << '\n';
-}
-} // namespace n203
-
-namespace n204
-{
-template <typename T> class composition
-{
-  public:
-    T
-    add(T const a, T const b)
-    {
-        return a + b;
-    }
-};
-} // namespace n204
-
-namespace n205
-{
-class composition
-{
-  public:
     template <typename T>
     T
     add(T const a, T const b)
     {
         return a + b;
     }
-};
+
+    class foo
+    {
+        int value;
+
+      public:
+        explicit foo(int const i) : value(i)
+        {
+        }
+
+        int
+        get() const
+        {
+            return value;
+        }
+
+        explicit
+        operator int() const
+        {
+            return value;
+        }
+    };
+
+    foo
+    operator+(foo const a, foo const b)
+    {
+        return foo((int)a + (int)b);
+    }
+
+    template <typename Pointer, typename Predicate>
+    int
+    count_if(Pointer start, Pointer end, Predicate p)
+    {
+        std::println("{}", __PRETTY_FUNCTION__);
+        int total = 0;
+        for (Pointer i = start; i != end; i++)
+        {
+            if (p(*i))
+            {
+                total++;
+            }
+        }
+        return total;
+    }
+} // namespace n201
+
+namespace n202
+{
+    template <typename T>
+    class wrapper
+    {
+      public:
+        wrapper(T const v) : value(v)
+        {
+        }
+
+        T const &
+        get() const
+        {
+            return value;
+        }
+
+      private:
+        T value;
+    };
+} // namespace n202
+
+namespace n203
+{
+    template <typename T>
+    class wrapper;
+
+    void use_wrapper(wrapper<int> *ptr);
+
+    template <typename T>
+    class wrapper
+    {
+      public:
+        wrapper(T const v) : value(v)
+        {
+        }
+
+        T const &
+        get() const
+        {
+            return value;
+        }
+
+      private:
+        T value;
+    };
+
+    void
+    use_wrapper(wrapper<int> *ptr)
+    {
+        std::println("{}", ptr->get());
+    }
+} // namespace n203
+
+namespace n204
+{
+    template <typename T>
+    class composition
+    {
+      public:
+        T
+        add(T const a, T const b)
+        {
+            return a + b;
+        }
+    };
+} // namespace n204
+
+namespace n205
+{
+    class composition
+    {
+      public:
+        template <typename T>
+        T
+        add(T const a, T const b)
+        {
+            return a + b;
+        }
+    };
 } // namespace n205
 
 namespace n206
 {
-template <typename T> class wrapper
-{
-  public:
-    wrapper(T const v) : value(v)
+    template <typename T>
+    class wrapper
     {
-    }
+      public:
+        wrapper(T const v) : value(v)
+        {
+        }
 
-    T const &
-    get() const
-    {
-        return value;
-    }
+        T const &
+        get() const
+        {
+            return value;
+        }
 
-    template <typename U>
-    U
-    as() const
-    {
-        return static_cast<U>(value);
-    }
+        // function template (must have a different type parameter)
+        template <typename U>
+        U
+        as() const
+        {
+            return static_cast<U>(value);
+        }
 
-  private:
-    T value;
-};
+      private:
+        T value;
+    };
 } // namespace n206
 
 namespace n207
 {
-template <typename T> class wrapper1
-{ /* ... */
-};
+    template <typename T>
+    class wrapper1
+    { /* ... */
+    };
 
-template <typename T = int> class wrapper2
-{ /* ... */
-};
+    template <typename T = int>
+    class wrapper2
+    { /* ... */
+    };
 
-template <typename> class wrapper3;
+    template <typename>
+    class wrapper3;
 
-template <typename = int> class wrapper4;
+    template <typename = int>
+    class wrapper4;
 
-template <typename... T> class wrapper5
-{ /* ... */
-};
+    template <typename... T>
+    class wrapper5
+    { /* ... */
+    };
 
-template <typename T>
-concept WrappableType = std::is_trivial_v<T>;
+    template <typename T>
+    concept WrappableType = std::is_trivial_v<T>;
 
-template <WrappableType T> class wrapper6
-{ /* ... */
-};
+    template <WrappableType T>
+    class wrapper6
+    { /* ... */
+    };
 
-template <WrappableType T = int> class wrapper7
-{ /* ... */
-};
+    template <WrappableType T = int>
+    class wrapper7
+    { /* ... */
+    };
 
-template <WrappableType... T> class wrapper8
-{ /* ... */
-};
+    template <WrappableType... T>
+    class wrapper8
+    { /* ... */
+    };
 } // namespace n207
 
 namespace n208
 {
-template <int V> class foo1
-{ /*...*/
-};
+    template <int V>
+    class foo1
+    { /*...*/
+    };
 
-template <int V = 42> class foo2
-{ /*...*/
-};
+    template <int V = 42>
+    class foo2
+    { /*...*/
+    };
 
-template <int... V> class foo3
-{ /*...*/
-};
+    template <int... V>
+    class foo3
+    { /*...*/
+    };
 } // namespace n208
 
 namespace n209
 {
-template <typename T, size_t S> class buffer
-{
-    T data_[S];
-
-  public:
-    constexpr T const *
-    data() const
+    template <typename T, size_t S>
+    class buffer
     {
-        return data_;
-    }
+        T data_[S];
 
-    constexpr T &
-    operator[](size_t const index)
+      public:
+        constexpr T const *
+        data() const
+        {
+            return data_;
+        }
+
+        constexpr T &
+        operator[](size_t const index)
+        {
+            return data_[index];
+        }
+
+        constexpr T const &
+        operator[](size_t const index) const
+        {
+            return data_[index];
+        }
+    };
+
+    template <typename T, size_t S>
+    buffer<T, S>
+    make_buffer()
     {
-        return data_[index];
+        return {};
     }
-
-    constexpr T const &
-    operator[](size_t const index) const
-    {
-        return data_[index];
-    }
-};
-
-template <typename T, size_t S>
-buffer<T, S>
-make_buffer()
-{
-    return {};
-}
 } // namespace n209
 
 namespace n210
 {
-struct device
-{
-    virtual void output() = 0;
-    virtual ~device()
+    struct device
     {
-    }
-};
+        virtual void output() = 0;
+        virtual ~device()
+        {
+        }
+    };
 
-template <typename Command, void (Command::*action)()> struct smart_device : device
-{
-    smart_device(Command *command) : cmd(command)
+    template <typename Command, void (Command::*action)()>
+    struct smart_device : device
     {
-    }
+        smart_device(Command *command) : cmd(command)
+        {
+        }
 
-    void
-    output() override
+        void
+        output() override
+        {
+            (cmd->*action)();
+        }
+
+      private:
+        Command *cmd;
+    };
+
+    struct hello_command
     {
-        (cmd->*action)();
-    }
+        void
+        say_hello_in_english()
+        {
+            std::println("Hello, world!");
+        }
 
-  private:
-    Command *cmd;
-};
-
-struct hello_command
-{
-    void
-    say_hello_in_english()
-    {
-        std::cout << "Hello, world!\n";
-    }
-
-    void
-    say_hello_in_spanish()
-    {
-        std::cout << "Hola mundo!\n";
-    }
-};
+        void
+        say_hello_in_spanish()
+        {
+            std::println("Hola mundo!");
+        }
+    };
 } // namespace n210
 
 namespace n211
 {
-struct device
-{
-    virtual void output() = 0;
-    virtual ~device()
+    struct device
     {
-    }
-};
+        virtual void output() = 0;
+        virtual ~device()
+        {
+        }
+    };
 
-template <typename Command, void (Command::*action)()> struct smart_device : device
-{
-    smart_device(Command &command) : cmd(command)
+    template <typename Command, void (Command::*action)()>
+    struct smart_device : device
     {
-    }
+        smart_device(Command &command) : cmd(command)
+        {
+        }
 
-    void
-    output() override
+        void
+        output() override
+        {
+            (cmd.*action)();
+        }
+
+      private:
+        Command &cmd;
+    };
+
+    struct hello_command
     {
-        (cmd.*action)();
-    }
+        void
+        say_hello_in_english()
+        {
+            std::println("Hello, world!");
+        }
 
-  private:
-    Command &cmd;
-};
+        void
+        say_hello_in_spanish()
+        {
+            std::println("Hola mundo!");
+        }
+    };
+} // namespace n211
 
-struct hello_command
+namespace n212
 {
+    struct device
+    {
+        virtual void output() = 0;
+        virtual ~device()
+        {
+        }
+    };
+
+    template <void (*action)()>
+    struct smart_device : device
+    {
+        void
+        output() override
+        {
+            (*action)();
+        }
+    };
+
     void
     say_hello_in_english()
     {
-        std::cout << "Hello, world!\n";
+        std::println("Hello, world!");
     }
 
     void
     say_hello_in_spanish()
     {
-        std::cout << "Hola mundo!\n";
+        std::println("Hola mundo!");
     }
-};
-} // namespace n211
-
-namespace n212
-{
-struct device
-{
-    virtual void output() = 0;
-    virtual ~device()
-    {
-    }
-};
-
-template <void (*action)()> struct smart_device : device
-{
-    void
-    output() override
-    {
-        (*action)();
-    }
-};
-
-void
-say_hello_in_english()
-{
-    std::cout << "Hello, world!\n";
-}
-
-void
-say_hello_in_spanish()
-{
-    std::cout << "Hola mundo!\n";
-}
 } // namespace n212
 
 namespace n213
 {
-template <auto x> struct foo
-{
-};
+    template <auto x>
+    struct foo
+    {
+    };
 } // namespace n213
 
 namespace n214
 {
-template <size_t N> struct string_literal
-{
-    constexpr string_literal(const char (&str)[N])
+    template <size_t N>
+    struct string_literal
     {
-        std::copy_n(str, N, value);
-    }
+        constexpr string_literal(const char (&str)[N])
+        {
+            std::copy_n(str, N, value);
+        }
 
-    char value[N];
-};
+        char value[N];
+    };
 
-template <string_literal x> struct foo
-{
-};
+    template <string_literal x>
+    struct foo
+    {
+    };
 } // namespace n214
 
 namespace n215
 {
-template <auto... x> struct foo
-{ /* ... */
-};
+    template <auto... x>
+    struct foo
+    { /* ... */
+    };
 } // namespace n215
 
 namespace n216
 {
-template <typename T> class simple_wrapper
-{
-  public:
-    T value;
-};
-
-template <typename T> class fancy_wrapper
-{
-  public:
-    fancy_wrapper(T const v) : value(v)
+    template <typename T>
+    class simple_wrapper
     {
-    }
+      public:
+        T value;
+    };
 
-    T const &
-    get() const
+    template <typename T>
+    class fancy_wrapper
     {
-        return value;
-    }
+      public:
+        fancy_wrapper(T const v) : value(v)
+        {
+        }
 
-    template <typename U>
-    U
-    as() const
+        T const &
+        get() const
+        {
+            return value;
+        }
+
+        template <typename U>
+        U
+        as() const
+        {
+            return static_cast<U>(value);
+        }
+
+      private:
+        T value;
+    };
+
+    template <typename T, typename U, template <typename> typename W = fancy_wrapper>
+    class wrapping_pair
     {
-        return static_cast<U>(value);
-    }
+      public:
+        wrapping_pair(T const a, U const b) : item1(a), item2(b)
+        {
+        }
 
-  private:
-    T value;
-};
-
-template <typename T, typename U, template <typename> typename W = fancy_wrapper> class wrapping_pair
-{
-  public:
-    wrapping_pair(T const a, U const b) : item1(a), item2(b)
-    {
-    }
-
-    W<T> item1;
-    W<U> item2;
-};
+        W<T> item1;
+        W<U> item2;
+    };
 } // namespace n216
 
 namespace n217
 {
-template <typename T = int> class foo
-{ /*...*/
-};
+    template <typename T = int>
+    class foo
+    { /*...*/
+    };
 
-template <typename T = int, typename U = double> class bar
-{ /*...*/
-};
+    template <typename T = int, typename U = double>
+    class bar
+    { /*...*/
+    };
 } // namespace n217
 
 namespace n218
 {
-// template <typename T = int, typename U>
-// class bar { };
+    // template <typename T = int, typename U>
+    // class bar { };
 
-template <typename T = int, typename U>
-void
-func()
-{
-}
+    template <typename T = int, typename U>
+    void
+    func()
+    {
+    }
 } // namespace n218
 
 namespace n219
 {
-template <typename T, typename U = double> struct foo;
+    template <typename T, typename U = double>
+    struct foo;
 
-template <typename T = int, typename U> struct foo;
+    template <typename T = int, typename U>
+    struct foo;
 
-template <typename T, typename U> struct foo
-{
-    T a;
-    U b;
-};
+    template <typename T, typename U>
+    struct foo
+    {
+        T a;
+        U b;
+    };
 } // namespace n219
 
 namespace n220
 {
-template <typename T = int> struct foo;
+    template <typename T = int>
+    struct foo;
 
-// template <typename T = int> // error
-// struct foo {};
+    // template <typename T = int> // error
+    // struct foo {};
 } // namespace n220
 
 namespace n221
 {
-template <typename T> struct foo
-{
-  protected:
-    using value_type = T;
-};
+    template <typename T>
+    struct foo
+    {
+      protected:
+        using value_type = T;
+    };
 
-template <typename T, typename U = typename T::value_type> struct bar
-{
-    using value_type = U;
-};
+    template <typename T, typename U = typename T::value_type>
+    struct bar
+    {
+        using value_type = U;
+    };
 } // namespace n221
 
 // namespace n222
@@ -517,44 +553,49 @@ template <typename T, typename U = typename T::value_type> struct bar
 
 namespace n223
 {
-template <typename T> struct foo
-{
-    void
-    f()
+    template <typename T>
+    struct foo
     {
-    }
-    void
-    g()
-    {
-    }
-};
+        void
+        f()
+        {
+        }
+        void
+        g()
+        {
+        }
+    };
 } // namespace n223
 
 namespace n224
 {
-template <typename T> struct control
-{
-};
+    template <typename T>
+    struct control
+    {
+    };
 
-template <typename T> struct button : public control<T>
-{
-};
+    template <typename T>
+    struct button : public control<T>
+    {
+    };
 
-void
-show(button<int> *ptr)
-{
-    control<int> *c [[maybe_unused]] = ptr;
-}
+    void
+    show(button<int> *ptr)
+    {
+        control<int> *c [[maybe_unused]] = ptr;
+    }
 } // namespace n224
 
 namespace n225
 {
-template <typename T> struct foo
-{
-    static T data;
-};
+    template <typename T>
+    struct foo
+    {
+        static T data;
+    };
 
-template <typename T> T foo<T>::data = 0;
+    template <typename T>
+    T foo<T>::data = 0;
 } // namespace n225
 
 // namespace n226
@@ -585,378 +626,413 @@ template <typename T> T foo<T>::data = 0;
 
 namespace n227
 {
-template <typename T> class foo
-{
-    struct bar
+    template <typename T>
+    class foo
     {
+        struct bar
+        {
+        };
+
+        T
+        f(bar const arg [[maybe_unused]])
+        {
+            return {};
+        }
     };
 
-    T
-    f(bar const arg [[maybe_unused]])
-    {
-        return {};
-    }
-};
-
-template int foo<int>::f(foo<int>::bar);
+    template int foo<int>::f(foo<int>::bar);
 } // namespace n227
 
 namespace n228
 {
-template <typename T> struct is_floating_point
-{
-    constexpr static bool value = false;
-};
+    template <typename T>
+    struct is_floating_point
+    {
+        constexpr static bool value = false;
+    };
 
-template <> struct is_floating_point<float>
-{
-    constexpr static bool value = true;
-};
+    template <>
+    struct is_floating_point<float>
+    {
+        constexpr static bool value = true;
+    };
 
-template <> struct is_floating_point<double>
-{
-    constexpr static bool value = true;
-};
+    template <>
+    struct is_floating_point<double>
+    {
+        constexpr static bool value = true;
+    };
 
-template <> struct is_floating_point<long double>
-{
-    constexpr static bool value = true;
-};
+    template <>
+    struct is_floating_point<long double>
+    {
+        constexpr static bool value = true;
+    };
 
-template <typename T> inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
+    template <typename T>
+    inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
 } // namespace n228
 
 namespace n229
 {
-template <typename T> struct is_floating_point;
+    template <typename T>
+    struct is_floating_point;
 
-template <> struct is_floating_point<float>
-{
-    constexpr static bool value = true;
-};
+    template <>
+    struct is_floating_point<float>
+    {
+        constexpr static bool value = true;
+    };
 
-template <typename T> struct is_floating_point
-{
-    constexpr static bool value = false;
-};
+    template <typename T>
+    struct is_floating_point
+    {
+        constexpr static bool value = false;
+    };
 } // namespace n229
 
 namespace n230
 {
-template <typename> struct foo
-{
-}; // primary template
+    template <typename>
+    struct foo
+    {
+    }; // primary template
 
-template <> struct foo<int>; // explicit specialization declaration
+    template <>
+    struct foo<int>; // explicit specialization declaration
 } // namespace n230
 
 namespace n231
 {
-template <typename T> struct foo
-{
-};
+    template <typename T>
+    struct foo
+    {
+    };
 
-template <typename T>
-void
-func(foo<T>)
-{
-    std::cout << "primary template\n";
-}
+    template <typename T>
+    void
+    func(foo<T>)
+    {
+        std::println("primary template");
+    }
 
-template <>
-void
-func(foo<int>)
-{
-    std::cout << "int specialization\n";
-}
+    template <>
+    void
+    func(foo<int>)
+    {
+        std::println("int specialization");
+    }
 } // namespace n231
 
 namespace n232
 {
-template <typename T>
-void
-func(T a [[maybe_unused]])
-{
-    std::cout << "primary template\n";
-}
+    template <typename T>
+    void
+    func(T a [[maybe_unused]])
+    {
+        std::println("primary template");
+    }
 
-template <>
-void
-func(int a [[maybe_unused]] /*= 0*/) // error: default argument
-{
-    std::cout << "int specialization\n";
-}
+    template <>
+    void
+    func(int a [[maybe_unused]] /*= 0*/) // error: default argument
+    {
+        std::println("int specialization");
+    }
 } // namespace n232
 
 namespace n233
 {
-template <typename T> struct foo
-{
-    static T value;
-};
+    template <typename T>
+    struct foo
+    {
+        static T value;
+    };
 
-template <typename T> T foo<T>::value = 0;
+    template <typename T>
+    T foo<T>::value = 0;
 
-template <> int foo<int>::value = 42;
+    template <>
+    int foo<int>::value = 42;
 } // namespace n233
 
 namespace n234
 {
-template <typename T, typename U>
-void
-func(T a [[maybe_unused]], U b [[maybe_unused]])
-{
-    std::cout << "primary template\n";
-}
+    template <typename T, typename U>
+    void
+    func(T a [[maybe_unused]], U b [[maybe_unused]])
+    {
+        std::println("primary template");
+    }
 
-template <>
-void
-func(int a [[maybe_unused]], int b [[maybe_unused]])
-{
-    std::cout << "int-int specialization\n";
-}
+    template <>
+    void
+    func(int a [[maybe_unused]], int b [[maybe_unused]])
+    {
+        std::println("int-int specialization");
+    }
 
-template <>
-void
-func(int a [[maybe_unused]], double b [[maybe_unused]])
-{
-    std::cout << "int-double specialization\n";
-}
+    template <>
+    void
+    func(int a [[maybe_unused]], double b [[maybe_unused]])
+    {
+        std::println("int-double specialization");
+    }
 } // namespace n234
 
 namespace n235
 {
-template <typename T, int S> struct collection
-{
-    void
-    operator()()
+    template <typename T, int S>
+    struct collection
     {
-        std::cout << "primary template\n";
-    }
-};
+        void
+        operator()()
+        {
+            std::println("primary template");
+        }
+    };
 
-template <typename T> struct collection<T, 10>
-{
-    void
-    operator()()
+    template <typename T>
+    struct collection<T, 10>
     {
-        std::cout << "partial specialization <T, 10>\n";
-    }
-};
+        void
+        operator()()
+        {
+            std::println("partial specialization <T, 10>");
+        }
+    };
 
-template <int S> struct collection<int, S>
-{
-    void
-    operator()()
+    template <int S>
+    struct collection<int, S>
     {
-        std::cout << "partial specialization <int, S>\n";
-    }
-};
+        void
+        operator()()
+        {
+            std::println("partial specialization <int, S>");
+        }
+    };
 
-template <typename T, int S> struct collection<T *, S>
-{
-    void
-    operator()()
+    template <typename T, int S>
+    struct collection<T *, S>
     {
-        std::cout << "partial specialization <T*, S>\n";
-    }
-};
+        void
+        operator()()
+        {
+            std::println("partial specialization <T*, S>");
+        }
+    };
 } // namespace n235
 
 namespace n236
 {
-template <int A, int B> struct foo
-{
-};
+    template <int A, int B>
+    struct foo
+    {
+    };
 
-template <int A> struct foo<A, A>
-{
-};
+    template <int A>
+    struct foo<A, A>
+    {
+    };
 
-// template <int A>
-// struct foo<A, A + 1> {}; // error
+    // template <int A>
+    // struct foo<A, A + 1> {}; // error
 } // namespace n236
 
 namespace n237
 {
-template <typename T, size_t S>
-std::ostream &
-pretty_print(std::ostream &os, std::array<T, S> const &arr)
-{
-    os << '[';
-    if (S > 0)
+    template <typename T, size_t S>
+    std::ostream &
+    pretty_print(std::ostream &os, std::array<T, S> const &arr)
     {
-        size_t i = 0;
-        for (; i < S - 1; ++i)
+        os << '[';
+        if (S > 0)
         {
-            os << arr[i] << ',';
+            size_t i = 0;
+            for (; i < S - 1; ++i)
+            {
+                os << arr[i] << ',';
+            }
+            os << arr[S - 1];
         }
-        os << arr[S - 1];
-    }
-    os << ']';
+        os << ']';
 
-    return os;
-}
+        return os;
+    }
 } // namespace n237
 
 namespace n238
 {
-template <size_t S>
-std::ostream &
-pretty_print(std::ostream &os, std::array<char, S> const &arr)
-{
-    os << '[';
-    for (auto const &e : arr)
+    template <size_t S>
+    std::ostream &
+    pretty_print(std::ostream &os, std::array<char, S> const &arr)
     {
-        os << e;
-    }
-    os << ']';
+        os << '[';
+        for (auto const &e : arr)
+        {
+            os << e;
+        }
+        os << ']';
 
-    return os;
-}
+        return os;
+    }
 } // namespace n238
 
 namespace n239
 {
-constexpr double PI = 3.1415926535897932385L;
+    constexpr double PI = 3.1415926535897932385L;
 
-template <typename T>
-T
-sphere_volume(T const r)
-{
-    return static_cast<T>(4 * PI * r * r * r / 3);
-}
+    template <typename T>
+    T
+    sphere_volume(T const r)
+    {
+        return static_cast<T>(4 * PI * r * r * r / 3);
+    }
 } // namespace n239
 
 namespace n240
 {
-template <typename T> struct PI
-{
-    static const T value;
-};
+    template <typename T>
+    struct PI
+    {
+        static const T value;
+    };
 
-template <typename T> const T PI<T>::value = T(3.1415926535897932385L);
+    template <typename T>
+    const T PI<T>::value = T(3.1415926535897932385L);
 
-template <typename T>
-T
-sphere_volume(T const r)
-{
-    return 4 * PI<T>::value * r * r * r / 3;
-}
+    template <typename T>
+    T
+    sphere_volume(T const r)
+    {
+        return 4 * PI<T>::value * r * r * r / 3;
+    }
 } // namespace n240
 
 namespace n241
 {
-template <class T> constexpr T PI = T(3.1415926535897932385L);
+    template <class T>
+    constexpr T PI = T(3.1415926535897932385L);
 
-template <typename T>
-T
-sphere_volume(T const r)
-{
-    return 4 * PI<T> * r * r * r / 3;
-}
+    template <typename T>
+    T
+    sphere_volume(T const r)
+    {
+        return 4 * PI<T> * r * r * r / 3;
+    }
 } // namespace n241
 
 namespace n242
 {
-struct math_constants
-{
-    template <class T> static constexpr T PI = T(3.1415926535897932385L);
-};
+    struct math_constants
+    {
+        template <class T>
+        static constexpr T PI = T(3.1415926535897932385L);
+    };
 
-template <typename T>
-T
-sphere_volume(T const r)
-{
-    return 4 * math_constants::PI<T> * r * r * r / 3;
-}
+    template <typename T>
+    T
+    sphere_volume(T const r)
+    {
+        return 4 * math_constants::PI<T> * r * r * r / 3;
+    }
 } // namespace n242
 
 namespace n243
 {
-struct math_constants
-{
-    template <class T> static const T PI;
-};
+    struct math_constants
+    {
+        template <class T>
+        static const T PI;
+    };
 
-template <class T> const T math_constants::PI = T(3.1415926535897932385L);
+    template <class T>
+    const T math_constants::PI = T(3.1415926535897932385L);
 
-template <typename T>
-T
-sphere_volume(T const r)
-{
-    return 4 * math_constants::PI<T> * r * r * r / 3;
-}
+    template <typename T>
+    T
+    sphere_volume(T const r)
+    {
+        return 4 * math_constants::PI<T> * r * r * r / 3;
+    }
 } // namespace n243
 
 namespace n244
 {
-template <typename T> constexpr T SEPARATOR = '\n';
+    template <typename T>
+    constexpr T SEPARATOR = '\n';
 
-template <> constexpr wchar_t SEPARATOR<wchar_t> = L'\n';
+    template <>
+    constexpr wchar_t SEPARATOR<wchar_t> = L'\n';
 
-template <typename T>
-std::basic_ostream<T> &
-show_parts(std::basic_ostream<T> &s, std::basic_string_view<T> const &str)
-{
-    using size_type = typename std::basic_string_view<T>::size_type;
-    size_type start = 0;
-    size_type end;
-    do
+    template <typename T>
+    std::basic_ostream<T> &
+    show_parts(std::basic_ostream<T> &s, std::basic_string_view<T> const &str)
     {
-        end = str.find(SEPARATOR<T>, start);
-        s << '[' << str.substr(start, end - start) << ']' << SEPARATOR<T>;
-        start = end + 1;
-    } while (end != std::string::npos);
+        using size_type = typename std::basic_string_view<T>::size_type;
+        size_type start = 0;
+        size_type end;
+        do
+        {
+            end = str.find(SEPARATOR<T>, start);
+            s << '[' << str.substr(start, end - start) << ']' << SEPARATOR<T>;
+            start = end + 1;
+        } while (end != std::string::npos);
 
-    return s;
-}
+        return s;
+    }
 } // namespace n244
 
 namespace n245
 {
-template <typename T> struct foo
-{
-    typedef T value_type;
-};
+    template <typename T>
+    struct foo
+    {
+        typedef T value_type;
+    };
 } // namespace n245
 
 namespace n246
 {
-template <typename T> struct foo
-{
-    using value_type = T;
-};
+    template <typename T>
+    struct foo
+    {
+        using value_type = T;
+    };
 } // namespace n246
 
 namespace n247
 {
-template <typename T> using customer_addresses_t = std::map<int, std::vector<T>>;
+    template <typename T>
+    using customer_addresses_t = std::map<int, std::vector<T>>;
 
-struct delivery_address_t
-{
-};
-struct invoice_address_t
-{
-};
+    struct delivery_address_t
+    {
+    };
+    struct invoice_address_t
+    {
+    };
 
-using customer_delivery_addresses_t = customer_addresses_t<delivery_address_t>;
-using customer_invoice_addresses_t  = customer_addresses_t<invoice_address_t>;
+    using customer_delivery_addresses_t = customer_addresses_t<delivery_address_t>;
+    using customer_invoice_addresses_t  = customer_addresses_t<invoice_address_t>;
 } // namespace n247
 
 namespace n247
 {
-template <typename T, size_t S> struct list
-{
-    using type = std::vector<T>;
-};
+    template <typename T, size_t S>
+    struct list
+    {
+        using type = std::vector<T>;
+    };
 
-template <typename T> struct list<T, 1>
-{
-    using type = T;
-};
+    template <typename T>
+    struct list<T, 1>
+    {
+        using type = T;
+    };
 
-template <typename T, size_t S> using list_t = typename list<T, S>::type;
+    template <typename T, size_t S>
+    using list_t = typename list<T, S>::type;
 } // namespace n247
 
 namespace n248
@@ -968,25 +1044,33 @@ int
 main()
 {
     {
+        std::println("====================== using namespace n201");
         using namespace n201;
 
-        auto a1 [[maybe_unused]] = add(42, 21);
-        auto a2 [[maybe_unused]] = add<int>(42, 21);
-        auto a3 [[maybe_unused]] = add<>(42, 21);
+        auto a1 = add(42, 21);
+        std::println("{}", a1); // 63
+        auto a2 = add<int>(42, 21);
+        std::println("{}", a2); // 63
+        auto a3 = add<>(42, 21);
+        std::println("{}", a3); // 63
 
-        auto b [[maybe_unused]] = add<short>(42, 21);
+        auto b = add<short>(42, 21);
+        std::println("{}", b);  // 63
 
-        // auto d1 = add(41.0, 21); // error
-        auto d2 [[maybe_unused]] = add<double>(41.0, 21);
+        // auto d1 = add(42.0, 21); // error
+        auto d2 = add<double>(42.0, 21);
+        std::println("{}", d2);      // 63
 
-        auto f [[maybe_unused]] = add(foo(42), foo(41));
+        auto f = add(foo(42), foo(21));
+        std::println("{}", f.get()); // 63
 
         int arr[]{1, 1, 2, 3, 5, 8, 11};
         int odds = count_if(std::begin(arr), std::end(arr), [](int const n) { return n % 2 == 1; });
-        std::cout << odds << '\n';
+        std::println("{}", odds);    // 5
     }
 
     {
+        std::println("\n====================== using namespace n202");
         using namespace n202;
 
         wrapper         a(42);   // wraps an int
@@ -997,6 +1081,7 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n203");
         using namespace n203;
 
         wrapper<int> a(42); // wraps an int
@@ -1004,45 +1089,56 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n204");
         using namespace n204;
 
         composition<int> c;
-        c.add(41, 21);
+        std::println("{}", c.add(41, 21));
     }
 
     {
+        std::println("\n====================== using namespace n205");
         using namespace n205;
 
         composition c;
-        c.add<int>(41, 21);
+        std::println("{}", c.add<int>(41, 21));
+        std::println("{}", c.add(41, 21));
     }
 
     {
+        std::println("\n====================== using namespace n206");
         using namespace n206;
 
-        wrapper<double> a(42.0);
-        auto            d [[maybe_unused]] = a.get();     // double
-        auto            n [[maybe_unused]] = a.as<int>(); // int
+        // wrapper<double> a(42.0);
+        wrapper a(42.0);
+
+        auto d = a.get();     // double
+        auto n = a.as<int>(); // int
+        // int  n = a.as();   // error
+        std::println("{}", d);
+        std::println("{}", n);
     }
 
     {
         using namespace n209;
+        std::println("\n====================== using namespace n209");
 
         buffer<int, 10> b1;
         b1[0] = 42;
-        std::cout << b1[0] << '\n';
+        std::println("{}", b1[0]);
 
         auto b2 [[maybe_unused]] = make_buffer<int, 10>();
     }
 
     {
         using namespace n209;
+        std::println("\n====================== using namespace n209");
 
         buffer<int, 10>    b1;
         buffer<int, 2 * 5> b2;
 
-        std::cout << std::is_same_v<buffer<int, 10>, buffer<int, 2 * 5>> << '\n';
-        std::cout << std::is_same_v<decltype(b1), decltype(b2)> << '\n';
+        std::println("{}", std::is_same_v<buffer<int, 10>, buffer<int, 2 * 5>>);
+        std::println("{}", std::is_same_v<decltype(b1), decltype(b2)>);
 
         static_assert(std::is_same_v<decltype(b1), decltype(b2)>);
 
@@ -1052,6 +1148,7 @@ main()
 
     {
         using namespace n210;
+        std::println("\n====================== using namespace n210");
 
         hello_command cmd;
 
@@ -1064,6 +1161,7 @@ main()
 
     {
         using namespace n211;
+        std::println("\n====================== using namespace n211");
 
         hello_command cmd;
 
@@ -1076,6 +1174,7 @@ main()
 
     {
         using namespace n212;
+        std::println("\n====================== using namespace n212");
 
         auto w1 = std::make_unique<smart_device<&say_hello_in_english>>();
         w1->output();
@@ -1088,6 +1187,7 @@ main()
 
     {
         using namespace n212;
+        std::println("\n====================== using namespace n212");
 
         std::unique_ptr<device> w1 = std::make_unique<smart_device<&say_hello_in_english>>();
         w1->output();
@@ -1100,42 +1200,49 @@ main()
 
     {
         using namespace n213;
+        std::println("\n====================== using namespace n213");
         [[maybe_unused]] foo<42>   f1; // foo<int>
         [[maybe_unused]] foo<42.0> f2; // foo<double>
-                                       // foo<"42"> f3;  // error
+        // [[maybe_unused]] foo<"42"> f3; // error
     }
 
     {
         using namespace n214;
+        std::println("\n====================== using namespace n214");
         [[maybe_unused]] foo<"42"> f;
     }
 
     {
         using namespace n215;
+        std::println("\n====================== using namespace n215");
         [[maybe_unused]] foo<42, 42.0, false, 'x'> f;
     }
 
     {
         using namespace n216;
+        std::println("\n====================== using namespace n216");
         wrapping_pair<int, double> p1(42, 42.0);
-        std::cout << p1.item1.get() << ' ' << p1.item2.get() << '\n';
+        std::println("{} {}", p1.item1.get(), p1.item2.get());
 
         wrapping_pair<int, double, simple_wrapper> p2(42, 42.0);
-        std::cout << p2.item1.value << ' ' << p2.item2.value << '\n';
+        std::println("{} {}", p2.item1.value, p2.item2.value);
     }
 
     {
         using namespace n219;
+        std::println("\n====================== using namespace n219");
         foo f [[maybe_unused]]{42, 42.0};
     }
 
     {
         using namespace n221;
+        std::println("\n====================== using namespace n221");
         // bar<foo<int>> x;
     }
 
     // {
     //     using namespace n222;
+    //     std::println("//     using namespace n222");
     //     foo<int> a;
     //     a.f();
     //     // a.g();
@@ -1143,6 +1250,7 @@ main()
 
     {
         using namespace n223;
+        std::println("\n====================== using namespace n223");
 
         [[maybe_unused]] foo<int>    *p;
         [[maybe_unused]] foo<int>     x;
@@ -1151,6 +1259,7 @@ main()
 
     {
         using namespace n223;
+        std::println("\n====================== using namespace n223");
 
         [[maybe_unused]] foo<int> *p;
         foo<int>                   x;
@@ -1162,59 +1271,65 @@ main()
 
     {
         using namespace n225;
+        std::println("\n====================== using namespace n225");
 
         foo<int>    a;
         foo<double> b;
         foo<double> c;
 
-        std::cout << a.data << '\n'; // 0
-        std::cout << b.data << '\n'; // 0
-        std::cout << c.data << '\n'; // 0
+        std::println("{}", a.data); // 0
+        std::println("{}", b.data); // 0
+        std::println("{}", c.data); // 0
 
         b.data = 42;
-        std::cout << b.data << '\n'; // 42
-        std::cout << c.data << '\n'; // 42
+        std::println("{}", b.data); // 42
+        std::println("{}", c.data); // 42
     }
 
     {
         using namespace ext;
+        std::println("\n====================== using namespace ext");
 
         wrapper<int> a{0};
 
-        std::cout << a.data << '\n';
+        std::println("{}", a.data);
         f();
         g();
     }
 
     {
         using namespace n228;
+        std::println("\n====================== using namespace n228");
 
-        std::cout << is_floating_point<int>::value << '\n';
-        std::cout << is_floating_point<float>::value << '\n';
-        std::cout << is_floating_point<double>::value << '\n';
-        std::cout << is_floating_point<long double>::value << '\n';
-        std::cout << is_floating_point<std::string>::value << '\n';
+        std::println("{}", is_floating_point<int>::value);
+        std::println("{}", is_floating_point<float>::value);
+        std::println("{}", is_floating_point<double>::value);
+        std::println("{}", is_floating_point<long double>::value);
+        std::println("{}", is_floating_point<std::string>::value);
     }
 
     {
         using namespace n228;
+        std::println("\n====================== using namespace n228");
 
-        std::cout << is_floating_point_v<int> << '\n';
-        std::cout << is_floating_point_v<float> << '\n';
-        std::cout << is_floating_point_v<double> << '\n';
-        std::cout << is_floating_point_v<long double> << '\n';
-        std::cout << is_floating_point_v<std::string> << '\n';
+        std::println("{}", is_floating_point_v<int>);
+        std::println("{}", is_floating_point_v<float>);
+        std::println("{}", is_floating_point_v<double>);
+        std::println("{}", is_floating_point_v<long double>);
+        std::println("{}", is_floating_point_v<std::string>);
     }
 
     {
         using namespace n229;
+        std::println("\n====================== using namespace n229");
 
-        std::cout << is_floating_point<int>::value << '\n';
-        std::cout << is_floating_point<float>::value << '\n';
+        std::println("{}", is_floating_point<int>::value);
+        std::println("{}", is_floating_point<float>::value);
     }
 
     {
         using namespace n230;
+        std::println("\n====================== using namespace n230");
 
         [[maybe_unused]] foo<double> a; // OK
         [[maybe_unused]] foo<int>   *b; // OK
@@ -1223,6 +1338,7 @@ main()
 
     {
         using namespace n231;
+        std::println("\n====================== using namespace n231");
 
         func(foo<int>{});
         func(foo<double>{});
@@ -1230,6 +1346,7 @@ main()
 
     {
         using namespace n232;
+        std::println("\n====================== using namespace n232");
 
         func(42.0);
         func(42);
@@ -1237,22 +1354,24 @@ main()
 
     {
         using namespace n233;
+        std::println("\n====================== using namespace n233");
 
         foo<double> a, b;
-        std::cout << a.value << '\n';
-        std::cout << b.value << '\n';
+        std::println("{}", a.value);
+        std::println("{}", b.value);
 
         foo<int> c;
-        std::cout << c.value << '\n';
+        std::println("{}", c.value);
 
         a.value = 100;
-        std::cout << a.value << '\n';
-        std::cout << b.value << '\n';
-        std::cout << c.value << '\n';
+        std::println("{}", a.value);
+        std::println("{}", b.value);
+        std::println("{}", c.value);
     }
 
     {
         using namespace n234;
+        std::println("\n====================== using namespace n234");
 
         func(1, 2);
         func(1, 2.0);
@@ -1261,6 +1380,7 @@ main()
 
     {
         using namespace n235;
+        std::println("\n====================== using namespace n235");
 
         collection<char, 42>{}();  // primary template
         collection<int, 42>{}();   // partial specialization <int, S>
@@ -1275,6 +1395,7 @@ main()
 
     {
         using namespace n237;
+        std::println("\n====================== using namespace n237");
 
         std::array<int, 9> arr{1, 1, 2, 3, 5, 8, 13, 21};
         pretty_print(std::cout, arr);
@@ -1286,6 +1407,7 @@ main()
 
     {
         using namespace n238;
+        std::println("\n====================== using namespace n238");
 
         std::array<char, 9> str;
         std::strcpy(str.data(), "template");
@@ -1294,6 +1416,7 @@ main()
 
     {
         using namespace n239;
+        std::println("\n====================== using namespace n239");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1301,6 +1424,7 @@ main()
 
     {
         using namespace n240;
+        std::println("\n====================== using namespace n240");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1308,6 +1432,7 @@ main()
 
     {
         using namespace n241;
+        std::println("\n====================== using namespace n241");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1315,6 +1440,7 @@ main()
 
     {
         using namespace n242;
+        std::println("\n====================== using namespace n242");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1322,6 +1448,7 @@ main()
 
     {
         using namespace n244;
+        std::println("\n====================== using namespace n244");
         show_parts<char>(std::cout, "one\ntwo\nthree");
         show_parts<wchar_t>(std::wcout, L"one line");
     }
@@ -1340,6 +1467,7 @@ main()
 
     {
         using namespace n247;
+        std::println("\n====================== using namespace n247");
         static_assert(std::is_same_v<list_t<int, 1>, int>);
         static_assert(std::is_same_v<list_t<int, 2>, std::vector<int>>);
     }
@@ -1351,7 +1479,7 @@ main()
         int  pivot = 5;
         auto count = std::count_if(std::begin(arr), std::end(arr), [pivot](int const a) { return a > pivot; });
 
-        std::cout << count << '\n';
+        std::println("{}", count);
     }
 
     {
@@ -1432,7 +1560,7 @@ main()
             }
         };
 
-        std::cout << factorial(5) << '\n';
+        std::println("{}", factorial(5));
     }
 
     {
@@ -1447,6 +1575,6 @@ main()
             }
         };
 
-        std::cout << factorial(factorial, 5) << '\n';
+        std::println("{}", factorial(factorial, 5));
     }
 }
