@@ -176,41 +176,53 @@ namespace n207
 {
     template <typename T>
     class wrapper1
-    { /* ... */
+    {
+        // ...
     };
 
     template <typename T = int>
     class wrapper2
-    { /* ... */
+    {
+        // ...
     };
 
+    // forward declarations don't need type variable names
     template <typename>
     class wrapper3;
 
+    // default type
     template <typename = int>
     class wrapper4;
 
+    // variadic template with parameter pack
     template <typename... T>
     class wrapper5
-    { /* ... */
+    {
+        // ...
     };
 
+    // Constraints specify requirements on template arguments.
+    // A named set of constraints is called a concept.
     template <typename T>
     concept WrappableType = std::is_trivial_v<T>;
 
+    // Concepts can be used like a type.
     template <WrappableType T>
     class wrapper6
-    { /* ... */
+    {
+        // ...
     };
 
     template <WrappableType T = int>
     class wrapper7
-    { /* ... */
+    {
+        // ...
     };
 
     template <WrappableType... T>
     class wrapper8
-    { /* ... */
+    {
+        // ...
     };
 } // namespace n207
 
@@ -218,17 +230,20 @@ namespace n208
 {
     template <int V>
     class foo1
-    { /*...*/
+    {
+        //...
     };
 
     template <int V = 42>
     class foo2
-    { /*...*/
+    {
+        //...
     };
 
     template <int... V>
     class foo3
-    { /*...*/
+    {
+        //...
     };
 } // namespace n208
 
@@ -323,6 +338,7 @@ namespace n211
     template <typename Command, void (Command::*action)()>
     struct smart_device : device
     {
+        // using a reference instead of pointer
         smart_device(Command &command) : cmd(command)
         {
         }
@@ -369,7 +385,9 @@ namespace n212
         void
         output() override
         {
+            // the same:
             (*action)();
+            action();
         }
     };
 
@@ -391,6 +409,7 @@ namespace n213
     template <auto x>
     struct foo
     {
+        // ...
     };
 } // namespace n213
 
@@ -401,15 +420,17 @@ namespace n214
     {
         constexpr string_literal(const char (&str)[N])
         {
-            std::copy_n(str, N, value);
+            std::copy_n(str, N, value); // copy from 'str' to 'value'
         }
 
         char value[N];
     };
 
-    template <string_literal x>
+    // template <string_literal s>
+    template <string_literal>
     struct foo
     {
+        // ...
     };
 } // namespace n214
 
@@ -417,7 +438,8 @@ namespace n215
 {
     template <auto... x>
     struct foo
-    { /* ... */
+    {
+        // ...
     };
 } // namespace n215
 
@@ -434,7 +456,7 @@ namespace n216
     class fancy_wrapper
     {
       public:
-        fancy_wrapper(T const v) : value(v)
+        fancy_wrapper(T const v) : value{v}
         {
         }
 
@@ -459,7 +481,7 @@ namespace n216
     class wrapping_pair
     {
       public:
-        wrapping_pair(T const a, U const b) : item1(a), item2(b)
+        wrapping_pair(T const a, U const b) : item1{a}, item2{b}
         {
         }
 
@@ -472,35 +494,44 @@ namespace n217
 {
     template <typename T = int>
     class foo
-    { /*...*/
+    {
+        // ...
     };
 
     template <typename T = int, typename U = double>
     class bar
-    { /*...*/
+    {
+        // ...
     };
 } // namespace n217
 
 namespace n218
 {
+    // U must also have a default type..
     // template <typename T = int, typename U>
     // class bar { };
 
+    // No default type necessary for U.
     template <typename T = int, typename U>
     void
     func()
     {
+        // ...
     }
 } // namespace n218
 
 namespace n219
 {
+    // Merging all template declarations and its definition.
+
     template <typename T, typename U = double>
     struct foo;
 
     template <typename T = int, typename U>
     struct foo;
 
+    // semantically the same (after merging):
+    // template <typename T = int, typename U = double>
     template <typename T, typename U>
     struct foo
     {
@@ -514,8 +545,13 @@ namespace n220
     template <typename T = int>
     struct foo;
 
+    // Template parameter redefines default argument.
     // template <typename T = int> // error
-    // struct foo {};
+    template <typename T> // error
+    struct foo
+    {
+        // ...
+    };
 } // namespace n220
 
 namespace n221
@@ -527,29 +563,35 @@ namespace n221
         using value_type = T;
     };
 
-    template <typename T, typename U = typename T::value_type>
+    // when you uncomment variable in main: 'value_type' is a protected member of 'n221::foo<int>':
+    // same: template <typename T, typename U = typename T::value_type>
+    template <typename T, typename U = T::value_type>
     struct bar
     {
-        using value_type = U;
+        // ...
     };
 } // namespace n221
 
-// namespace n222
-// {
-// template <typename T> struct foo
-// {
-//     void
-//     f()
-//     {
-//     }
-//
-//     void
-//     g()
-//     {
-//         int a = "42";
-//     }
-// };
-// } // namespace n222
+namespace n222
+{
+    template <typename T>
+    struct foo
+    {
+        void
+        f()
+        {
+            // ...
+        }
+
+        void
+        g()
+        {
+            // clang and gcc perform semantic check/validation and throw an error although g() is not used!
+            // int a = "42";
+            // static_assert(false);
+        }
+    };
+} // namespace n222
 
 namespace n223
 {
@@ -559,10 +601,15 @@ namespace n223
         void
         f()
         {
+            std::println("{}", __PRETTY_FUNCTION__);
+            // ...
         }
+
         void
         g()
         {
+            std::println("{}", __PRETTY_FUNCTION__);
+            // ...
         }
     };
 } // namespace n223
@@ -572,16 +619,20 @@ namespace n224
     template <typename T>
     struct control
     {
+        // ...
     };
 
     template <typename T>
     struct button : public control<T>
     {
+        // ...
     };
 
+    // pointer to a templated class doesn't trigger its instantiation
     void
     show(button<int> *ptr)
     {
+        // but pointer conversion does: triggers button<int> instantiation.
         control<int> *c [[maybe_unused]] = ptr;
     }
 } // namespace n224
@@ -591,11 +642,12 @@ namespace n225
     template <typename T>
     struct foo
     {
-        static T data;
+        // Every specialization of a class template has its own copy of static members!!
+        static T shared_data;
     };
 
     template <typename T>
-    T foo<T>::data = 0;
+    T foo<T>::shared_data = 0;
 } // namespace n225
 
 // namespace n226
@@ -1044,7 +1096,7 @@ int
 main()
 {
     {
-        std::println("====================== using namespace n201");
+        std::println("====================== using namespace n201 =============================");
         using namespace n201;
 
         auto a1 = add(42, 21);
@@ -1070,7 +1122,7 @@ main()
     }
 
     {
-        std::println("\n====================== using namespace n202");
+        std::println("\n====================== using namespace n202 =============================");
         using namespace n202;
 
         wrapper         a(42);   // wraps an int
@@ -1081,7 +1133,7 @@ main()
     }
 
     {
-        std::println("\n====================== using namespace n203");
+        std::println("\n====================== using namespace n203 =============================");
         using namespace n203;
 
         wrapper<int> a(42); // wraps an int
@@ -1089,7 +1141,7 @@ main()
     }
 
     {
-        std::println("\n====================== using namespace n204");
+        std::println("\n====================== using namespace n204 =============================");
         using namespace n204;
 
         composition<int> c;
@@ -1097,7 +1149,7 @@ main()
     }
 
     {
-        std::println("\n====================== using namespace n205");
+        std::println("\n====================== using namespace n205 =============================");
         using namespace n205;
 
         composition c;
@@ -1106,7 +1158,7 @@ main()
     }
 
     {
-        std::println("\n====================== using namespace n206");
+        std::println("\n====================== using namespace n206 =============================");
         using namespace n206;
 
         // wrapper<double> a(42.0);
@@ -1120,35 +1172,43 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n209 =============================");
         using namespace n209;
-        std::println("\n====================== using namespace n209");
 
         buffer<int, 10> b1;
         b1[0] = 42;
-        std::println("{}", b1[0]);
+        std::println("{}", b1[0]); // 42
 
-        auto b2 [[maybe_unused]] = make_buffer<int, 10>();
-    }
-
-    {
-        using namespace n209;
-        std::println("\n====================== using namespace n209");
-
-        buffer<int, 10>    b1;
-        buffer<int, 2 * 5> b2;
-
-        std::println("{}", std::is_same_v<buffer<int, 10>, buffer<int, 2 * 5>>);
-        std::println("{}", std::is_same_v<decltype(b1), decltype(b2)>);
-
-        static_assert(std::is_same_v<decltype(b1), decltype(b2)>);
+        auto b2 = make_buffer<int, 2 * 5>();
+        std::println("{}", b2[0]); // 0
+        std::println("{}", b2[1]); // 0
+        std::println("{}", b2[2]); // 0
 
         buffer<int, 3 * 5> b3;
+
+        static_assert(std::is_same_v<decltype(b1), decltype(b2)>);
+        static_assert(!std::is_same_v<decltype(b2), decltype(b3)>);
         static_assert(!std::is_same_v<decltype(b1), decltype(b3)>);
     }
 
     {
+        std::println("\n====================== using namespace n209 =============================");
+        using namespace n209;
+
+        buffer<int, 10>    b1;
+        buffer<int, 2 * 5> b2;
+
+        std::println("is same: {}", std::is_same_v<buffer<int, 10>, buffer<int, 2 * 5>>);
+        std::println("is same: {}", std::is_same_v<decltype(b1), decltype(b2)>);
+
+        buffer<int, 3 * 5> b3;
+        static_assert(std::is_same_v<decltype(b1), decltype(b2)>);
+        static_assert(!std::is_same_v<decltype(b1), decltype(b3)>);
+    }
+
+    {
+        std::println("\n====================== using namespace n210 =============================");
         using namespace n210;
-        std::println("\n====================== using namespace n210");
 
         hello_command cmd;
 
@@ -1160,8 +1220,8 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n211 =============================");
         using namespace n211;
-        std::println("\n====================== using namespace n211");
 
         hello_command cmd;
 
@@ -1173,8 +1233,8 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n212 =============================");
         using namespace n212;
-        std::println("\n====================== using namespace n212");
 
         auto w1 = std::make_unique<smart_device<&say_hello_in_english>>();
         w1->output();
@@ -1186,80 +1246,103 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n212 =============================");
         using namespace n212;
-        std::println("\n====================== using namespace n212");
 
+        // pointer to base class
         std::unique_ptr<device> w1 = std::make_unique<smart_device<&say_hello_in_english>>();
         w1->output();
 
         std::unique_ptr<device> w2 = std::make_unique<smart_device<&say_hello_in_spanish>>();
         w2->output();
 
+        // types are the same
         static_assert(std::is_same_v<decltype(w1), decltype(w2)>);
     }
 
     {
+        std::println("\n====================== using namespace n213 =============================");
         using namespace n213;
-        std::println("\n====================== using namespace n213");
+
         [[maybe_unused]] foo<42>   f1; // foo<int>
-        [[maybe_unused]] foo<42.0> f2; // foo<double>
-        // [[maybe_unused]] foo<"42"> f3; // error
+        [[maybe_unused]] foo<42.0> f2; // foo<double> (allowed in C++20)
+        // string literals cannot be used as arguments for non-type template parameters:
+        // [[maybe_unused]] foo<"42"> f3;
     }
 
     {
+        std::println("\n====================== using namespace n214 =============================");
         using namespace n214;
-        std::println("\n====================== using namespace n214");
+
+        // work-around in C++20
         [[maybe_unused]] foo<"42"> f;
     }
 
     {
+        std::println("\n====================== using namespace n215 =============================");
         using namespace n215;
-        std::println("\n====================== using namespace n215");
+
+        // each parameter is deduced independently
         [[maybe_unused]] foo<42, 42.0, false, 'x'> f;
     }
 
     {
+        std::println("\n====================== using namespace n216 =============================");
         using namespace n216;
-        std::println("\n====================== using namespace n216");
-        wrapping_pair<int, double> p1(42, 42.0);
+
+        wrapping_pair<int, double> p1(42, 42.5);
         std::println("{} {}", p1.item1.get(), p1.item2.get());
 
-        wrapping_pair<int, double, simple_wrapper> p2(42, 42.0);
+        wrapping_pair<int, double, simple_wrapper> p2(42, 42.5);
         std::println("{} {}", p2.item1.value, p2.item2.value);
     }
 
     {
+        std::println("\n====================== using namespace n219 =============================");
         using namespace n219;
-        std::println("\n====================== using namespace n219");
-        foo f [[maybe_unused]]{42, 42.0};
+
+        foo f{42, 42.5};
+        std::println("{} {}", f.a, f.b);
     }
 
     {
+        std::println("\n====================== using namespace n221 =============================");
         using namespace n221;
-        std::println("\n====================== using namespace n221");
+
+        // error: ‘using n221::foo<int>::value_type = int’ is protected within this context
         // bar<foo<int>> x;
     }
 
-    // {
-    //     using namespace n222;
-    //     std::println("//     using namespace n222");
-    //     foo<int> a;
-    //     a.f();
-    //     // a.g();
-    // }
-
     {
-        using namespace n223;
-        std::println("\n====================== using namespace n223");
+        std::println("\n====================== using namespace n222 =============================");
+        using namespace n222;
 
-        [[maybe_unused]] foo<int>    *p;
-        [[maybe_unused]] foo<int>     x;
-        [[maybe_unused]] foo<double> *q;
+        foo<int> a;
+        a.f();
+        a.g();
     }
 
     {
+        std::println("\n====================== using namespace n223 =============================");
         using namespace n223;
-        std::println("\n====================== using namespace n223");
+
+        foo<int>    *p = nullptr;
+        foo<int>     x;
+        foo<double> *q = nullptr;
+
+        p->f();
+        p->g();
+
+        x.f();
+        x.g();
+
+        q->f();
+        q->g();
+    }
+
+    {
+        std::println("\n====================== using namespace n223 =============================");
+        using namespace n223;
 
         [[maybe_unused]] foo<int> *p;
         foo<int>                   x;
@@ -1270,25 +1353,31 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n225 =============================");
         using namespace n225;
-        std::println("\n====================== using namespace n225");
 
         foo<int>    a;
         foo<double> b;
         foo<double> c;
 
-        std::println("{}", a.data); // 0
-        std::println("{}", b.data); // 0
-        std::println("{}", c.data); // 0
+        // b and c are the same -> share static var 'data'
+        static_assert(std::is_same_v<decltype(b), decltype(c)>);
+        static_assert(!std::is_same_v<decltype(a), decltype(b)>);
+        static_assert(!std::is_same_v<decltype(a), decltype(c)>);
 
-        b.data = 42;
-        std::println("{}", b.data); // 42
-        std::println("{}", c.data); // 42
+        std::println("{}", a.shared_data); // 0
+        std::println("{}", b.shared_data); // 0
+        std::println("{}", c.shared_data); // 0
+
+        b.shared_data = 42;
+        std::println("{}", a.shared_data); // 0
+        std::println("{}", b.shared_data); // 42
+        std::println("{}", c.shared_data); // 42
     }
 
     {
+        std::println("\n====================== using namespace ext =============================");
         using namespace ext;
-        std::println("\n====================== using namespace ext");
 
         wrapper<int> a{0};
 
@@ -1299,7 +1388,7 @@ main()
 
     {
         using namespace n228;
-        std::println("\n====================== using namespace n228");
+        std::println("\n====================== using namespace n228 =============================");
 
         std::println("{}", is_floating_point<int>::value);
         std::println("{}", is_floating_point<float>::value);
@@ -1310,7 +1399,7 @@ main()
 
     {
         using namespace n228;
-        std::println("\n====================== using namespace n228");
+        std::println("\n====================== using namespace n228 =============================");
 
         std::println("{}", is_floating_point_v<int>);
         std::println("{}", is_floating_point_v<float>);
@@ -1321,7 +1410,7 @@ main()
 
     {
         using namespace n229;
-        std::println("\n====================== using namespace n229");
+        std::println("\n====================== using namespace n229 =============================");
 
         std::println("{}", is_floating_point<int>::value);
         std::println("{}", is_floating_point<float>::value);
@@ -1329,7 +1418,7 @@ main()
 
     {
         using namespace n230;
-        std::println("\n====================== using namespace n230");
+        std::println("\n====================== using namespace n230 =============================");
 
         [[maybe_unused]] foo<double> a; // OK
         [[maybe_unused]] foo<int>   *b; // OK
@@ -1338,7 +1427,7 @@ main()
 
     {
         using namespace n231;
-        std::println("\n====================== using namespace n231");
+        std::println("\n====================== using namespace n231 =============================");
 
         func(foo<int>{});
         func(foo<double>{});
@@ -1346,7 +1435,7 @@ main()
 
     {
         using namespace n232;
-        std::println("\n====================== using namespace n232");
+        std::println("\n====================== using namespace n232 =============================");
 
         func(42.0);
         func(42);
@@ -1354,7 +1443,7 @@ main()
 
     {
         using namespace n233;
-        std::println("\n====================== using namespace n233");
+        std::println("\n====================== using namespace n233 =============================");
 
         foo<double> a, b;
         std::println("{}", a.value);
@@ -1371,7 +1460,7 @@ main()
 
     {
         using namespace n234;
-        std::println("\n====================== using namespace n234");
+        std::println("\n====================== using namespace n234 =============================");
 
         func(1, 2);
         func(1, 2.0);
@@ -1380,7 +1469,7 @@ main()
 
     {
         using namespace n235;
-        std::println("\n====================== using namespace n235");
+        std::println("\n====================== using namespace n235 =============================");
 
         collection<char, 42>{}();  // primary template
         collection<int, 42>{}();   // partial specialization <int, S>
@@ -1395,7 +1484,7 @@ main()
 
     {
         using namespace n237;
-        std::println("\n====================== using namespace n237");
+        std::println("\n====================== using namespace n237 =============================");
 
         std::array<int, 9> arr{1, 1, 2, 3, 5, 8, 13, 21};
         pretty_print(std::cout, arr);
@@ -1407,7 +1496,7 @@ main()
 
     {
         using namespace n238;
-        std::println("\n====================== using namespace n238");
+        std::println("\n====================== using namespace n238 =============================");
 
         std::array<char, 9> str;
         std::strcpy(str.data(), "template");
@@ -1416,7 +1505,7 @@ main()
 
     {
         using namespace n239;
-        std::println("\n====================== using namespace n239");
+        std::println("\n====================== using namespace n239 =============================");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1424,7 +1513,7 @@ main()
 
     {
         using namespace n240;
-        std::println("\n====================== using namespace n240");
+        std::println("\n====================== using namespace n240 =============================");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1432,7 +1521,7 @@ main()
 
     {
         using namespace n241;
-        std::println("\n====================== using namespace n241");
+        std::println("\n====================== using namespace n241 =============================");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1440,7 +1529,7 @@ main()
 
     {
         using namespace n242;
-        std::println("\n====================== using namespace n242");
+        std::println("\n====================== using namespace n242 =============================");
 
         float  v1 [[maybe_unused]] = sphere_volume(42.0f);
         double v2 [[maybe_unused]] = sphere_volume(42.0);
@@ -1448,7 +1537,7 @@ main()
 
     {
         using namespace n244;
-        std::println("\n====================== using namespace n244");
+        std::println("\n====================== using namespace n244 =============================");
         show_parts<char>(std::cout, "one\ntwo\nthree");
         show_parts<wchar_t>(std::wcout, L"one line");
     }
@@ -1467,7 +1556,7 @@ main()
 
     {
         using namespace n247;
-        std::println("\n====================== using namespace n247");
+        std::println("\n====================== using namespace n247 =============================");
         static_assert(std::is_same_v<list_t<int, 1>, int>);
         static_assert(std::is_same_v<list_t<int, 2>, std::vector<int>>);
     }

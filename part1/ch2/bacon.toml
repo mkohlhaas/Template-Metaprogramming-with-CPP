@@ -13,7 +13,7 @@ need_stdout = true
 analyzer = "cpp"
 
 [jobs.meson-exec]
-command = ["meson", "devenv", "-C", "build", "ch2"]
+command = ["meson", "devenv", "-C", "build", "./ch2"]
 need_stdout = true
 allow_warnings = true
 
