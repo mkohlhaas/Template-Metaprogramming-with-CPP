@@ -1,0 +1,11 @@
+BasedOnStyle:                 Microsoft
+Language:                     Cpp
+ColumnLimit:                  120
+AlignConsecutiveAssignments:  Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros:       Consecutive
+InsertBraces:                 true
+AlignTrailingComments:
+  Kind:           Always
+  OverEmptyLines: 3
+BreakAfterReturnType:         AllDefinitions
