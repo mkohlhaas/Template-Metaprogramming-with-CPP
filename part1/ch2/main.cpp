@@ -1023,6 +1023,7 @@ namespace n242
 {
     struct math_constants
     {
+        // in-class initialization with static constexpr
         template <class T>
         static constexpr T PI = T(3.1415926535897932385L);
     };
@@ -1037,12 +1038,15 @@ namespace n242
 
 namespace n243
 {
+    // out-of-class initialization with static const
+    // only declaration
     struct math_constants
     {
         template <class T>
         static const T PI;
     };
 
+    // out-of-class initialization
     template <class T>
     const T math_constants::PI = T(3.1415926535897932385L);
 
@@ -1100,22 +1104,37 @@ namespace n246
 
 namespace n247
 {
+    // An alias template is a name that refers not to a type but a family of types.
+
+    // alias template
     template <typename T>
     using customer_addresses_t = std::map<int, std::vector<T>>;
 
     struct delivery_address_t
     {
     };
+
     struct invoice_address_t
     {
     };
 
+    // type aliases
     using customer_delivery_addresses_t = customer_addresses_t<delivery_address_t>;
     using customer_invoice_addresses_t  = customer_addresses_t<invoice_address_t>;
 } // namespace n247
 
 namespace n247
 {
+    // Alias templates cannot be specialized!
+    // primary
+    // template <typename T, size_t S>
+    // using list_t = std::vector<T>;
+
+    // specialization
+    // template <typename T>
+    // using list_t<T, 1> = T; // error: Partial specialization of alias templates is not permitted
+
+    // Here's a work-around (classes can be specialized):
     template <typename T, size_t S>
     struct list
     {
@@ -1129,7 +1148,7 @@ namespace n247
     };
 
     template <typename T, size_t S>
-    using list_t = typename list<T, S>::type;
+    using list_t = list<T, S>::type;
 } // namespace n247
 
 namespace n248
@@ -1454,7 +1473,7 @@ main()
         std::println("\n====================== using namespace n228 =============================");
         using namespace n228;
 
-        std::println("{}", is_floating_point_v<int>);         // false
+        std::println("{}", is_floating_point_v<int>);         // false; using variable template
         std::println("{}", is_floating_point_v<float>);       // true
         std::println("{}", is_floating_point_v<double>);      // true
         std::println("{}", is_floating_point_v<long double>); // true
@@ -1601,109 +1620,164 @@ main()
     }
 
     {
-        using namespace n244;
         std::println("\n====================== using namespace n244 =============================");
+        using namespace n244;
+
         show_parts<char>(std::cout, "one\ntwo\nthree");
         show_parts<wchar_t>(std::wcout, L"one line");
     }
 
     {
+        std::println("\n====================== type aliases =====================================");
+
         typedef int                                      index_t [[maybe_unused]];
         typedef std::vector<std::pair<int, std::string>> NameValueList [[maybe_unused]];
         typedef int (*fn_ptr [[maybe_unused]])(int, char);
     }
 
     {
+        std::println("\n====================== type aliases =====================================");
+
         using index_t [[maybe_unused]]       = int;
         using NameValueList [[maybe_unused]] = std::vector<std::pair<int, std::string>>;
-        using fn_ptr [[maybe_unused]]        = int(int, char);
+        using fn_ptr [[maybe_unused]]        = int(int, char); // cool syntax!!!
     }
 
     {
-        using namespace n247;
         std::println("\n====================== using namespace n247 =============================");
+        using namespace n247;
+
         static_assert(std::is_same_v<list_t<int, 1>, int>);
         static_assert(std::is_same_v<list_t<int, 2>, std::vector<int>>);
     }
 
     {
+        std::println("\n====================== lambdas ==========================================");
+
         int arr[] = {1, 6, 3, 8, 4, 2, 9};
-        std::sort(std::begin(arr), std::end(arr), [](int const a, int const b) { return a > b; });
+        std::sort(std::begin(arr), std::end(arr), [](int const a, int const b) { return a < b; });
+        std::println("{}", arr[0]); // 1
+        std::println("{}", arr[6]); // 9
 
         int  pivot = 5;
         auto count = std::count_if(std::begin(arr), std::end(arr), [pivot](int const a) { return a > pivot; });
 
-        std::println("{}", count);
+        std::println("{}", count); // 3
     }
 
     {
-        auto l1 = [](int a) { return a + a; };           // C++11, regular lambda
+        std::println("\n====================== lambda templates 2 ===============================");
+
+        auto l1 = [](int a) { return a + a; };           // C++11, regular lambda (returns int)
         auto l2 = [](auto a) { return a + a; };          // C++14, generic lambda
         auto l3 = []<typename T>(T a) { return a + a; }; // C++20, template lambda
 
-        auto v1 [[maybe_unused]] = l1(42);               // OK
-        auto v2 [[maybe_unused]] = l1(42.0);             // warning
-        // auto v3               = l1(std::string{"42"});  // error
+        int v1 = l1(42);
+        int v2 = l1(42.0);                               // automatic conversion to int
+        // auto v = l1(std::string{"42"});               // error
 
-        auto v5 [[maybe_unused]] = l2(42);                 // OK
-        auto v6 [[maybe_unused]] = l2(42.0);               // OK
-        auto v7 [[maybe_unused]] = l2(std::string{"42"});  // OK
+        int         v3 = l2(42);
+        double      v4 = l2(42.0);              // v5 is a double
+        std::string v5 = l2(std::string{"42"}); // string concatenation
 
-        auto v8 [[maybe_unused]]  = l3(42);                // OK
-        auto v9 [[maybe_unused]]  = l3(42.0);              // OK
-        auto v10 [[maybe_unused]] = l3(std::string{"42"}); // OK
+        int         v6 = l3(42);
+        double      v7 = l3(42.0);
+        std::string v8 = l3(std::string{"42"});
+
+        std::println("{}", v1); // 84
+        std::println("{}", v2); // 84
+        std::println("{}", v3); // 84
+        std::println("{}", v4); // 84
+        std::println("{}", v5); // 4242
+        std::println("{}", v6); // 84
+        std::println("{}", v7); // 84
+        std::println("{}", v8); // 4242
     }
 
     {
+        std::println("\n====================== lambda templates 3 ===============================");
+
         auto l1 = [](int a, int b) { return a + b; };
         auto l2 = [](auto a, auto b) { return a + b; };
         auto l3 = []<typename T, typename U>(T a, U b) { return a + b; };
         auto l4 = [](auto a, decltype(a) b) { return a + b; };
 
-        auto v1 [[maybe_unused]] = l1(42, 1);     // OK
-        auto v2 [[maybe_unused]] = l1(42.0, 1.0); // warning
-        // auto v3 = l1(std::string{ "42" }, '1'); // error
+        // auto v = l1(std::string{ "42" }, '1');
+        // auto v = l4(std::string{ "42" }, '1');
 
-        auto v4 [[maybe_unused]] = l2(42, 1);                                // OK
-        auto v5 [[maybe_unused]] = l2(42.0, 1);                              // OK
-        auto v6                  = l2(std::string{"42"}, '1');               // OK
-        auto v7                  = l2(std::string{"42"}, std::string{"1"});  // OK
+        auto v1 = l1(42, 1);
+        auto v2 = l1(42.0, 1.0);
 
-        auto v8 [[maybe_unused]] = l3(42, 1);                                // OK
-        auto v9 [[maybe_unused]] = l3(42.0, 1);                              // OK
-        auto v10                 = l3(std::string{"42"}, '1');               // OK
-        auto v11                 = l3(std::string{"42"}, std::string{"42"}); // OK
+        auto v3 = l2(42, 1);
+        auto v4 = l2(42.0, 1);
+        auto v5 = l2(std::string{"42"}, '1');
+        auto v6 = l2(std::string{"42"}, std::string{"1"});
 
-        auto v12 [[maybe_unused]] = l4(42.0, 1);                             // OK
-        auto v13 [[maybe_unused]] = l4(42, 1.0);                             // warning
-        // auto v14 = l4(std::string{ "42" }, '1');                          // error
+        auto v7  = l3(42, 1);
+        auto v8  = l3(42.0, 1);
+        auto v9  = l3(std::string{"42"}, '1');
+        auto v10 = l3(std::string{"42"}, std::string{"42"});
+
+        auto v11 = l4(42.0, 1);
+        auto v12 = l4(42, 1.0);
+
+        std::println("{}", v1);  // 43
+        std::println("{}", v2);  // 43
+
+        std::println("{}", v3);  // 43
+        std::println("{}", v4);  // 43
+        std::println("{}", v5);  // 421
+        std::println("{}", v6);  // 421
+
+        std::println("{}", v7);  // 43
+        std::println("{}", v8);  // 43
+        std::println("{}", v9);  // 421
+        std::println("{}", v10); // 4242
+
+        std::println("{}", v11); // 43
+        std::println("{}", v12); // 43
     }
 
     {
+        std::println("\n====================== lambda templates 4 ===============================");
+
         auto l = []<typename T, size_t N>(std::array<T, N> const &arr) {
             return std::accumulate(arr.begin(), arr.end(), static_cast<T>(0));
         };
 
-        // auto v1 = l(1); // error
-        auto v2 [[maybe_unused]] = l(std::array<int, 3>{1, 2, 3});
+        // auto v1 = l(1); // error: 1 is not an array
+
+        auto v2 = l(std::array<int, 3>{1, 2, 3});
+        auto v3 = l(std::array{1, 2, 3});
+
+        std::println("{}", v2); // 6
+        std::println("{}", v3); // 6
     }
 
     {
+        std::println("\n====================== lambda templates 5 ===============================");
+
+        // a, b must be same type
         auto l = []<typename T>(T a, T b) { return a + b; };
 
         auto v1 [[maybe_unused]] = l(42, 1); // OK
-        // auto v2 = l(42.0, 1);             // error
+        // auto v = l(42.0, 1);              // error
 
-        auto v4 [[maybe_unused]] = l(42.0, 1.0); // OK
-        // auto v5 = l(42, false);               // error
+        auto v2 [[maybe_unused]] = l(42.0, 1.0); // OK
+        // auto v = l(42, false);                // error
 
-        auto v6 = l(std::string{"42"}, std::string{"1"}); // OK
-        // auto v6 = l(std::string{ "42" }, '1');         // error
+        auto v3 = l(std::string{"42"}, std::string{"1"}); // OK
+        // auto v = l(std::string{ "42" }, '1');          // error
+
+        std::println("{}", v1); // 43
+        std::println("{}", v2); // 43
+        std::println("{}", v3); // 421
     }
 
     {
-        std::function<int(int)> factorial;
-        factorial = [&factorial](int const n) {
+        std::println("\n====================== lambda templates 6 ===============================");
+
+        std::function<int(int)> factorial = [&factorial](int const n) {
             if (n < 2)
             {
                 return 1;
@@ -1714,10 +1788,12 @@ main()
             }
         };
 
-        std::println("{}", factorial(5));
+        std::println("{}", factorial(5)); // 120
     }
 
     {
+        std::println("\n====================== lambda templates 7 ===============================");
+
         auto factorial = [](auto f, int const n) {
             if (n < 2)
             {
@@ -1729,6 +1805,6 @@ main()
             }
         };
 
-        std::println("{}", factorial(factorial, 5));
+        std::println("{}", factorial(factorial, 5)); // 120
     }
 }
