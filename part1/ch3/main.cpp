@@ -1,6 +1,7 @@
 #include <array>
 #include <functional>
 #include <iostream>
+#include <print>
 #include <tuple>
 
 namespace n301
@@ -14,6 +15,7 @@ namespace n301
         va_start(args, count);
 
         int val = va_arg(args, int);
+
         for (int i = 1; i < count; i++)
         {
             int n = va_arg(args, int);
@@ -39,8 +41,8 @@ namespace n302
     {
         va_list args;
         va_start(args, count);
-
         T val = va_arg(args, T);
+
         for (int i = 1; i < count; i++)
         {
             T n = va_arg(args, T);
@@ -58,6 +60,13 @@ namespace n302
 
 namespace n303
 {
+    template <typename T>
+    T
+    min(T a)
+    {
+        return a;
+    }
+
     template <typename T>
     T
     min(T a, T b)
@@ -106,11 +115,7 @@ namespace n305
     T
     min(T a, T b)
     {
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-        std::cout << __PRETTY_FUNCTION__ << "\n";
-#elif defined(_MSC_VER)
-        std::cout << __FUNCSIG__ << "\n";
-#endif
+        std::println("single: {}", __PRETTY_FUNCTION__);
         return a < b ? a : b;
     }
 
@@ -118,11 +123,7 @@ namespace n305
     T
     min(T a, Args... args)
     {
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-        std::cout << __PRETTY_FUNCTION__ << "\n";
-#elif defined(_MSC_VER)
-        std::cout << __FUNCSIG__ << "\n";
-#endif
+        std::println("variadic: {}", __PRETTY_FUNCTION__);
         return min(a, min(args...));
     }
 } // namespace n305
@@ -163,21 +164,23 @@ namespace n307
 
 namespace n308
 {
-    template <typename... Ts>
+    template <typename T1, typename T2, typename T3, typename T4>
     constexpr auto
     get_type_sizes()
     {
-        return std::array<std::size_t, sizeof...(Ts)>{sizeof(Ts)...};
+        // return std::array<std::size_t, 4>{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
+        return std::array{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
     }
 } // namespace n308
 
 namespace n309
 {
-    template <typename T1, typename T2, typename T3, typename T4>
-    constexpr auto
+    template <typename... Ts>
+    auto
     get_type_sizes()
     {
-        return std::array<std::size_t, 4>{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
+        // return std::array<std::size_t, sizeof...(Ts)>{sizeof(Ts)...};
+        return std::array{sizeof(Ts)...};
     }
 } // namespace n309
 
@@ -187,7 +190,7 @@ namespace n310
     constexpr auto
     multipacks(Ts... args1, Us... args2)
     {
-        std::cout << sizeof...(args1) << ',' << sizeof...(args2) << '\n';
+        std::println("{} {}", sizeof...(args1), sizeof...(args2));
     }
 } // namespace n310
 
@@ -505,7 +508,7 @@ namespace n318
         void
         execute()
         {
-            std::cout << "A::execute\n";
+            std::println("A::execute");
         }
     };
     struct B
@@ -513,7 +516,7 @@ namespace n318
         void
         execute()
         {
-            std::cout << "B::execute\n";
+            std::println("B::execute");
         }
     };
     struct C
@@ -521,7 +524,7 @@ namespace n318
         void
         execute()
         {
-            std::cout << "C::execute\n";
+            std::println("C::execute");
         }
     };
 
@@ -567,197 +570,237 @@ int
 main()
 {
     {
+        std::println("\n====================== using namespace n301 =============================");
         using namespace n301;
 
-        std::cout << "min(42, 7)=" << min(2, 42, 7) << '\n';
-        std::cout << "min(1,5,3,-4,9)=" << min(5, 1, 5, 3, -4, 9) << '\n';
+        std::println("{}", min(1, 7));              // 7
+        std::println("{}", min(2, 42, 7));          // 7
+        std::println("{}", min(5, 1, 5, 3, -4, 9)); // -4
     }
 
     {
+        std::println("\n====================== using namespace n302 =============================");
         using namespace n302;
 
-        std::cout << "min(42.0, 7.5)=" << min<double>(2, 42.0, 7.5) << '\n';
-        std::cout << "min(1,5,3,-4,9)=" << min<int>(5, 1, 5, 3, -4, 9) << '\n';
+        std::println("{}", min<double>(1, 7.5));              // 7.5
+        std::println("{}", min<double>(2, 42.0, 7.5));        // 7.5
+        std::println("{} (garbage)", min<int>(2, 42.0, 7.5)); // !!!
+        std::println("{}", min<int>(5, 1, 5, 3, -4, 9));      // -4
     }
 
     {
+        std::println("\n====================== using namespace n303 =============================");
         using namespace n303;
 
-        std::cout << "min(42.0, 7.5)=" << min(42.0, 7.5) << '\n';
-        std::cout << "min(1,5,3,-4,9)=" << min(1, 5, 3, -4, 9) << '\n';
+        std::println("{}", min(7.5));            // 7.5
+        std::println("{}", min(42.0, 7.5));      // 7.5
+        std::println("{}", min(1, 5, 3, -4, 9)); // -4
     }
 
     {
+        std::println("\n====================== using namespace n304 =============================");
         using namespace n304;
 
-        std::cout << "min(42, 7)=" << min(42, 7) << '\n';
-        std::cout << "min(1,5,3,-4,9)=" << min(1, 5, 3, -4, 9) << '\n';
+        std::println("{}", min(42, 7));          // 7
+        std::println("{}", min(1, 5, 3, -4, 9)); // -4
     }
 
     {
+        std::println("\n====================== using namespace n305 =============================");
         using namespace n305;
 
-        min(1, 5, 3, -4, 9);
+        std::println("{}", min(1, 5, 3, -4, 9));       // -4
+        std::println("{}", min(1, 8, 5, 7, 3, -4, 9)); // -4
     }
 
     {
+        std::println("\n====================== using namespace n306 =============================");
         using namespace n306;
 
-        std::cout << sum(1, 2, 3, 4, 5) << '\n';
-        std::cout << sum(1) << '\n';
+        std::println("{}", sum(1, 2, 3, 4, 5)); // 15
+        std::println("{}", sum(1));             // 1
     }
 
     {
+        std::println("\n====================== using namespace n307 =============================");
         using namespace n307;
 
-        std::cout << sum(1, 2, 3, 4, 5) << '\n';
-        std::cout << sum(1) << '\n';
+        std::println("{}", sum(1, 2, 3, 4, 5)); // 15
+        std::println("{}", sum(1));             // 1
     }
 
     {
+        std::println("\n====================== using namespace n308 =============================");
         using namespace n308;
 
         auto sizes = get_type_sizes<short, int, long, long long>();
-        for (auto const &s : sizes)
+        for (auto const s : sizes)
         {
-            std::cout << s << '\n';
+            std::println("{}", s); // 2 4 8 8
         }
     }
 
     {
+        std::println("\n====================== using namespace n309 =============================");
+        using namespace n309;
+
+        auto sizes = get_type_sizes<short, int, long, long long>();
+        for (auto const s : sizes)
+        {
+            std::println("{}", s); // 2 4 8 8
+        }
+    }
+
+    {
+        std::println("\n====================== using namespace n310 =============================");
         using namespace n310;
+
         multipacks<int>(1, 2, 3, 4, 5, 6);                          // 1,5
         multipacks<int, int, int>(1, 2, 3, 4, 5, 6);                // 3,3
         multipacks<int, int, int, int>(1, 2, 3, 4, 5, 6);           // 4,2
         multipacks<int, int, int, int, int, int>(1, 2, 3, 4, 5, 6); // 6,0
-
         multipacks<int, int>(1, 2, 4.0, 5.0, 6.0);                  // 2,3
         multipacks<int, int, int>(1, 2, 3, 4.0, 5.0, 6.0);          // 3,3
     }
 
     {
+        std::println("\n====================== using namespace n311 =============================");
         using namespace n311;
-        // multipacks<int>(1, 2, 3, 4, 5, 6);                    // error
-        multipacks<int, int, int>(1, 2, 3, 4, 5, 6); // OK
-        // multipacks<int, int, int, int>(1, 2, 3, 4, 5, 6);     // error
+
+        multipacks<int, int, int>(1, 2, 3, 4, 5, 6);
+        multipacks<int, int, int>(1, 2, 3, 4.0, 5.0, 6.0);
+
+        // multipacks<int>(1, 2, 3, 4, 5, 6);                          // error
+        // multipacks<int, int, int, int>(1, 2, 3, 4, 5, 6);           // error
         // multipacks<int, int, int, int, int, int>(1, 2, 3, 4, 5, 6); // error
-
-        // multipacks<int, int>(1, 2, 4.0, 5.0, 6.0);            // error
-        multipacks<int, int, int>(1, 2, 3, 4.0, 5.0, 6.0); // OK
+        // multipacks<int, int>(1, 2, 4.0, 5.0, 6.0);                  // error
     }
 
-    {
-        using namespace n312;
+    // {
+    //     std::println("\n====================== using namespace n312 =============================");
+    //     using namespace n312;
+    //
+    //     func_pair<bool(int, int), double(int, int, double)> funcs{twice_as, sum_and_div};
+    //     funcs.f(42, 12);
+    //     funcs.g(42, 12, 10.0);
+    // }
 
-        func_pair<bool(int, int), double(int, int, double)> funcs{twice_as, sum_and_div};
-        funcs.f(42, 12);
-        funcs.g(42, 12, 10.0);
-    }
+    // {
+    //     std::println("\n====================== using namespace n313 =============================");
+    //     using namespace n313;
+    //
+    //     tuple<int>               one(42);
+    //     tuple<int, double>       two(42, 42.0);
+    //     tuple<int, double, char> three(42, 42.0, 'a');
+    //
+    //     std::println("{}", one.value);                                         // 42
+    //     std::println("{}", two.value);                                         // 42
+    //     std::println("{}", three.value);                                       // 42
+    //
+    //     std::println("{}", get<0>(one));                                       // 42
+    //     std::println("{} {}", get<0>(two), get<1>(two));                       // 42 42
+    //     std::println("{} {} {}", get<0>(three), get<1>(three), get<2>(three)); // 42 42 a
+    // }
 
-    {
-        using namespace n313;
+    // {
+    //     std::println("\n====================== using namespace n314 =============================");
+    //     using namespace n314;
+    //
+    //     // std::println("{}", sum()); // error
+    //     std::println("{}", sum(1));                 // 1
+    //     std::println("{}", sum(1, 2));              // 3
+    //     std::println("{}", sum(1, 2, 3, 4, 5));     // 15
+    //
+    //     std::println("{}", sum_from_zero());        // 0
+    //     std::println("{}", sum_from_zero(1, 2, 3)); // 6
+    // }
 
-        tuple<int>               one(42);
-        tuple<int, double>       two(42, 42.0);
-        tuple<int, double, char> three(42, 42.0, 'a');
+    // {
+    //     std::println("\n====================== using namespace n315 =============================");
+    //     using namespace n315;
+    //
+    //     printl('d', 'o', 'g'); // dog
+    //     printr('d', 'o', 'g'); // dog
+    //     print('d', 'o', 'g');  // dog
+    // }
 
-        std::cout << one.value << '\n';
-        std::cout << two.value << ',' << two.rest.value << '\n';
-        std::cout << three.value << ',' << three.rest.value << ',' << three.rest.rest.value << '\n';
+    // {
+    //     std::println("\n====================== using namespace n315 =============================");
+    //     using namespace n315;
+    //
+    //     std::vector<int> v;
+    //     push_back_many(v, 1, 2, 3, 4, 5);
+    //     std::println("{}", v.size()); // 5
+    // }
 
-        std::cout << get<0>(one) << '\n';
-        std::cout << get<0>(two) << ',' << get<1>(two) << '\n';
-        std::cout << get<0>(three) << ',' << get<1>(three) << ',' << get<2>(three) << '\n';
-    }
+    // {
+    //     std::println("\n====================== using namespace n316 =============================");
+    //     using namespace n316;
+    //
+    //     std::println("{}", Sum<1>);             // 1
+    //     std::println("{}", Sum<1, 2>);          // 3
+    //     std::println("{}", Sum<1, 2, 3, 4, 5>); // 15
+    // }
 
-    {
-        using namespace n314;
+    // {
+    //     std::println("\n====================== using namespace n317 =============================");
+    //     using namespace n317;
+    //
+    //     foo<double, char, int> f1;
+    //     foo<int, char, double> f2;
+    //     int_foo<char, double>  f3;
+    //     static_assert(!std::is_same_v<decltype(f1), decltype(f2)>);
+    //     static_assert(std::is_same_v<decltype(f2), decltype(f3)>);
+    // }
 
-        // std::cout << sum() << '\n'; // error
-        std::cout << sum(1) << '\n';
-        std::cout << sum(1, 2) << '\n';
-        std::cout << sum(1, 2, 3, 4, 5) << '\n';
+    // {
+    //     std::println("\n====================== using namespace n317 =============================");
+    //     using namespace n317;
+    //
+    //     std::tuple<int, char, double> t1{42, 'x', 42.99};
+    //
+    //     auto t2 /* [[maybe_unused]] */ = select_tuple(t1, index_sequence<0, 2>{});
+    // }
 
-        std::cout << sum_from_zero() << '\n';
-        std::cout << sum_from_zero(1, 2, 3) << '\n';
-    }
+    // {
+    //     std::println("\n====================== using namespace n318 =============================");
+    //     using namespace n318;
+    //
+    //     [[maybe_unused]] outer<int, double, char[5]> a;
+    //
+    //     tagger<int, double, char[5], short, float>();
+    //
+    //     make_it(42);
+    //     make_it(42, 'a');
+    //
+    //     do_sums(1, 2, 3, 4);
+    //
+    //     parenthesized(1, 2, 3, 4);
+    //
+    //     brace_enclosed(1, 2, 3, 4);
+    //
+    //     captures(1, 2, 3, 4);
+    //
+    //     auto arr [[maybe_unused]] = make_array(1, 2, 3, 4);
+    //
+    //     alignment1<int, double> al1 [[maybe_unused]];
+    //     al1.a = 'a';
+    //
+    //     // alignment2<1, 4, 8> al2; // error with VC++
+    //     // al2.a = 'b';
+    // }
 
-    {
-        using namespace n315;
-
-        printl('d', 'o', 'g'); // dog
-        printr('d', 'o', 'g'); // dog
-        print('d', 'o', 'g');  // dog
-    }
-
-    {
-        using namespace n315;
-
-        std::vector<int> v;
-        push_back_many(v, 1, 2, 3, 4, 5);
-    }
-
-    {
-        using namespace n316;
-
-        std::cout << Sum<1> << '\n';
-        std::cout << Sum<1, 2> << '\n';
-        std::cout << Sum<1, 2, 3, 4, 5> << '\n';
-    }
-
-    {
-        using namespace n317;
-
-        [[maybe_unused]] foo<double, char, int> f1;
-        foo<int, char, double>                  f2;
-        int_foo<char, double>                   f3;
-        static_assert(std::is_same_v<decltype(f2), decltype(f3)>);
-    }
-
-    {
-        using namespace n317;
-
-        std::tuple<int, char, double> t1{42, 'x', 42.99};
-        auto                          t2 [[maybe_unused]] = select_tuple(t1, index_sequence<0, 2>{});
-    }
-
-    {
-        using namespace n318;
-
-        [[maybe_unused]] outer<int, double, char[5]> a;
-
-        tagger<int, double, char[5], short, float>();
-
-        make_it(42);
-        make_it(42, 'a');
-
-        do_sums(1, 2, 3, 4);
-
-        parenthesized(1, 2, 3, 4);
-
-        brace_enclosed(1, 2, 3, 4);
-
-        captures(1, 2, 3, 4);
-
-        auto arr [[maybe_unused]] = make_array(1, 2, 3, 4);
-
-        alignment1<int, double> al1 [[maybe_unused]];
-        al1.a = 'a';
-
-        // alignment2<1, 4, 8> al2; // error with VC++
-        // al2.a = 'b';
-    }
-
-    {
-        using namespace n318;
-
-        A a;
-        B b;
-        C c;
-        X x(a, b, c);
-
-        x.A::execute();
-        x.B::execute();
-        x.C::execute();
-    }
+    // {
+    //     std::println("\n====================== using namespace n318 =============================");
+    //     using namespace n318;
+    //
+    //     A a;
+    //     B b;
+    //     C c;
+    //     X x(a, b, c);
+    //
+    //     x.A::execute(); // A::execute
+    //     x.B::execute(); // B::execute
+    //     x.C::execute(); // C::execute
+    // }
 }
