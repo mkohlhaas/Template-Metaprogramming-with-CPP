@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <ostream>
 #include <print>
 
 namespace n201
@@ -650,37 +651,46 @@ namespace n225
     T foo<T>::shared_data = 0;
 } // namespace n225
 
-// namespace n226
-// {
-// template <typename T> struct wrapper
-// {
-//     T value;
-// };
-//
-// template struct wrapper<int>; // [1]
-// } // namespace n226
-//
-// template struct n226::wrapper<double>; // [2]
-//
-// namespace n226
-// {
-// template <typename T>
-// T
-// add(T const a, T const b)
-// {
-//     return a + b;
-// }
-//
-// template int add(int, int); // [1]
-// } // namespace n226
-//
-// template int n226::add(int, int); // [2]
+namespace n226
+{
+    template <typename T>
+    struct wrapper
+    {
+        T value;
+    };
+
+    // Explicit Class Instantiation
+    template struct wrapper<int>; // [1]
+} // namespace n226
+
+// Explicit Class Instantiation
+// You have to use namespace scoping if outside the namespace.
+// A general 'using namespace n226' is not sufficient.
+template struct n226::wrapper<double>; // [2]
+
+namespace n226
+{
+    template <typename T>
+    T
+    add(T const a, T const b)
+    {
+        return a + b;
+    }
+
+    // Explicit Function Instantiation
+    template int add(int, int); // [1]
+} // namespace n226
+
+// Explicit Function Instantiation
+// You have to use namespace scoping if outside the namespace.
+template double n226::add(double, double); // [2]
 
 namespace n227
 {
     template <typename T>
     class foo
     {
+      private:
         struct bar
         {
         };
@@ -692,29 +702,38 @@ namespace n227
         }
     };
 
+    // Explicit Method Instantiation
+    // (private) member access specification is ignored in explicit instantiation definitions
     template int foo<int>::f(foo<int>::bar);
 } // namespace n227
 
 namespace n228
 {
+    // primary template
     template <typename T>
     struct is_floating_point
     {
         constexpr static bool value = false;
     };
 
+    // specialized template
+    // explicit (full) specialization
     template <>
     struct is_floating_point<float>
     {
         constexpr static bool value = true;
     };
 
+    // specialized template
+    // explicit (full) specialization
     template <>
     struct is_floating_point<double>
     {
         constexpr static bool value = true;
     };
 
+    // specialized template
+    // explicit (full) specialization
     template <>
     struct is_floating_point<long double>
     {
@@ -727,15 +746,18 @@ namespace n228
 
 namespace n229
 {
+    // declaration
     template <typename T>
     struct is_floating_point;
 
+    // specialization
     template <>
     struct is_floating_point<float>
     {
         constexpr static bool value = true;
     };
 
+    // primary
     template <typename T>
     struct is_floating_point
     {
@@ -745,13 +767,16 @@ namespace n229
 
 namespace n230
 {
+    // primary
     template <typename>
     struct foo
     {
-    }; // primary template
+        // ...
+    };
 
+    // explicit specialization declaration (but never defined!)
     template <>
-    struct foo<int>; // explicit specialization declaration
+    struct foo<int>;
 } // namespace n230
 
 namespace n231
@@ -768,6 +793,9 @@ namespace n231
         std::println("primary template");
     }
 
+    // template<> void func<int>(foo<int>)
+    //                     ^^^^^
+    //         superfluous bc compiler can deduce
     template <>
     void
     func(foo<int>)
@@ -778,6 +806,7 @@ namespace n231
 
 namespace n232
 {
+    // primary function template
     template <typename T>
     void
     func(T a [[maybe_unused]])
@@ -785,9 +814,10 @@ namespace n232
         std::println("primary template");
     }
 
+    // specialization
     template <>
     void
-    func(int a [[maybe_unused]] /*= 0*/) // error: default argument
+    func(int a [[maybe_unused]] /* = 0 */) // error: Default argument not permitted on an explicit specialization
     {
         std::println("int specialization");
     }
@@ -795,45 +825,54 @@ namespace n232
 
 namespace n233
 {
+    // class template
     template <typename T>
     struct foo
     {
         static T value;
     };
 
+    // class (static) member template
     template <typename T>
     T foo<T>::value = 0;
 
+    // class (static) member template specialization
     template <>
     int foo<int>::value = 42;
 } // namespace n233
 
 namespace n234
 {
+    // primary function template
     template <typename T, typename U>
     void
-    func(T a [[maybe_unused]], U b [[maybe_unused]])
+    func(T a, U b)
     {
-        std::println("primary template");
+        std::println("primary template: {} {}", a, b);
     }
 
+    // int, int - specialization
     template <>
     void
-    func(int a [[maybe_unused]], int b [[maybe_unused]])
+    func(int a, int b)
     {
-        std::println("int-int specialization");
+        std::println("int-int specialization: {} {}", a, b);
     }
 
+    // int, double - specialization
     template <>
     void
-    func(int a [[maybe_unused]], double b [[maybe_unused]])
+    func(int a, double b)
     {
-        std::println("int-double specialization");
+        std::println("int-double specialization: {} {}", a, b);
     }
 } // namespace n234
 
 namespace n235
 {
+    // A template A is considered more specialized than a template B if it accepts
+    // a subset of the types that B accepts, but not the other way around.
+
     template <typename T, int S>
     struct collection
     {
@@ -844,6 +883,7 @@ namespace n235
         }
     };
 
+    // int S is specialized
     template <typename T>
     struct collection<T, 10>
     {
@@ -854,6 +894,7 @@ namespace n235
         }
     };
 
+    // typename T is specialized
     template <int S>
     struct collection<int, S>
     {
@@ -864,6 +905,7 @@ namespace n235
         }
     };
 
+    // pointer to T is specialized (we still need 'typename T' in the template parameter list)
     template <typename T, int S>
     struct collection<T *, S>
     {
@@ -893,6 +935,7 @@ namespace n236
 
 namespace n237
 {
+    // primary
     template <typename T, size_t S>
     std::ostream &
     pretty_print(std::ostream &os, std::array<T, S> const &arr)
@@ -907,13 +950,14 @@ namespace n237
             }
             os << arr[S - 1];
         }
-        os << ']';
+        os << ']' << std::endl;
 
         return os;
     }
 } // namespace n237
 
-namespace n238
+// increase namespace number to remove specialization
+namespace n237
 {
     template <size_t S>
     std::ostream &
@@ -928,7 +972,7 @@ namespace n238
 
         return os;
     }
-} // namespace n238
+} // namespace n237
 
 namespace n239
 {
@@ -950,6 +994,7 @@ namespace n240
         static const T value;
     };
 
+    // variable template
     template <typename T>
     const T PI<T>::value = T(3.1415926535897932385L);
 
@@ -963,7 +1008,7 @@ namespace n240
 
 namespace n241
 {
-    template <class T>
+    template <typename T>
     constexpr T PI = T(3.1415926535897932385L);
 
     template <typename T>
@@ -1379,160 +1424,180 @@ main()
         std::println("\n====================== using namespace ext =============================");
         using namespace ext;
 
+        // 'wrapper<int>' has been explicitly instantiated in source1.cpp.
+        // The compiler won't instantiate wrapper<int> here.
         wrapper<int> a{0};
 
         std::println("{}", a.data);
-        f();
-        g();
+        f(); // f() is defined in source1.cpp
+        g(); // g() is defined in source2.cpp
+
+        // Class Member Function Instantiation:
+        // When you do explicit template declarations (not shown here), keep in mind that a class member function that
+        // is defined within the body of the class is always considered inline and therefore it will always be
+        // instantiated. Therefore, you can only use the extern keyword for member functions that are defined outside of
+        // the class body.
     }
 
     {
-        using namespace n228;
         std::println("\n====================== using namespace n228 =============================");
-
-        std::println("{}", is_floating_point<int>::value);
-        std::println("{}", is_floating_point<float>::value);
-        std::println("{}", is_floating_point<double>::value);
-        std::println("{}", is_floating_point<long double>::value);
-        std::println("{}", is_floating_point<std::string>::value);
-    }
-
-    {
         using namespace n228;
-        std::println("\n====================== using namespace n228 =============================");
 
-        std::println("{}", is_floating_point_v<int>);
-        std::println("{}", is_floating_point_v<float>);
-        std::println("{}", is_floating_point_v<double>);
-        std::println("{}", is_floating_point_v<long double>);
-        std::println("{}", is_floating_point_v<std::string>);
+        std::println("{}", is_floating_point<int>::value);         // false; using generic template
+        std::println("{}", is_floating_point<float>::value);       // true;  using specialized template
+        std::println("{}", is_floating_point<double>::value);      // true;  using specialized template
+        std::println("{}", is_floating_point<long double>::value); // true;  using specialized template
+        std::println("{}", is_floating_point<std::string>::value); // false; using generic template
     }
 
     {
-        using namespace n229;
+        std::println("\n====================== using namespace n228 =============================");
+        using namespace n228;
+
+        std::println("{}", is_floating_point_v<int>);         // false
+        std::println("{}", is_floating_point_v<float>);       // true
+        std::println("{}", is_floating_point_v<double>);      // true
+        std::println("{}", is_floating_point_v<long double>); // true
+        std::println("{}", is_floating_point_v<std::string>); // false
+    }
+
+    {
         std::println("\n====================== using namespace n229 =============================");
+        using namespace n229;
 
-        std::println("{}", is_floating_point<int>::value);
-        std::println("{}", is_floating_point<float>::value);
+        std::println("{}", is_floating_point<int>::value);   // false
+        std::println("{}", is_floating_point<float>::value); // true
     }
 
     {
-        using namespace n230;
         std::println("\n====================== using namespace n230 =============================");
+        using namespace n230;
 
-        [[maybe_unused]] foo<double> a; // OK
-        [[maybe_unused]] foo<int>   *b; // OK
-        // foo<int> c;                  // error, foo<int> incomplete type
+        // foo<int> has been declared but never defined!
+        [[maybe_unused]] foo<double> a; // OK (compiler uses primary template)
+        [[maybe_unused]] foo<int>   *b; // OK (pointer poses no problem)
+        // foo<int>                  c; // error, foo<int> never defined
     }
 
     {
-        using namespace n231;
         std::println("\n====================== using namespace n231 =============================");
+        using namespace n231;
 
-        func(foo<int>{});
-        func(foo<double>{});
+        func(foo<int>{});    // int specialization
+        func(foo<double>{}); // primary template
     }
 
     {
-        using namespace n232;
         std::println("\n====================== using namespace n232 =============================");
+        using namespace n232;
 
-        func(42.0);
-        func(42);
+        func(42.0); // primary template
+        func(42);   // int specialization
     }
 
     {
-        using namespace n233;
         std::println("\n====================== using namespace n233 =============================");
+        using namespace n233;
 
+        // each specialization has its own copy of static members
         foo<double> a, b;
-        std::println("{}", a.value);
-        std::println("{}", b.value);
+        foo<int>    c;
 
-        foo<int> c;
-        std::println("{}", c.value);
+        std::println("{}", a.value); // 0
+        std::println("{}", b.value); // 0
+        std::println("{}", c.value); // 42
 
         a.value = 100;
-        std::println("{}", a.value);
-        std::println("{}", b.value);
-        std::println("{}", c.value);
+
+        std::println("{}", a.value); // 100
+        std::println("{}", b.value); // 100
+        std::println("{}", c.value); // 42
     }
 
     {
-        using namespace n234;
         std::println("\n====================== using namespace n234 =============================");
+        using namespace n234;
 
-        func(1, 2);
-        func(1, 2.0);
-        func(1.0, 2.0);
+        func(1, 2);     // int-int specialization: 1 2
+        func(1, 2.0);   // int-double specialization: 1 2
+        func(1.0, 2.0); // primary template: 1 2
     }
 
     {
-        using namespace n235;
         std::println("\n====================== using namespace n235 =============================");
+        using namespace n235;
 
         collection<char, 42>{}();  // primary template
         collection<int, 42>{}();   // partial specialization <int, S>
         collection<char, 10>{}();  // partial specialization <T, 10>
         collection<int *, 20>{}(); // partial specialization <T*, S>
 
+        // Ambiguous partial specializations of 'collection<int, 10>'
         // error: collection<T,10> or collection<int,S>
         // collection<int, 10>{}();
+
+        // Ambiguous partial specializations of 'collection<char *, 10>'
         // error: collection<T,10> or collection<T*,S>
-        // collection<char*, 10>{}();
+        // collection<char *, 10>{}();
     }
 
     {
-        using namespace n237;
         std::println("\n====================== using namespace n237 =============================");
+        using namespace n237;
 
-        std::array<int, 9> arr{1, 1, 2, 3, 5, 8, 13, 21};
-        pretty_print(std::cout, arr);
-
-        std::array<char, 9> str;
-        std::strcpy(str.data(), "template");
-        pretty_print(std::cout, str);
-    }
-
-    {
-        using namespace n238;
-        std::println("\n====================== using namespace n238 =============================");
+        // std::array<int, 9> arr{1, 1, 2, 3, 5, 8, 13, 21};
+        std::array arr{1, 1, 2, 3, 5, 8, 13, 21};
+        pretty_print(std::cout, arr); // [1,1,2,3,5,8,13,21]
 
         std::array<char, 9> str;
         std::strcpy(str.data(), "template");
-        pretty_print(std::cout, str);
+        pretty_print(std::cout, str); // without specialization: [t,e,m,p,l,a,t,e,]
     }
 
     {
-        using namespace n239;
+        std::println("\n====================== using namespace n237 =============================");
+        using namespace n237;
+
+        std::array<char, 9> str;
+        std::strcpy(str.data(), "template");
+        pretty_print(std::cout, str); // [template]
+    }
+
+    {
         std::println("\n====================== using namespace n239 =============================");
+        using namespace n239;
 
-        float  v1 [[maybe_unused]] = sphere_volume(42.0f);
-        double v2 [[maybe_unused]] = sphere_volume(42.0);
+        // no templates
+        float  v1 = sphere_volume(42.0f);
+        double v2 = sphere_volume(42.0);
+        std::println("sphere volumes: {} {}", v1, v2); // sphere volumes: 310339.1 310339.08869221417
     }
 
     {
-        using namespace n240;
         std::println("\n====================== using namespace n240 =============================");
+        using namespace n240;
 
-        float  v1 [[maybe_unused]] = sphere_volume(42.0f);
-        double v2 [[maybe_unused]] = sphere_volume(42.0);
+        float  v1 = sphere_volume(42.0f);
+        double v2 = sphere_volume(42.0);
+        std::println("sphere volumes: {} {}", v1, v2); // sphere volumes: 310339.1 310339.08869221417
     }
 
     {
-        using namespace n241;
         std::println("\n====================== using namespace n241 =============================");
+        using namespace n241;
 
-        float  v1 [[maybe_unused]] = sphere_volume(42.0f);
-        double v2 [[maybe_unused]] = sphere_volume(42.0);
+        float  v1 = sphere_volume(42.0f);
+        double v2 = sphere_volume(42.0);
+        std::println("sphere volumes: {} {}", v1, v2); // sphere volumes: 310339.1 310339.08869221417
     }
 
     {
-        using namespace n242;
         std::println("\n====================== using namespace n242 =============================");
+        using namespace n242;
 
-        float  v1 [[maybe_unused]] = sphere_volume(42.0f);
-        double v2 [[maybe_unused]] = sphere_volume(42.0);
+        float  v1 = sphere_volume(42.0f);
+        double v2 = sphere_volume(42.0);
+        std::println("sphere volumes: {} {}", v1, v2); // sphere volumes: 310339.1 310339.08869221417
     }
 
     {
