@@ -218,9 +218,12 @@ namespace n312
         return (a + b) / c;
     }
 
+    // primary (is actually needed)
+    // template <typename F, typename G>
     template <typename, typename>
     struct func_pair;
 
+    // specialization
     template <typename R1, typename... A1, typename R2, typename... A2>
     struct func_pair<R1(A1...), R2(A2...)>
     {
@@ -231,6 +234,7 @@ namespace n312
 
 namespace n313
 {
+    // primary
     template <typename T, typename... Ts>
     struct tuple
     {
@@ -248,6 +252,8 @@ namespace n313
         tuple<Ts...> rest;
     };
 
+    // specialization
+    // tuple with one element
     template <typename T>
     struct tuple<T>
     {
@@ -264,29 +270,38 @@ namespace n313
         T value;
     };
 
+    // primary class template
+    // Variadic class template to find return type.
     template <size_t N, typename T, typename... Ts>
     struct nth_type : nth_type<N - 1, Ts...>
     {
         static_assert(N < sizeof...(Ts) + 1, "index out of bounds");
     };
 
+    // specialization (N == 0)
+    // We found the return type (it's T).
     template <typename T, typename... Ts>
     struct nth_type<0, T, Ts...>
     {
         using value_type = T;
     };
 
+    // primary class template
+    // Variadic class template to find return value.
     template <size_t N>
     struct getter
     {
         template <typename... Ts>
-        static typename nth_type<N, Ts...>::value_type &
+        // static typename nth_type<N, Ts...>::value_type &
+        static nth_type<N, Ts...>::value_type &
         get(tuple<Ts...> &t)
         {
             return getter<N - 1>::get(t.rest);
         }
     };
 
+    // specialization
+    // recursive base case
     template <>
     struct getter<0>
     {
@@ -298,8 +313,10 @@ namespace n313
         }
     };
 
+    // function template
     template <size_t N, typename... Ts>
-    typename nth_type<N, Ts...>::value_type &
+    // typename nth_type<N, Ts...>::value_type &
+    nth_type<N, Ts...>::value_type &
     get(tuple<Ts...> &t)
     {
         return getter<N>::get(t);
@@ -312,14 +329,14 @@ namespace n314
     int
     sum(T... args)
     {
-        return (... + args);
+        return (... + args); // unary left fold
     }
 
     template <typename... T>
     int
     sum_from_zero(T... args)
     {
-        return (0 + ... + args);
+        return (0 + ... + args); // binary left fold
     }
 } // namespace n314
 
@@ -329,49 +346,50 @@ namespace n315
     int
     suml(T... args)
     {
-        return (... + args);
+        return (... + args); // unary left fold
     }
 
     template <typename... T>
     int
     sumr(T... args)
     {
-        return (args + ...);
+        return (args + ...); // unary right fold
     }
 
     template <typename... T>
     void
     printl(T... args)
     {
-        (..., (std::cout << args)) << '\n';
+        (..., (std::cout << args)) << '\n'; // using comma operator (unary left fold)
     }
 
     template <typename... T>
     void
     printr(T... args)
     {
-        ((std::cout << args), ...) << '\n';
+        ((std::cout << args), ...) << '\n'; // using comma operator (unary right fold)
     }
 
     template <typename... T>
     void
     print(T... args)
     {
-        (std::cout << ... << args) << '\n';
+        (std::cout << ... << args) << '\n'; // binary left fold
     }
 
     template <typename T, typename... Args>
     void
     push_back_many(std::vector<T> &v, Args &&...args)
     {
-        (v.push_back(args), ...);
+        // (v.push_back(args), ...); // unary right fold
+        (..., v.push_back(args)); // unary left fold
     }
 } // namespace n315
 
 namespace n316
 {
     template <int... R>
-    constexpr int Sum = (... + R);
+    constexpr int Sum = (... + R); // unary left fold
 
     template <int... I>
     constexpr auto indexes = std::make_index_sequence<5>();
@@ -396,7 +414,7 @@ namespace n317
     using index_sequence = integer_sequence<std::size_t, Ints...>;
 
     template <typename T, std::size_t N, T... Is>
-    struct make_integer_sequence : make_integer_sequence<T, N - 1, N - 1, Is...>
+    struct make_integer_sequence : make_integer_sequence<T, N - 1, Is...>
     {
     };
 
@@ -424,7 +442,8 @@ namespace n318
     template <typename... T>
     struct outer
     {
-        template <T... args>
+        // template <T... args>
+        template <T...>
         struct inner
         {
         };
@@ -469,9 +488,12 @@ namespace n318
     void
     do_sums(T... args)
     {
-        auto s1 [[maybe_unused]] = sum(args...);
-        auto s2 [[maybe_unused]] = sum(42, args...);
-        auto s3 [[maybe_unused]] = sum(step_it(args)...);
+        auto s1 = sum(args...);
+        auto s2 = sum(42, args...);
+        auto s3 = sum(step_it(args)...);
+        std::println("{}", s1);
+        std::println("{}", s2);
+        std::println("{}", s3);
     }
 
     template <typename... T>
@@ -556,12 +578,14 @@ namespace n318
     template <typename... T>
     struct alignment1
     {
+        // Der größte Ausrichtungswert aller Elemente im Pack wird verwendet.
         alignas(T...) char a;
     };
 
     template <int... args>
     struct alignment2
     {
+        // Der größte Ausrichtungswert aller Elemente im Pack wird verwendet.
         alignas(args...) char a;
     };
 } // namespace n318
@@ -676,131 +700,151 @@ main()
         // multipacks<int, int>(1, 2, 4.0, 5.0, 6.0);                  // error
     }
 
-    // {
-    //     std::println("\n====================== using namespace n312 =============================");
-    //     using namespace n312;
-    //
-    //     func_pair<bool(int, int), double(int, int, double)> funcs{twice_as, sum_and_div};
-    //     funcs.f(42, 12);
-    //     funcs.g(42, 12, 10.0);
-    // }
+    {
+        std::println("\n====================== using namespace n312 =============================");
+        using namespace n312;
 
-    // {
-    //     std::println("\n====================== using namespace n313 =============================");
-    //     using namespace n313;
-    //
-    //     tuple<int>               one(42);
-    //     tuple<int, double>       two(42, 42.0);
-    //     tuple<int, double, char> three(42, 42.0, 'a');
-    //
-    //     std::println("{}", one.value);                                         // 42
-    //     std::println("{}", two.value);                                         // 42
-    //     std::println("{}", three.value);                                       // 42
-    //
-    //     std::println("{}", get<0>(one));                                       // 42
-    //     std::println("{} {}", get<0>(two), get<1>(two));                       // 42 42
-    //     std::println("{} {} {}", get<0>(three), get<1>(three), get<2>(three)); // 42 42 a
-    // }
+        func_pair<bool(int, int), double(int, int, double)> funcs{twice_as, sum_and_div};
 
-    // {
-    //     std::println("\n====================== using namespace n314 =============================");
-    //     using namespace n314;
-    //
-    //     // std::println("{}", sum()); // error
-    //     std::println("{}", sum(1));                 // 1
-    //     std::println("{}", sum(1, 2));              // 3
-    //     std::println("{}", sum(1, 2, 3, 4, 5));     // 15
-    //
-    //     std::println("{}", sum_from_zero());        // 0
-    //     std::println("{}", sum_from_zero(1, 2, 3)); // 6
-    // }
+        std::println("{}", funcs.f(42, 12));       // true
+        std::println("{}", funcs.g(42, 12, 10.0)); // 5.4
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n315 =============================");
-    //     using namespace n315;
-    //
-    //     printl('d', 'o', 'g'); // dog
-    //     printr('d', 'o', 'g'); // dog
-    //     print('d', 'o', 'g');  // dog
-    // }
+    {
+        std::println("\n====================== using namespace n318 =============================");
+        using namespace n318;
 
-    // {
-    //     std::println("\n====================== using namespace n315 =============================");
-    //     using namespace n315;
-    //
-    //     std::vector<int> v;
-    //     push_back_many(v, 1, 2, 3, 4, 5);
-    //     std::println("{}", v.size()); // 5
-    // }
+        [[maybe_unused]] outer<int, double, char[5]> a;
 
-    // {
-    //     std::println("\n====================== using namespace n316 =============================");
-    //     using namespace n316;
-    //
-    //     std::println("{}", Sum<1>);             // 1
-    //     std::println("{}", Sum<1, 2>);          // 3
-    //     std::println("{}", Sum<1, 2, 3, 4, 5>); // 15
-    // }
+        tagger<int, double, char[5], short, float>();
 
-    // {
-    //     std::println("\n====================== using namespace n317 =============================");
-    //     using namespace n317;
-    //
-    //     foo<double, char, int> f1;
-    //     foo<int, char, double> f2;
-    //     int_foo<char, double>  f3;
-    //     static_assert(!std::is_same_v<decltype(f1), decltype(f2)>);
-    //     static_assert(std::is_same_v<decltype(f2), decltype(f3)>);
-    // }
+        make_it(42);
+        make_it(42, 'a');
 
-    // {
-    //     std::println("\n====================== using namespace n317 =============================");
-    //     using namespace n317;
-    //
-    //     std::tuple<int, char, double> t1{42, 'x', 42.99};
-    //
-    //     auto t2 /* [[maybe_unused]] */ = select_tuple(t1, index_sequence<0, 2>{});
-    // }
+        do_sums(1, 2, 3, 4); // 1 2 3 4
 
-    // {
-    //     std::println("\n====================== using namespace n318 =============================");
-    //     using namespace n318;
-    //
-    //     [[maybe_unused]] outer<int, double, char[5]> a;
-    //
-    //     tagger<int, double, char[5], short, float>();
-    //
-    //     make_it(42);
-    //     make_it(42, 'a');
-    //
-    //     do_sums(1, 2, 3, 4);
-    //
-    //     parenthesized(1, 2, 3, 4);
-    //
-    //     brace_enclosed(1, 2, 3, 4);
-    //
-    //     captures(1, 2, 3, 4);
-    //
-    //     auto arr [[maybe_unused]] = make_array(1, 2, 3, 4);
-    //
-    //     alignment1<int, double> al1 [[maybe_unused]];
-    //     al1.a = 'a';
-    //
-    //     // alignment2<1, 4, 8> al2; // error with VC++
-    //     // al2.a = 'b';
-    // }
+        parenthesized(1, 2, 3, 4);
 
-    // {
-    //     std::println("\n====================== using namespace n318 =============================");
-    //     using namespace n318;
-    //
-    //     A a;
-    //     B b;
-    //     C c;
-    //     X x(a, b, c);
-    //
-    //     x.A::execute(); // A::execute
-    //     x.B::execute(); // B::execute
-    //     x.C::execute(); // C::execute
-    // }
+        brace_enclosed(1, 2, 3, 4);
+
+        captures(1, 2, 3, 4);
+
+        auto arr = make_array(1, 2, 3, 4);
+        std::println("{}", arr[0]); // 1
+        std::println("{}", arr[1]); // 2
+        std::println("{}", arr[2]); // 3
+        std::println("{}", arr[3]); // 4
+
+        alignment1<int, double> al1{'a'};
+        std::println("{}", al1.a);  // a
+
+        alignment2<1, 4, 8> al2{'a'};
+        std::println("{}", al2.a);  // a
+    }
+
+    {
+        std::println("\n====================== using namespace n318 =============================");
+        using namespace n318;
+
+        A a;
+        B b;
+        C c;
+        X x(a, b, c);
+
+        x.A::execute(); // A::execute
+        x.B::execute(); // B::execute
+        x.C::execute(); // C::execute
+    }
+
+    {
+        std::println("\n====================== using namespace n313 =============================");
+        using namespace n313;
+
+        tuple<int>               one(42);
+        tuple<int, double>       two(42, 42.0);
+        tuple<int, double, char> three(42, 42.0, 'a');
+
+        tuple one1(42);
+        tuple two1(42, 42.0);
+        tuple three1(42, 42.0, 'a');
+
+        std::println("{}", one.value);                                         // 42
+        std::println("{}", two.value);                                         // 42
+        std::println("{}", three.value);                                       // 42
+
+        std::println("{}", get<0>(one));                                       // 42
+        std::println("{} {}", get<0>(two), get<1>(two));                       // 42 42
+        std::println("{} {} {}", get<0>(three), get<1>(three), get<2>(three)); // 42 42 a
+
+        // std::println("{} {}", get<0>(two), get<1>(two), get<3>(two));
+        //                                                 ^^^^^^
+        //                               error: No matching function for call to 'get'.
+    }
+
+    {
+        std::println("\n====================== using namespace n314 =============================");
+        using namespace n314;
+
+        // std::println("{}", sum());                     // error
+        std::println("{}", sum(1));                       // 1
+        std::println("{}", sum(1, 2));                    // 3
+        std::println("{}", sum(1, 2, 3, 4, 5));           // 15
+
+        std::println("{}", sum_from_zero());              // 0
+        std::println("{}", sum_from_zero(1));             // 1
+        std::println("{}", sum_from_zero(1, 2));          // 3
+        std::println("{}", sum_from_zero(1, 2, 3));       // 6
+        std::println("{}", sum_from_zero(1, 2, 3, 4));    // 10
+        std::println("{}", sum_from_zero(1, 2, 3, 4, 5)); // 15
+    }
+
+    {
+        std::println("\n====================== using namespace n315 =============================");
+        using namespace n315;
+
+        printl('d', 'o', 'g'); // dog
+        printr('d', 'o', 'g'); // dog
+        print('d', 'o', 'g');  // dog
+    }
+
+    {
+        std::println("\n====================== using namespace n315 =============================");
+        using namespace n315;
+
+        std::vector<int> v;
+        push_back_many(v, 1, 2, 3, 4, 5);
+        std::println("{}", v.size()); // 5
+        std::println("{}", v[0]);     // 1
+        std::println("{}", v[4]);     // 5
+    }
+
+    {
+        std::println("\n====================== using namespace n316 =============================");
+        using namespace n316;
+
+        std::println("{}", Sum<1>);             // 1
+        std::println("{}", Sum<1, 2>);          // 3
+        std::println("{}", Sum<1, 2, 3, 4, 5>); // 15
+    }
+
+    {
+        std::println("\n====================== using namespace n317 =============================");
+        using namespace n317;
+
+        foo<double, char, int> f1;
+        foo<int, char, double> f2;
+        int_foo<char, double>  f3;
+
+        static_assert(!std::is_same_v<decltype(f1), decltype(f2)>);
+        static_assert(std::is_same_v<decltype(f2), decltype(f3)>);
+    }
+
+    {
+        std::println("\n====================== using namespace n317 =============================");
+        using namespace n317;
+
+        std::tuple<int, char, double> t1{42, 'x', 42.99};
+
+        auto t2 [[maybe_unused]] = select_tuple(t1, index_sequence<0, 2>{});
+    }
 }
