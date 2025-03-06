@@ -1,6 +1,6 @@
-#include <iostream>
 #include <map>
 #include <mutex>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -12,7 +12,7 @@ namespace n401
     void
     handle(double value) // [2] handle(double) definition
     {
-        std::cout << "processing a double: " << value << '\n';
+        std::println("processing a double: {}", value);
     }
 
     template <typename T>
@@ -28,7 +28,7 @@ namespace n401
     void
     handle(int value) // [5] handle(int) definition
     {
-        std::cout << "processing an int: " << value << '\n';
+        std::println("processing an int: {}", value);
     }
 } // namespace n401
 
@@ -40,7 +40,7 @@ namespace n402
         void
         handle(T value)
         {
-            std::cout << "handler<T>: " << value << '\n';
+            std::println("handler<T>: {}", value);
         }
     };
 
@@ -60,7 +60,7 @@ namespace n402
         void
         handle(int value)
         {
-            std::cout << "handler<int>: " << value << '\n';
+            std::println("handler<int>: {}", value);
         }
     };
 } // namespace n402
@@ -73,7 +73,7 @@ namespace n403
         void
         init()
         {
-            std::cout << "init\n";
+            std::println("init");
         }
     };
 
@@ -86,7 +86,7 @@ namespace n403
             // init();        // error: identifier not found
             this->init();
 
-            std::cout << "parse\n";
+            std::println("parse");
         }
     };
 } // namespace n403
@@ -99,7 +99,7 @@ namespace n404
         void
         init()
         {
-            std::cout << "init\n";
+            std::println("init");
         }
     };
 
@@ -111,7 +111,7 @@ namespace n404
         {
             this->init();
 
-            std::cout << "parse\n";
+            std::println("parse");
         }
     };
 
@@ -121,7 +121,7 @@ namespace n404
         void
         init()
         {
-            std::cout << "specialized init\n";
+            std::println("specialized init");
         }
     };
 } // namespace n404
@@ -144,7 +144,7 @@ namespace n405
             // base_parser<T>::value_type v{};
             typename base_parser<T>::value_type v [[maybe_unused]]{};
 
-            std::cout << "parse\n";
+            std::println("parse");
         }
     };
 } // namespace n405
@@ -158,7 +158,7 @@ namespace n406
         void
         init()
         {
-            std::cout << "init\n";
+            std::println("init");
         }
 
         template <typename U>
@@ -182,7 +182,7 @@ namespace n406
 
             typename base_parser<T>::template token<int> t2 [[maybe_unused]]{};
 
-            std::cout << "parse\n";
+            std::println("parse");
         }
     };
 } // namespace n406
@@ -301,7 +301,7 @@ namespace n412
     void
     process(T arg)
     {
-        std::cout << "processing " << arg << '\n';
+        std::println("processing {}", arg);
     }
 
     struct account_t
@@ -366,147 +366,147 @@ namespace n412
     void
     process01(T)
     {
-        std::cout << "T" << '\n';
+        std::println("T");
     }
 
     template <typename T>
     void
     process02(T const)
     {
-        std::cout << "T const" << '\n';
+        std::println("T const");
     }
 
     // template <typename T>
     // void
     // process03(T volatile)
     // {
-    //     std::cout << "T volatile" << '\n';
+    //     std::println("T volatile");
     // }
 
     template <typename T>
     void
     process04(T *)
     {
-        std::cout << "T*" << '\n';
+        std::println("T*");
     }
 
     template <typename T>
     void
     process04(T &)
     {
-        std::cout << "T&" << '\n';
+        std::println("T&");
     }
 
     template <typename T>
     void
     process05(T &&)
     {
-        std::cout << "T&&" << '\n';
+        std::println("T&&");
     }
 
     template <typename T>
     void
     process06(T[5])
     {
-        std::cout << "T[5]" << '\n';
+        std::println("T[5]");
     }
 
     template <size_t n>
     void
     process07(account_t[5][n])
     {
-        std::cout << "C[5][n]" << '\n';
+        std::println("C[5][n]");
     }
 
     template <typename T>
     void
     process08(T (*)())
     {
-        std::cout << "T (*)()" << '\n';
+        std::println("T (*)()");
     }
 
     template <typename T>
     void
     process08(account_t (*)(T))
     {
-        std::cout << "C (*)(T)" << '\n';
+        std::println("C (*)(T)");
     }
 
     template <typename T, typename U>
     void
     process08(T (*)(U))
     {
-        std::cout << "T (*)(U)" << '\n';
+        std::println("T (*)(U)");
     }
 
     template <typename T>
     void
     process09(T (account_t::*)())
     {
-        std::cout << "T (C::*)()" << '\n';
+        std::println("T (C::*)()");
     }
 
     template <typename T, typename U>
     void
     process09(T (account_t::*)(U))
     {
-        std::cout << "T (C::*)(U)" << '\n';
+        std::println("T (C::*)(U)");
     }
 
     template <typename T, typename U>
     void
     process09(T (U::*)())
     {
-        std::cout << "T (U::*)()" << '\n';
+        std::println("T (U::*)()");
     }
 
     template <typename T, typename U, typename V>
     void
     process09(T (U::*)(V))
     {
-        std::cout << "T (U::*)(V)" << '\n';
+        std::println("T (U::*)(V)");
     }
 
     template <typename T>
     void
     process09(account_t (T::*)())
     {
-        std::cout << "C (T::*)()" << '\n';
+        std::println("C (T::*)()");
     }
 
     template <typename T, typename U>
     void
     process09(transaction_t (T::*)(U))
     {
-        std::cout << "C (T::*)(U)" << '\n';
+        std::println("C (T::*)(U)");
     }
 
     template <typename T>
     void
     process09(balance_report_t (balance_t::*)(T))
     {
-        std::cout << "D (C::*)(T)" << '\n';
+        std::println("D (C::*)(T)");
     }
 
     template <typename T>
     void
     process10(T account_t::*)
     {
-        std::cout << "T C::*" << '\n';
+        std::println("T C::*");
     }
 
     template <typename T>
     void
     process10(account_t T::*)
     {
-        std::cout << "C T::*" << '\n';
+        std::println("C T::*");
     }
 
     template <typename T, typename U>
     void
     process10(T U::*)
     {
-        std::cout << "T U::*" << '\n';
+        std::println("T U::*");
     }
 
     template <typename T>
@@ -525,35 +525,35 @@ namespace n412
     void
     process11(wrapper<T>)
     {
-        std::cout << "C<T>" << '\n';
+        std::println("C<T>");
     }
 
     template <size_t i>
     void
     process12(int_array<i>)
     {
-        std::cout << "C<i>" << '\n';
+        std::println("C<i>");
     }
 
     template <template <typename> class TT, typename T>
     void
     process13(TT<T>)
     {
-        std::cout << "TT<T>" << '\n';
+        std::println("TT<T>");
     }
 
     template <template <size_t> typename TT, size_t i>
     void
     process14(TT<i>)
     {
-        std::cout << "TT<i>" << '\n';
+        std::println("TT<i>");
     }
 
     template <template <typename> typename TT>
     void
     process15(TT<account_t>)
     {
-        std::cout << "TT<C>" << '\n';
+        std::println("TT<C>");
     }
 } // namespace n412
 
@@ -564,8 +564,8 @@ namespace n413
     process(double arr [[maybe_unused]][i])
     {
         using index_type [[maybe_unused]] = T;
-        std::cout << "processing " << i << " doubles" << '\n';
-        std::cout << "index type is " << typeid(T).name() << '\n';
+        std::println("processing {} doubles", i);
+        std::println("index type is {}", typeid(T).name());
     }
 } // namespace n413
 
@@ -575,7 +575,7 @@ namespace n414
     void
     process(T a = 0, T b = 42)
     {
-        std::cout << a << "," << b << '\n';
+        std::println("{}, {}", a, b);
     }
 } // namespace n414
 
@@ -592,29 +592,29 @@ namespace n415
     void
     alpha(T, int)
     {
-        std::cout << "alpha(T,int)" << '\n';
+        std::println("alpha(T,int)");
     }
 
     void
     beta(int, int)
     {
-        std::cout << "beta(int,int)" << '\n';
+        std::println("beta(int,int)");
     }
     void
     beta(short, int)
     {
-        std::cout << "beta(short,int)" << '\n';
+        std::println("beta(short,int)");
     }
 
     void
     gamma(short, int, long long)
     {
-        std::cout << "gamma(short,int,long long)" << '\n';
+        std::println("gamma(short,int,long long)");
     }
     void
     gamma(double, int)
     {
-        std::cout << "gamma(double,int)" << '\n';
+        std::println("gamma(double,int)");
     }
 } // namespace n415
 
@@ -624,28 +624,28 @@ namespace n416
     void
     process1(int a [[maybe_unused]][Size])
     {
-        std::cout << "process(int[Size])" << '\n';
+        std::println("process(int[Size])");
     }
 
     template <size_t Size>
     void
     process2(int a [[maybe_unused]][5][Size])
     {
-        std::cout << "process(int[5][Size])" << '\n';
+        std::println("process(int[5][Size])");
     }
 
     template <size_t Size>
     void
     process3(int (&a [[maybe_unused]])[Size])
     {
-        std::cout << "process(int[Size]&)" << '\n';
+        std::println("process(int[Size]&)");
     }
 
     template <size_t Size>
     void
     process4(int (*a [[maybe_unused]])[Size])
     {
-        std::cout << "process(int[Size]*)" << '\n';
+        std::println("process(int[Size]*)");
     }
 } // namespace n416
 
@@ -661,7 +661,7 @@ namespace n417
     void
     process(ncube<N - 1> cube)
     {
-        std::cout << cube.dimensions << '\n';
+        std::println("{}", cube.dimensions);
     }
 } // namespace n417
 
@@ -735,25 +735,25 @@ namespace n421
     void
     f(foo &v [[maybe_unused]])
     {
-        std::cout << "f(foo&)\n";
+        std::println("f(foo&)");
     }
 
     void
     g(foo &v [[maybe_unused]])
     {
-        std::cout << "g(foo&)\n";
+        std::println("g(foo&)");
     }
 
     void
     g(foo &&v [[maybe_unused]])
     {
-        std::cout << "g(foo&&)\n";
+        std::println("g(foo&&)");
     }
 
     void
     h(foo &&v [[maybe_unused]])
     {
-        std::cout << "h(foo&&)\n";
+        std::println("h(foo&&)");
     }
 } // namespace n421
 
@@ -767,13 +767,13 @@ namespace n422
     void
     g(foo &v [[maybe_unused]])
     {
-        std::cout << "g(foo&)\n";
+        std::println("g(foo&)");
     }
 
     void
     g(foo &&v [[maybe_unused]])
     {
-        std::cout << "g(foo&&)\n";
+        std::println("g(foo&&)");
     }
 
     void
@@ -799,13 +799,13 @@ namespace n423
     void
     g(foo &v [[maybe_unused]])
     {
-        std::cout << "g(foo&)\n";
+        std::println("g(foo&)");
     }
 
     void
     g(foo &&v [[maybe_unused]])
     {
-        std::cout << "g(foo&&)\n";
+        std::println("g(foo&&)");
     }
 
     void
@@ -827,21 +827,21 @@ namespace n424
     void
     f(T &&arg [[maybe_unused]]) // forwarding reference
     {
-        std::cout << "f(T&&)\n";
+        std::println("f(T&&)");
     }
 
     template <typename T>
     void
     f(T const &&arg [[maybe_unused]]) // rvalue reference
     {
-        std::cout << "f(T const&&)\n";
+        std::println("f(T const&&)");
     }
 
     template <typename T>
     void
     f(std::vector<T> &&arg [[maybe_unused]]) // rvalue reference
     {
-        std::cout << "f(vector<T>&&)\n";
+        std::println("f(vector<T>&&)");
     }
 
     template <typename T>
@@ -850,7 +850,7 @@ namespace n424
         void
         f(T &&arg [[maybe_unused]]) // rvalue reference
         {
-            std::cout << "S.f(T&&)\n";
+            std::println("S.f(T&&)");
         }
     };
 } // namespace n424
@@ -865,13 +865,13 @@ namespace n425
     void
     g(foo &v [[maybe_unused]])
     {
-        std::cout << "g(foo&)\n";
+        std::println("g(foo&)");
     }
 
     void
     g(foo &&v [[maybe_unused]])
     {
-        std::cout << "g(foo&&)\n";
+        std::println("g(foo&&)");
     }
 
     template <typename T>
@@ -899,13 +899,13 @@ namespace n426
     void
     g(foo &v [[maybe_unused]])
     {
-        std::cout << "g(foo&)\n";
+        std::println("g(foo&)");
     }
 
     void
     g(foo &&v [[maybe_unused]])
     {
-        std::cout << "g(foo&&)\n";
+        std::println("g(foo&&)");
     }
 
     template <typename T>
@@ -1094,7 +1094,7 @@ namespace n438
     void
     print(wrapper const &w)
     {
-        std::cout << w.value << '\n';
+        std::println("{}", w.value);
     }
 } // namespace n438
 
@@ -1120,7 +1120,7 @@ namespace n439
     void
     print(wrapper const &w)
     {
-        std::cout << w.value << '\n';
+        std::println("{}", w.value);
     }
 
     template <typename T>
@@ -1129,7 +1129,7 @@ namespace n439
         void
         operator()(wrapper const &w)
         {
-            std::cout << w.value << '\n';
+            std::println("{}", w.value);
         }
     };
 } // namespace n439
@@ -1161,14 +1161,14 @@ namespace n440
     void
     print(wrapper const &w [[maybe_unused]])
     {
-        // std::cout << w.value << '\n'; // error
+        // std::println("{}", w.value << '\n'; // error
     }
 
     template <>
     void
     print<int>(wrapper const &w)
     {
-        std::cout << w.value << '\n';
+        std::println("{}", w.value);
     }
 
     template <typename T>
@@ -1177,7 +1177,7 @@ namespace n440
         void
         operator()(wrapper const &w [[maybe_unused]])
         {
-            // std::cout << w.value << '\n'; // error
+            // std::println("{}", w.value << '\n'; // error
         }
     };
 
@@ -1187,7 +1187,7 @@ namespace n440
         void
         operator()(wrapper const &w)
         {
-            std::cout << w.value << '\n';
+            std::println("{}", w.value);
         }
     };
 } // namespace n440
@@ -1210,13 +1210,13 @@ namespace n441
     void
     print(wrapper<int> const &w)
     {
-        std::cout << w.value << '\n';
+        std::println("{}", w.value);
     }
 
     void
     print(wrapper<char> const &w [[maybe_unused]])
     {
-        // std::cout << w.value << '\n'; // error
+        // std::println("{}", w.value << '\n'; // error
     }
 } // namespace n441
 
@@ -1243,14 +1243,14 @@ namespace n442
     void
     print(wrapper<T> const &w [[maybe_unused]])
     {
-        // std::cout << w.value << '\n'; // error
+        // std::println("{}", w.value << '\n'; // error
     }
 
     template <>
     void
     print(wrapper<int> const &w [[maybe_unused]])
     {
-        // std::cout << w.value << '\n';
+        // std::println("{}", w.value << '\n';
     }
 
     template <typename T>
@@ -1259,7 +1259,7 @@ namespace n442
         void
         operator()(wrapper<T> const &w [[maybe_unused]])
         {
-            // std::cout << w.value << '\n'; // error
+            // std::println("{}", w.value << '\n'; // error
         }
     };
 
@@ -1269,7 +1269,7 @@ namespace n442
         void
         operator()(wrapper<int> const &w)
         {
-            std::cout << w.value << '\n';
+            std::println("{}", w.value);
         }
     };
 } // namespace n442
@@ -1300,7 +1300,7 @@ namespace n443
     void
     print(wrapper<T> const &w)
     {
-        std::cout << w.value << '\n';
+        std::println("{}", w.value);
     }
 
     template <typename T>
@@ -1309,7 +1309,7 @@ namespace n443
         void
         operator()(wrapper<T> const &w)
         {
-            std::cout << w.value << '\n';
+            std::println("{}", w.value);
         }
     };
 } // namespace n443
@@ -1337,7 +1337,7 @@ namespace n444
     void
     print(wrapper<T> const &w)
     {
-        std::cout << w.value << '\n';
+        std::println("{}", w.value);
     }
 
     template <typename T>
@@ -1346,7 +1346,7 @@ namespace n444
         void
         operator()(wrapper<T> const &w)
         {
-            std::cout << w.value << '\n';
+            std::println("{}", w.value);
         }
     };
 } // namespace n444
@@ -1372,7 +1372,7 @@ namespace n445
         {
             connection<executor> c("localhost", 1234);
 
-            std::cout << c.ConnectionString << '\n';
+            std::println("{}", c.ConnectionString);
         }
     };
 } // namespace n445
@@ -1416,654 +1416,705 @@ int
 main()
 {
     {
+        std::println("\n====================== using namespace n401 =============================");
         using namespace n401;
 
         parser<int> p; // [6] template instantiation
         p.parse();
     }
 
-    {
-        using namespace n402;
-
-        handler<int>         h; // [5] template instantiation
-        parser<handler<int>> p; // [6] template instantiation
-        p.parse(h);
-    }
-
-    {
-        using namespace n403;
-
-        parser<int> p;
-        p.parse();
-    }
-
-    {
-        using namespace n404;
-
-        parser<int> p1;
-        p1.parse();
-
-        parser<double> p2;
-        p2.parse();
-    }
-
-    {
-        using namespace n405;
-
-        parser<int> p;
-        p.parse();
-    }
-
-    {
-        using namespace n406;
-
-        parser<int> p;
-        p.parse();
-    }
-
-    {
-        using namespace n407;
-
-        [[maybe_unused]]
-        parser<int> p;
-    }
-
-    {
-        using namespace n408;
-
-        std::cout << factorial<0>::value << '\n';
-        std::cout << factorial<1>::value << '\n';
-        std::cout << factorial<2>::value << '\n';
-        std::cout << factorial<3>::value << '\n';
-        std::cout << factorial<4>::value << '\n';
-        std::cout << factorial<5>::value << '\n';
-        std::cout << factorial<12>::value << '\n';
-    }
-
-    {
-        using namespace n409;
-
-        std::cout << factorial<0> << '\n';
-        std::cout << factorial<1> << '\n';
-        std::cout << factorial<2> << '\n';
-        std::cout << factorial<3> << '\n';
-        std::cout << factorial<4> << '\n';
-        std::cout << factorial<5> << '\n';
-        std::cout << factorial<12> << '\n';
-    }
-
-    {
-        using namespace n409b;
-
-        std::cout << factorial<1>() << '\n';
-        std::cout << factorial<2>() << '\n';
-        std::cout << factorial<3>() << '\n';
-        std::cout << factorial<4>() << '\n';
-        std::cout << factorial<5>() << '\n';
-    }
-
-    {
-        using namespace n410;
-
-        std::cout << factorial(0) << '\n';
-        std::cout << factorial(1) << '\n';
-        std::cout << factorial(2) << '\n';
-        std::cout << factorial(3) << '\n';
-        std::cout << factorial(4) << '\n';
-        std::cout << factorial(5) << '\n';
-
-        std::cout << typeid(manyfold_wrapper<0>::value_type).name() << '\n';
-        std::cout << typeid(manyfold_wrapper<1>::value_type).name() << '\n';
-        std::cout << typeid(manyfold_wrapper<2>::value_type).name() << '\n';
-        std::cout << typeid(manyfold_wrapper<3>::value_type).name() << '\n';
-    }
-
-    {
-        using namespace n411;
-
-        std::cout << sum<256> << '\n';
-    }
-
-    {
-        using namespace n412;
-
-        process(42);        // T is int
-        process<int>(42);   // T is int, redundant
-        process<short>(42); // T is short
-    }
-
-    {
-        using namespace n412;
-
-        account_t ac{42};
-        process01(ac); // T
-        process02(ac); // T const
-        // process03(ac);   // T volatile
-
-        process04(&ac);  // T*
-        process04(ac);   // T&
-        process05(ac);   // T&&
-
-        account_t arr1[5]{};
-        process06(arr1); // T[5]
-
-        process06(&ac);  // T[5]
-
-        account_t arr2[5][3];
-        process07(arr2); // C[5][n]
-
-        account_t (*pf1)()    = nullptr;
-        account_t (*pf2)(int) = nullptr;
-        double (*pf3)(int)    = nullptr;
-        process08(pf1); // T (*)()
-        process08(pf2); // C (*)(T)
-        process08(pf3); // T (*)(U)
-
-        int (account_t::*pfm1)()                 = &account_t::get_number;
-        int (account_t::*pfm2)(std::string)      = &account_t::from_string;
-        int (balance_t::*pfm3)()                 = &balance_t::get_account_number;
-        bool (balance_t::*pfm4)(double)          = &balance_t::can_withdraw;
-        account_t (balance_t::*pfm5)()           = &balance_t::get_account;
-        transaction_t (balance_t::*pfm6)(double) = &balance_t::withdraw;
-        balance_report_t (balance_t::*pfm7)(int) = &balance_t::make_report;
-
-        process09(pfm1); // T (C::*)()
-        process09(pfm2); // T (C::*)(U)
-        process09(pfm3); // T (U::*)()
-        process09(pfm4); // T (U::*)(V)
-        process09(pfm5); // C (T::*)()
-        process09(pfm6); // C (T::*)(U)
-        process09(pfm7); // D (C::*)(T)
-
-        // process10(&account_t::number);   // T C::*
-        process10(&balance_t::account); // C T::*
-        process10(&balance_t::amount);  // T U::*
-
-        wrapper<double> wd{42.0};
-        process11(wd);                  // C<T>
-
-        int_array<5> ia{};
-        process12(ia);                  // C<i>
-
-        process13(wd);                  // TT<U>
-        process14(ia);                  // TT<i>
-
-        wrapper<account_t> wa{{42}};
-        process15(wa);                  // TT<C>
-    }
-
-    {
-        using namespace n413;
-
-        double arr[5]{};
-        // process(arr);           // error
-        process<int, 5>(arr); // OK
-    }
-
-    {
-        using namespace n414;
-        // process();        // [1] error
-        process<int>(); // [2] OK
-        process(10);    // [3] OK
-    }
-
-    {
-        using namespace n415;
-
-        // invoke(&alpha);
-        // invoke(&beta);
-        invoke(&gamma);
-    }
-
-    {
-        using namespace n416;
-
-        int arr1[10];
-        int arr2[5][10];
-
-        // process1(arr1);   // error
-        process2(arr2);  // OK
-        process3(arr1);  // OK
-        process4(&arr1); // OK
-    }
-
-    {
-        using namespace n417;
-
-        ncube<5> cube;
-        // process(cube); // error
-        process<6>(cube); // OK
-    }
-
-    {
-        using namespace n418;
-
-        std::pair<int, double> p [[maybe_unused]]{42, 42.0};
-        std::vector<int>       v{1, 2, 3, 4, 5};
-        wrapper<int>           w [[maybe_unused]]{42};
-    }
-
-    {
-        using namespace n418;
-
-        auto p [[maybe_unused]] = std::make_pair(42, 42.0);
-        auto v [[maybe_unused]] = make_vector(1, 2, 3, 4, 5);
-        auto w [[maybe_unused]] = make_wrapper(42);
-    }
-
-    {
-        using namespace n418;
-
-        std::pair   p [[maybe_unused]]{42, 42.0};
-        std::vector v{1, 2, 3, 4, 5};
-        wrapper     w [[maybe_unused]]{42};
-    }
-
-    {
-        using namespace n419;
-
-        auto p [[maybe_unused]] = new point_t(1, 2);
-
-        std::mutex mt;
-        auto       l = std::lock_guard(mt);
-
-        // stream_t<42> s; // C++20
-    }
-
-    {
-        // without custom deduction guides
-        std::pair p1{1, "one"};     // std::pair<int, const char*>
-        std::pair p2{"two", 2};     // std::pair<const char*, int>
-        std::pair p3{"3", "three"}; // std::pair<const char*, const char*>
-    }
-
-    {
-        // with custom deduction guides
-        std::pair p1{1, "one"};     // std::pair<int, std::string>
-        std::pair p2{"two", 2};     // std::pair<std::string, int>
-        std::pair p3{"3", "three"}; // std::pair<std::string, std::string>
-    }
-
-    {
-        using namespace n420;
-
-        int     arr[] = {1, 2, 3, 4, 5};
-        range_t r(std::begin(arr), std::end(arr));
-    }
-
-    {
-        std::pair<int, std::string> p1{1, "one"}; // [1] OK
-        std::pair                   p2{2, "two"}; // [2] OK
-                                                  // std::pair<> p3{ 3, "three" };                // [3] error
-        // std::pair<int> p4{ 4, "four" };              // [4] error
-    }
-
-    {
-        std::vector v1{42};     // vector<int>
-        std::vector v2{v1, v1}; // vector<vector<int>>
-        std::vector v3{v1};     // vector<int>
-
-        std::cout << typeid(decltype(v1)).name() << '\n';
-        std::cout << typeid(decltype(v2)).name() << '\n';
-        std::cout << typeid(decltype(v3)).name() << '\n';
-    }
-
-    {
-        using namespace n421;
-
-        foo  x  = {42}; // x is l-value
-        foo &rx = x;    // rx is l-value
-
-        f(x);           // f(foo&)
-        f(rx);          // f(foo&)
-                        // f(foo{ 42 });     // error, a non-const reference may only be bound to an lvalue
-    }
-
-    {
-        using namespace n421;
-
-        foo  x  = {42}; // x is l-value
-        foo &rx = x;    // rx is l-value
-
-        g(x);           // g(foo&)
-        g(rx);          // g(foo&)
-        g(foo{42});     // g(foo&&)
-    }
-
-    {
-        using namespace n421;
-
-        foo  x                   = {42}; // x is l-value
-        foo &rx [[maybe_unused]] = x;    // rx is l-value
-
-        // h(x);             // error, cannot bind an lvalue to an rvalue reference
-        // h(rx);         // error
-        h(foo{42});      // h(foo&&)
-        h(std::move(x)); // h(foo&7)
-    }
-
-    {
-        using namespace n422;
-
-        foo x{42};
-
-        h(x);       // g(foo&)
-        h(foo{42}); // g(foo&)
-    }
-
-    {
-        using namespace n423;
-
-        foo x{42};
-
-        h(x);       // g(foo&)
-        h(foo{42}); // g(foo&&)
-    }
-
-    {
-        using namespace n424;
-
-        int x = 42;
-        f(x);                    // f(T&&)
-        f(42);                   // f(T&&)
-
-        int const cx = 100;
-        f(cx);                   // f(T&&)
-        f(std::move(cx));        // f(T const&&)
-
-        std::vector<int> v{42};
-        f(v);                    // f(T&&)
-        f(std::vector<int>{42}); // f(vector<T>&&)
-
-        S<int> s;
-        // s.f(x);                 // error
-        s.f(42); // S.f(T&&)
-    }
-
-    {
-        using lrefint                 = int &;
-        using rrefint                 = int &&;
-        int       x                   = 42;
-        lrefint  &r1 [[maybe_unused]] = x; // type of r1 is int&
-        lrefint &&r2 [[maybe_unused]] = x; // type of r2 is int&
-        rrefint  &r3 [[maybe_unused]] = x; // type of r3 is int&
-        rrefint &&r4 [[maybe_unused]] = 1; // type of r4 is int&&
-    }
-
-    {
-        int    x                   = 42;
-        auto &&rx [[maybe_unused]] = x;  // int&
-        auto &&rc [[maybe_unused]] = 42; // int&&
-        // auto const&& rcx = x;   // error
-
-        std::vector<int> v{42};
-        auto           &&rv [[maybe_unused]] = v[0]; // int&
-    }
-
-    {
-        using namespace n425;
-
-        foo x{42};
-
-        h(x);       // g(foo&)
-        h(foo{42}); // g(foo&)
-    }
-
-    {
-        using namespace n426;
-
-        foo x{42};
-
-        h(x);       // g(foo&)
-        h(foo{42}); // g(foo&&)
-    }
-
-    {
-        using namespace n428;
-
-        int          a  = 42;
-        int         &ra = a;
-        const double d  = 42.99;
-        long         arr[10];
-        long         l = 0;
-        char        *p = nullptr;
-        char         c = 'x';
-        wrapper      w1{1};
-        wrapper     *w2 = new wrapper{2};
-
-        [[maybe_unused]] decltype(a)   e1;     // R1, int
-        [[maybe_unused]] decltype(ra)  e2 = a; // R1, int&
-        [[maybe_unused]] decltype(f)   e3;     // R1, int()
-        [[maybe_unused]] decltype(f()) e4;     // R2, int
-        //[[maybe_unused]] decltype(g) e5;           // R1, error
-        [[maybe_unused]] decltype(g(1))      e6;           // R2, int
-        [[maybe_unused]] decltype(&f)        e7 = nullptr; // R4, int(*)()
-        [[maybe_unused]] decltype(d)         e8 = 1;       // R1, const double
-        [[maybe_unused]] decltype(arr)       e9;           // R1, long[10]
-        [[maybe_unused]] decltype(arr[1])    e10 = l;      // R3, long&
-        [[maybe_unused]] decltype(w1.val)    e11;          // R1, int
-        [[maybe_unused]] decltype(w1.get())  e12;          // R1, int
-        [[maybe_unused]] decltype(w2->val)   e13;          // R1, int
-        [[maybe_unused]] decltype(w2->get()) e14;          // R1, int
-        [[maybe_unused]] decltype(42)        e15 = 1;      // R4, int
-        [[maybe_unused]] decltype(1 + 2)     e16;          // R4, int
-        [[maybe_unused]] decltype(a + 1)     e17;          // R4, int
-        // [[maybe_unused]] decltype(a = 0)     e18 = a;       // R3, int&
-        [[maybe_unused]] decltype(p)    e19 = nullptr; // R1, char*
-        [[maybe_unused]] decltype(*p)   e20 = c;       // R3, char&
-        [[maybe_unused]] decltype(p[0]) e21 = c;       // R3, char&
-
-        delete w2;
-    }
-
-    {
-        int a = 42;
-        // decltype(a = 1) e [[maybe_unused]] = a;
-        std::cout << a << '\n';
-    }
-
-    {
-        using namespace n412;
-        [[maybe_unused]] decltype(wrapper<double>::data) e1; // double
-
-        int a [[maybe_unused]] = 42;
-
-        // [[maybe_unused]] decltype(wrapper<char>::data, a) e2; // int&
-    }
-
-    {
-        using namespace n429;
-
-        foo           f;
-        foo const     cf;
-        volatile foo *pf = &f;
-
-        [[maybe_unused]] decltype(f.a) e1 = 0;      // int
-        [[maybe_unused]] decltype(f.b) e2 = 0;      // int volatile
-        [[maybe_unused]] decltype(f.c) e3 = 0;      // int const
-
-        [[maybe_unused]] decltype(cf.a) e4 = 0;     // int
-        [[maybe_unused]] decltype(cf.b) e5 = 0;     // int volatile
-        [[maybe_unused]] decltype(cf.c) e6 = 0;     // int const
-
-        [[maybe_unused]] decltype(pf->a) e7 = 0;    // int
-        [[maybe_unused]] decltype(pf->b) e8 = 0;    // int volatile
-        [[maybe_unused]] decltype(pf->c) e9 = 0;    // int const
-
-        [[maybe_unused]] decltype(foo{}.a) e10 = 0; // int
-        [[maybe_unused]] decltype(foo{}.b) e11 = 0; // int volatile
-        [[maybe_unused]] decltype(foo{}.c) e12 = 0; // int const
-    }
-
-    {
-        using namespace n429;
-
-        foo           f;
-        foo const     cf;
-        volatile foo *pf = &f;
-
-        int x          = 1;
-        int volatile y = 2;
-        int const z    = 3;
-
-        [[maybe_unused]] decltype((f.a)) e1 = x;      // int&
-        [[maybe_unused]] decltype((f.b)) e2 = y;      // int volatile&
-        [[maybe_unused]] decltype((f.c)) e3 = z;      // int const&
-
-        [[maybe_unused]] decltype((cf.a)) e4 = x;     // int const&
-        [[maybe_unused]] decltype((cf.b)) e5 = y;     // int const volatile&
-        [[maybe_unused]] decltype((cf.c)) e6 = z;     // int const&
-
-        [[maybe_unused]] decltype((pf->a)) e7 = x;    // int volatile&
-        [[maybe_unused]] decltype((pf->b)) e8 = y;    // int volatile&
-        [[maybe_unused]] decltype((pf->c)) e9 = z;    // int const volatile&
-
-        [[maybe_unused]] decltype((foo{}.a)) e10 = 0; // int&&
-        [[maybe_unused]] decltype((foo{}.b)) e11 = 0; // int volatile&&
-        [[maybe_unused]] decltype((foo{}.c)) e12 = 0; // int const&&
-    }
-
-    {
-        int       a    = 0;
-        int      &ra   = a;
-        int const c    = 42;
-        int volatile d = 99;
-
-        [[maybe_unused]] decltype(ra)     &e1    = a; // int&
-        [[maybe_unused]] decltype(c) const e2    = 1; // int const
-        [[maybe_unused]] decltype(d) volatile e3 = 1; // int volatile
-    }
-
-    {
-        using namespace n430;
-        auto m1 [[maybe_unused]] = minimum(1, 5); // OK
-        auto m2 [[maybe_unused]] =
-            minimum(18.49, 9.99);                 // OK
-                                  // auto m3 = minimum(1, 9.99);      // error, arguments of different type
-    }
-
-    {
-        using namespace n431;
-        auto m1 [[maybe_unused]] = minimum(1, 5);        // OK
-        auto m2 [[maybe_unused]] = minimum(18.49, 9.99); // OK
-        auto m3 [[maybe_unused]] = minimum(1, 9.99);     // OK
-    }
-
-    {
-        using namespace n432;
-        auto m1 [[maybe_unused]] = minimum(1, 5);        // OK
-        auto m2 [[maybe_unused]] = minimum(18.49, 9.99); // OK
-        auto m3 [[maybe_unused]] = minimum(1, 9.99);     // OK
-    }
-
-    {
-        using namespace n433;
-        auto m1 [[maybe_unused]] = minimum(1, 5);        // OK
-        auto m2 [[maybe_unused]] = minimum(18.49, 9.99); // OK
-        auto m3 [[maybe_unused]] = minimum(1, 9.99);     // OK
-    }
-
-    {
-        using namespace n434;
-
-        int a = 42;
-
-        decltype(func(a))        r1 [[maybe_unused]] = func(a);        // int const&
-        decltype(func_caller(a)) r2 [[maybe_unused]] = func_caller(a); // int
-    }
-
-    {
-        using namespace n435;
-
-        int a = 42;
-
-        decltype(func(a))        r1 [[maybe_unused]] = func(a);        // int const&
-        decltype(func_caller(a)) r2 [[maybe_unused]] = func_caller(a); // int const&
-    }
-
-    {
-        using namespace n436;
-
-        static_assert(std::is_same_v<double, composition<int, double>::result_type>);
-
-        // error, no appropriate default constructor available
-        /*
-        static_assert(
-           std::is_same_v<
-           wrapper,
-           composition<int, wrapper>::result_type>);
-           */
-    }
-
-    {
-        using namespace n437;
-
-        static_assert(std::is_same_v<double, composition<int, double>::result_type>);
-
-        static_assert(std::is_same_v<wrapper, composition<int, wrapper>::result_type>);
-    }
-
-    {
-        using namespace n438;
-
-        wrapper w{42};
-        print(w);
-    }
-
-    {
-        using namespace n439;
-
-        wrapper w{42};
-        print<int>(w);
-        print<char>(w);
-        printer<int>()(w);
-        printer<double>()(w);
-    }
-
-    {
-        using namespace n440;
-
-        wrapper w{43};
-        print<int>(w);
-        print<char>(w);
-        printer<int>()(w);
-        printer<double>()(w);
-    }
-
-    {
-        using namespace n442;
-
-        wrapper w1{43};
-        print(w1);
-        printer<int>()(w1);
-
-        wrapper w2{'a'};
-        print(w2);
-        printer<char>()(w2);
-    }
-
-    {
-        using namespace n443;
-
-        wrapper w1{43};
-        print(w1);
-        printer<int>()(w1);
-
-        wrapper w2{'a'};
-        print(w2);
-        printer<char>()(w2);
-    }
-
-    {
-        using namespace n445;
-
-        executor e;
-        e.run();
-    }
-
-    {
-        using namespace n446;
-        dictionary<dictionary_traits> d;
-        d.add(1, "2");
-    }
+    // {
+    //     std::println("\n====================== using namespace n402 =============================");
+    //     using namespace n402;
+    //
+    //     handler<int>         h; // [5] template instantiation
+    //     parser<handler<int>> p; // [6] template instantiation
+    //     p.parse(h);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n403 =============================");
+    //     using namespace n403;
+    //
+    //     parser<int> p;
+    //     p.parse();
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n404 =============================");
+    //     using namespace n404;
+    //
+    //     parser<int> p1;
+    //     p1.parse();
+    //
+    //     parser<double> p2;
+    //     p2.parse();
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n405 =============================");
+    //     using namespace n405;
+    //
+    //     parser<int> p;
+    //     p.parse();
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n406 =============================");
+    //     using namespace n406;
+    //
+    //     parser<int> p;
+    //     p.parse();
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n407 =============================");
+    //     using namespace n407;
+    //
+    //     [[maybe_unused]]
+    //     parser<int> p;
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n408 =============================");
+    //     using namespace n408;
+    //
+    //     std::println("{}", factorial<0>::value);
+    //     std::println("{}", factorial<1>::value);
+    //     std::println("{}", factorial<2>::value);
+    //     std::println("{}", factorial<3>::value);
+    //     std::println("{}", factorial<4>::value);
+    //     std::println("{}", factorial<5>::value);
+    //     std::println("{}", factorial<12>::value);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n409 =============================");
+    //     using namespace n409;
+    //
+    //     std::println("{}", factorial<0>);
+    //     std::println("{}", factorial<1>);
+    //     std::println("{}", factorial<2>);
+    //     std::println("{}", factorial<3>);
+    //     std::println("{}", factorial<4>);
+    //     std::println("{}", factorial<5>);
+    //     std::println("{}", factorial<12>);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n409b ============================");
+    //     using namespace n409b;
+    //
+    //     std::println("{}", factorial<1>());
+    //     std::println("{}", factorial<2>());
+    //     std::println("{}", factorial<3>());
+    //     std::println("{}", factorial<4>());
+    //     std::println("{}", factorial<5>());
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n410 =============================");
+    //     using namespace n410;
+    //
+    //     std::println("{}", factorial(0));
+    //     std::println("{}", factorial(1));
+    //     std::println("{}", factorial(2));
+    //     std::println("{}", factorial(3));
+    //     std::println("{}", factorial(4));
+    //     std::println("{}", factorial(5));
+    //
+    //     std::println("{}", typeid(manyfold_wrapper<0>::value_type).name());
+    //     std::println("{}", typeid(manyfold_wrapper<1>::value_type).name());
+    //     std::println("{}", typeid(manyfold_wrapper<2>::value_type).name());
+    //     std::println("{}", typeid(manyfold_wrapper<3>::value_type).name());
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n411 =============================");
+    //     using namespace n411;
+    //
+    //     std::println("{}", sum<256>);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n412 =============================");
+    //     using namespace n412;
+    //
+    //     process(42);        // T is int
+    //     process<int>(42);   // T is int, redundant
+    //     process<short>(42); // T is short
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n412 =============================");
+    //     using namespace n412;
+    //
+    //     account_t ac{42};
+    //     process01(ac); // T
+    //     process02(ac); // T const
+    //     // process03(ac);   // T volatile
+    //
+    //     process04(&ac);  // T*
+    //     process04(ac);   // T&
+    //     process05(ac);   // T&&
+    //
+    //     account_t arr1[5]{};
+    //     process06(arr1); // T[5]
+    //
+    //     process06(&ac);  // T[5]
+    //
+    //     account_t arr2[5][3];
+    //     process07(arr2); // C[5][n]
+    //
+    //     account_t (*pf1)()    = nullptr;
+    //     account_t (*pf2)(int) = nullptr;
+    //     double (*pf3)(int)    = nullptr;
+    //     process08(pf1); // T (*)()
+    //     process08(pf2); // C (*)(T)
+    //     process08(pf3); // T (*)(U)
+    //
+    //     int (account_t::*pfm1)()                 = &account_t::get_number;
+    //     int (account_t::*pfm2)(std::string)      = &account_t::from_string;
+    //     int (balance_t::*pfm3)()                 = &balance_t::get_account_number;
+    //     bool (balance_t::*pfm4)(double)          = &balance_t::can_withdraw;
+    //     account_t (balance_t::*pfm5)()           = &balance_t::get_account;
+    //     transaction_t (balance_t::*pfm6)(double) = &balance_t::withdraw;
+    //     balance_report_t (balance_t::*pfm7)(int) = &balance_t::make_report;
+    //
+    //     process09(pfm1); // T (C::*)()
+    //     process09(pfm2); // T (C::*)(U)
+    //     process09(pfm3); // T (U::*)()
+    //     process09(pfm4); // T (U::*)(V)
+    //     process09(pfm5); // C (T::*)()
+    //     process09(pfm6); // C (T::*)(U)
+    //     process09(pfm7); // D (C::*)(T)
+    //
+    //     // process10(&account_t::number);   // T C::*
+    //     process10(&balance_t::account); // C T::*
+    //     process10(&balance_t::amount);  // T U::*
+    //
+    //     wrapper<double> wd{42.0};
+    //     process11(wd);                  // C<T>
+    //
+    //     int_array<5> ia{};
+    //     process12(ia);                  // C<i>
+    //
+    //     process13(wd);                  // TT<U>
+    //     process14(ia);                  // TT<i>
+    //
+    //     wrapper<account_t> wa{{42}};
+    //     process15(wa);                  // TT<C>
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n413 =============================");
+    //     using namespace n413;
+    //
+    //     double arr[5]{};
+    //     // process(arr);           // error
+    //     process<int, 5>(arr); // OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n414 =============================");
+    //     using namespace n414;
+    //     // process();        // [1] error
+    //     process<int>(); // [2] OK
+    //     process(10);    // [3] OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n415 =============================");
+    //     using namespace n415;
+    //
+    //     // invoke(&alpha);
+    //     // invoke(&beta);
+    //     invoke(&gamma);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n416 =============================");
+    //     using namespace n416;
+    //
+    //     int arr1[10];
+    //     int arr2[5][10];
+    //
+    //     // process1(arr1);   // error
+    //     process2(arr2);  // OK
+    //     process3(arr1);  // OK
+    //     process4(&arr1); // OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n417 =============================");
+    //     using namespace n417;
+    //
+    //     ncube<5> cube;
+    //     // process(cube); // error
+    //     process<6>(cube); // OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n418 =============================");
+    //     using namespace n418;
+    //
+    //     std::pair<int, double> p [[maybe_unused]]{42, 42.0};
+    //     std::vector<int>       v{1, 2, 3, 4, 5};
+    //     wrapper<int>           w [[maybe_unused]]{42};
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n418 =============================");
+    //     using namespace n418;
+    //
+    //     auto p [[maybe_unused]] = std::make_pair(42, 42.0);
+    //     auto v [[maybe_unused]] = make_vector(1, 2, 3, 4, 5);
+    //     auto w [[maybe_unused]] = make_wrapper(42);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n418 =============================");
+    //     using namespace n418;
+    //
+    //     std::pair   p [[maybe_unused]]{42, 42.0};
+    //     std::vector v{1, 2, 3, 4, 5};
+    //     wrapper     w [[maybe_unused]]{42};
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n419 =============================");
+    //     using namespace n419;
+    //
+    //     auto p [[maybe_unused]] = new point_t(1, 2);
+    //
+    //     std::mutex mt;
+    //     auto       l = std::lock_guard(mt);
+    //
+    //     // stream_t<42> s; // C++20
+    // }
+
+    // {
+    //     // without custom deduction guides
+    //     std::pair p1{1, "one"};     // std::pair<int, const char*>
+    //     std::pair p2{"two", 2};     // std::pair<const char*, int>
+    //     std::pair p3{"3", "three"}; // std::pair<const char*, const char*>
+    // }
+
+    // {
+    //     // with custom deduction guides
+    //     std::pair p1{1, "one"};     // std::pair<int, std::string>
+    //     std::pair p2{"two", 2};     // std::pair<std::string, int>
+    //     std::pair p3{"3", "three"}; // std::pair<std::string, std::string>
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n420 =============================");
+    //     using namespace n420;
+    //
+    //     int     arr[] = {1, 2, 3, 4, 5};
+    //     range_t r(std::begin(arr), std::end(arr));
+    // }
+
+    // {
+    //     std::pair<int, std::string> p1{1, "one"}; // [1] OK
+    //     std::pair                   p2{2, "two"}; // [2] OK
+    //                                               // std::pair<> p3{ 3, "three" };                // [3] error
+    //     // std::pair<int> p4{ 4, "four" };              // [4] error
+    // }
+
+    // {
+    //     std::vector v1{42};     // vector<int>
+    //     std::vector v2{v1, v1}; // vector<vector<int>>
+    //     std::vector v3{v1};     // vector<int>
+    //
+    //     std::println("{}", typeid(decltype(v1)).name());
+    //     std::println("{}", typeid(decltype(v2)).name());
+    //     std::println("{}", typeid(decltype(v3)).name());
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n421 =============================");
+    //     using namespace n421;
+    //
+    //     foo  x  = {42}; // x is l-value
+    //     foo &rx = x;    // rx is l-value
+    //
+    //     f(x);           // f(foo&)
+    //     f(rx);          // f(foo&)
+    //                     // f(foo{ 42 });     // error, a non-const reference may only be bound to an lvalue
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n421 =============================");
+    //     using namespace n421;
+    //
+    //     foo  x  = {42}; // x is l-value
+    //     foo &rx = x;    // rx is l-value
+    //
+    //     g(x);           // g(foo&)
+    //     g(rx);          // g(foo&)
+    //     g(foo{42});     // g(foo&&)
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n421 =============================");
+    //     using namespace n421;
+    //
+    //     foo  x                   = {42}; // x is l-value
+    //     foo &rx [[maybe_unused]] = x;    // rx is l-value
+    //
+    //     // h(x);             // error, cannot bind an lvalue to an rvalue reference
+    //     // h(rx);         // error
+    //     h(foo{42});      // h(foo&&)
+    //     h(std::move(x)); // h(foo&7)
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n422 =============================");
+    //     using namespace n422;
+    //
+    //     foo x{42};
+    //
+    //     h(x);       // g(foo&)
+    //     h(foo{42}); // g(foo&)
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n423 =============================");
+    //     using namespace n423;
+    //
+    //     foo x{42};
+    //
+    //     h(x);       // g(foo&)
+    //     h(foo{42}); // g(foo&&)
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n424 =============================");
+    //     using namespace n424;
+    //
+    //     int x = 42;
+    //     f(x);                    // f(T&&)
+    //     f(42);                   // f(T&&)
+    //
+    //     int const cx = 100;
+    //     f(cx);                   // f(T&&)
+    //     f(std::move(cx));        // f(T const&&)
+    //
+    //     std::vector<int> v{42};
+    //     f(v);                    // f(T&&)
+    //     f(std::vector<int>{42}); // f(vector<T>&&)
+    //
+    //     S<int> s;
+    //     // s.f(x);                 // error
+    //     s.f(42); // S.f(T&&)
+    // }
+
+    // {
+    //     using lrefint                 = int &;
+    //     using rrefint                 = int &&;
+    //     int       x                   = 42;
+    //     lrefint  &r1 [[maybe_unused]] = x; // type of r1 is int&
+    //     lrefint &&r2 [[maybe_unused]] = x; // type of r2 is int&
+    //     rrefint  &r3 [[maybe_unused]] = x; // type of r3 is int&
+    //     rrefint &&r4 [[maybe_unused]] = 1; // type of r4 is int&&
+    // }
+
+    // {
+    //     int    x                   = 42;
+    //     auto &&rx [[maybe_unused]] = x;  // int&
+    //     auto &&rc [[maybe_unused]] = 42; // int&&
+    //     // auto const&& rcx = x;   // error
+    //
+    //     std::vector<int> v{42};
+    //     auto           &&rv [[maybe_unused]] = v[0]; // int&
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n425 =============================");
+    //     using namespace n425;
+    //
+    //     foo x{42};
+    //
+    //     h(x);       // g(foo&)
+    //     h(foo{42}); // g(foo&)
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n426 =============================");
+    //     using namespace n426;
+    //
+    //     foo x{42};
+    //
+    //     h(x);       // g(foo&)
+    //     h(foo{42}); // g(foo&&)
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n428 =============================");
+    //     using namespace n428;
+    //
+    //     int          a  = 42;
+    //     int         &ra = a;
+    //     const double d  = 42.99;
+    //     long         arr[10];
+    //     long         l = 0;
+    //     char        *p = nullptr;
+    //     char         c = 'x';
+    //     wrapper      w1{1};
+    //     wrapper     *w2 = new wrapper{2};
+    //
+    //     [[maybe_unused]] decltype(a)   e1;     // R1, int
+    //     [[maybe_unused]] decltype(ra)  e2 = a; // R1, int&
+    //     [[maybe_unused]] decltype(f)   e3;     // R1, int()
+    //     [[maybe_unused]] decltype(f()) e4;     // R2, int
+    //     //[[maybe_unused]] decltype(g) e5;           // R1, error
+    //     [[maybe_unused]] decltype(g(1))      e6;           // R2, int
+    //     [[maybe_unused]] decltype(&f)        e7 = nullptr; // R4, int(*)()
+    //     [[maybe_unused]] decltype(d)         e8 = 1;       // R1, const double
+    //     [[maybe_unused]] decltype(arr)       e9;           // R1, long[10]
+    //     [[maybe_unused]] decltype(arr[1])    e10 = l;      // R3, long&
+    //     [[maybe_unused]] decltype(w1.val)    e11;          // R1, int
+    //     [[maybe_unused]] decltype(w1.get())  e12;          // R1, int
+    //     [[maybe_unused]] decltype(w2->val)   e13;          // R1, int
+    //     [[maybe_unused]] decltype(w2->get()) e14;          // R1, int
+    //     [[maybe_unused]] decltype(42)        e15 = 1;      // R4, int
+    //     [[maybe_unused]] decltype(1 + 2)     e16;          // R4, int
+    //     [[maybe_unused]] decltype(a + 1)     e17;          // R4, int
+    //     // [[maybe_unused]] decltype(a = 0)     e18 = a;       // R3, int&
+    //     [[maybe_unused]] decltype(p)    e19 = nullptr; // R1, char*
+    //     [[maybe_unused]] decltype(*p)   e20 = c;       // R3, char&
+    //     [[maybe_unused]] decltype(p[0]) e21 = c;       // R3, char&
+    //
+    //     delete w2;
+    // }
+
+    // {
+    //     int a = 42;
+    //     // decltype(a = 1) e [[maybe_unused]] = a;
+    //     std::println("{}", a);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n412 =============================");
+    //     using namespace n412;
+    //     [[maybe_unused]] decltype(wrapper<double>::data) e1; // double
+    //
+    //     int a [[maybe_unused]] = 42;
+    //
+    //     // [[maybe_unused]] decltype(wrapper<char>::data, a) e2; // int&
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n429 =============================");
+    //     using namespace n429;
+    //
+    //     foo           f;
+    //     foo const     cf;
+    //     volatile foo *pf = &f;
+    //
+    //     [[maybe_unused]] decltype(f.a) e1 = 0;      // int
+    //     [[maybe_unused]] decltype(f.b) e2 = 0;      // int volatile
+    //     [[maybe_unused]] decltype(f.c) e3 = 0;      // int const
+    //
+    //     [[maybe_unused]] decltype(cf.a) e4 = 0;     // int
+    //     [[maybe_unused]] decltype(cf.b) e5 = 0;     // int volatile
+    //     [[maybe_unused]] decltype(cf.c) e6 = 0;     // int const
+    //
+    //     [[maybe_unused]] decltype(pf->a) e7 = 0;    // int
+    //     [[maybe_unused]] decltype(pf->b) e8 = 0;    // int volatile
+    //     [[maybe_unused]] decltype(pf->c) e9 = 0;    // int const
+    //
+    //     [[maybe_unused]] decltype(foo{}.a) e10 = 0; // int
+    //     [[maybe_unused]] decltype(foo{}.b) e11 = 0; // int volatile
+    //     [[maybe_unused]] decltype(foo{}.c) e12 = 0; // int const
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n429 =============================");
+    //     using namespace n429;
+    //
+    //     foo           f;
+    //     foo const     cf;
+    //     volatile foo *pf = &f;
+    //
+    //     int x          = 1;
+    //     int volatile y = 2;
+    //     int const z    = 3;
+    //
+    //     [[maybe_unused]] decltype((f.a)) e1 = x;      // int&
+    //     [[maybe_unused]] decltype((f.b)) e2 = y;      // int volatile&
+    //     [[maybe_unused]] decltype((f.c)) e3 = z;      // int const&
+    //
+    //     [[maybe_unused]] decltype((cf.a)) e4 = x;     // int const&
+    //     [[maybe_unused]] decltype((cf.b)) e5 = y;     // int const volatile&
+    //     [[maybe_unused]] decltype((cf.c)) e6 = z;     // int const&
+    //
+    //     [[maybe_unused]] decltype((pf->a)) e7 = x;    // int volatile&
+    //     [[maybe_unused]] decltype((pf->b)) e8 = y;    // int volatile&
+    //     [[maybe_unused]] decltype((pf->c)) e9 = z;    // int const volatile&
+    //
+    //     [[maybe_unused]] decltype((foo{}.a)) e10 = 0; // int&&
+    //     [[maybe_unused]] decltype((foo{}.b)) e11 = 0; // int volatile&&
+    //     [[maybe_unused]] decltype((foo{}.c)) e12 = 0; // int const&&
+    // }
+
+    // {
+    //     int       a    = 0;
+    //     int      &ra   = a;
+    //     int const c    = 42;
+    //     int volatile d = 99;
+    //
+    //     [[maybe_unused]] decltype(ra)     &e1    = a; // int&
+    //     [[maybe_unused]] decltype(c) const e2    = 1; // int const
+    //     [[maybe_unused]] decltype(d) volatile e3 = 1; // int volatile
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n430 =============================");
+    //     using namespace n430;
+    //     auto m1 [[maybe_unused]] = minimum(1, 5); // OK
+    //     auto m2 [[maybe_unused]] =
+    //         minimum(18.49, 9.99);                 // OK
+    //                               // auto m3 = minimum(1, 9.99);      // error, arguments of different type
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n431 =============================");
+    //     using namespace n431;
+    //     auto m1 [[maybe_unused]] = minimum(1, 5);        // OK
+    //     auto m2 [[maybe_unused]] = minimum(18.49, 9.99); // OK
+    //     auto m3 [[maybe_unused]] = minimum(1, 9.99);     // OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n432 =============================");
+    //     using namespace n432;
+    //     auto m1 [[maybe_unused]] = minimum(1, 5);        // OK
+    //     auto m2 [[maybe_unused]] = minimum(18.49, 9.99); // OK
+    //     auto m3 [[maybe_unused]] = minimum(1, 9.99);     // OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n433 =============================");
+    //     using namespace n433;
+    //     auto m1 [[maybe_unused]] = minimum(1, 5);        // OK
+    //     auto m2 [[maybe_unused]] = minimum(18.49, 9.99); // OK
+    //     auto m3 [[maybe_unused]] = minimum(1, 9.99);     // OK
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n434 =============================");
+    //     using namespace n434;
+    //
+    //     int a = 42;
+    //
+    //     decltype(func(a))        r1 [[maybe_unused]] = func(a);        // int const&
+    //     decltype(func_caller(a)) r2 [[maybe_unused]] = func_caller(a); // int
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n435 =============================");
+    //     using namespace n435;
+    //
+    //     int a = 42;
+    //
+    //     decltype(func(a))        r1 [[maybe_unused]] = func(a);        // int const&
+    //     decltype(func_caller(a)) r2 [[maybe_unused]] = func_caller(a); // int const&
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n436 =============================");
+    //     using namespace n436;
+    //
+    //     static_assert(std::is_same_v<double, composition<int, double>::result_type>);
+    //
+    //     // error, no appropriate default constructor available
+    //     /*
+    //     static_assert(
+    //        std::is_same_v<
+    //        wrapper,
+    //        composition<int, wrapper>::result_type>);
+    //        */
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n437 =============================");
+    //     using namespace n437;
+    //
+    //     static_assert(std::is_same_v<double, composition<int, double>::result_type>);
+    //
+    //     static_assert(std::is_same_v<wrapper, composition<int, wrapper>::result_type>);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n438 =============================");
+    //     using namespace n438;
+    //
+    //     wrapper w{42};
+    //     print(w);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n439 =============================");
+    //     using namespace n439;
+    //
+    //     wrapper w{42};
+    //     print<int>(w);
+    //     print<char>(w);
+    //     printer<int>()(w);
+    //     printer<double>()(w);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n440 =============================");
+    //     using namespace n440;
+    //
+    //     wrapper w{43};
+    //     print<int>(w);
+    //     print<char>(w);
+    //     printer<int>()(w);
+    //     printer<double>()(w);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n442 =============================");
+    //     using namespace n442;
+    //
+    //     wrapper w1{43};
+    //     print(w1);
+    //     printer<int>()(w1);
+    //
+    //     wrapper w2{'a'};
+    //     print(w2);
+    //     printer<char>()(w2);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n443 =============================");
+    //     using namespace n443;
+    //
+    //     wrapper w1{43};
+    //     print(w1);
+    //     printer<int>()(w1);
+    //
+    //     wrapper w2{'a'};
+    //     print(w2);
+    //     printer<char>()(w2);
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n445 =============================");
+    //     using namespace n445;
+    //
+    //     executor e;
+    //     e.run();
+    // }
+
+    // {
+    //     std::println("\n====================== using namespace n446 =============================");
+    //     using namespace n446;
+    //     dictionary<dictionary_traits> d;
+    //     d.add(1, "2");
+    // }
 }
