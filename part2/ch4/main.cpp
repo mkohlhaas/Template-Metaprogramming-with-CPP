@@ -1,32 +1,65 @@
 #include <map>
-#include <mutex>
+// #include <mutex>
+#include <cxxabi.h> // gcc and clang…
+#include <memory>
 #include <print>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 
+std::string
+demangle(const char *mangled_name)
+{
+
+    std::string result;
+    std::size_t len    = 0;
+    int         status = 0;
+    char       *ptr    = __cxxabiv1::__cxa_demangle(mangled_name, nullptr, &len, &status);
+
+    if (status == 0)
+    {
+        result = ptr; // hope that this won't throw
+    }
+    else
+    {
+        result = "demangle error";
+    }
+
+    ::free(ptr);
+    return result;
+}
+
 namespace n401
 {
-    template <typename T>
-    struct parser;       // [1] template declaration
+    // For non-dependent names, it is performed at the point of the template definition.
 
+    // [1] template declaration
+    template <typename T>
+    struct parser;
+
+    // [2] handle(double) definition
     void
-    handle(double value) // [2] handle(double) definition
+    handle(double value)
     {
         std::println("processing a double: {}", value);
     }
 
+    // [3] template definition
     template <typename T>
-    struct parser // [3] template definition
+    struct parser
     {
         void
         parse()
         {
-            handle(42); // [4] non-dependent name
+            // [4] non-dependent name
+            handle(42);
         }
     };
 
+    // [5] handle(int) definition
+    // Not used!
     void
-    handle(int value) // [5] handle(int) definition
+    handle(int value)
     {
         std::println("processing an int: {}", value);
     }
@@ -34,8 +67,12 @@ namespace n401
 
 namespace n402
 {
+    // For dependent names, it is performed at the point of template instantiation.
+
+    // primary
+    // [1] template definition
     template <typename T>
-    struct handler // [1] template definition
+    struct handler
     {
         void
         handle(T value)
@@ -44,18 +81,23 @@ namespace n402
         }
     };
 
+    // [2] template definition
     template <typename T>
-    struct parser // [2] template definition
+    struct parser
     {
         void
         parse(T arg)
         {
-            arg.handle(42); // [3] dependent name
+            // [3] dependent name (handle depends on arg of type T)
+            arg.handle(42);
         }
     };
 
+    // specialization
+    // [4] template specialization
+    // This time it will be used!
     template <>
-    struct handler<int> // [4] template specialization
+    struct handler<int>
     {
         void
         handle(int value)
@@ -83,8 +125,8 @@ namespace n403
         void
         parse()
         {
-            // init();        // error: identifier not found
-            this->init();
+            // init(); // error: Use of undeclared identifier 'init'
+            this->init(); // now init is a dependent type
 
             std::println("parse");
         }
@@ -140,9 +182,10 @@ namespace n405
         void
         parse()
         {
-            // value_type v{}; //syntax error: unexpected token 'identifier', expected ';'
-            // base_parser<T>::value_type v{};
-            typename base_parser<T>::value_type v [[maybe_unused]]{};
+            // value_type v{}; // error: Unknown type name 'value_type'
+            // base_parser<T>::value_type v{}; // error: Missing 'typename' prior to dependent type name
+            // tell the compiler explicitly that this is a type (by default the compiler assumes it's not a type):
+            [[maybe_unused]] typename base_parser<T>::value_type v{};
 
             std::println("parse");
         }
@@ -173,14 +216,25 @@ namespace n406
         void
         parse()
         {
-            // base_parser<T>::init<int>(); // error
+            // token and init are templated functions
 
+            // Keep in mind that the template keyword can only follow the
+            // - scope resolution operator (::),
+            // - member access through pointer (->),
+            // - and the member access (.)
+
+            // error: Use 'template' keyword to treat 'init' as a dependent template name:
+            // base_parser<T>::init<int>();
             base_parser<T>::template init<int>();
 
+            // here it's obvious ('using') that we are dealing with a type -> typename not necessary
+            // using token_type = typename base_parser<T>::template token<int>;
             using token_type = base_parser<T>::template token<int>;
-            token_type t1 [[maybe_unused]]{};
+            [[maybe_unused]] token_type t1{};
 
-            typename base_parser<T>::template token<int> t2 [[maybe_unused]]{};
+            // must use typename to tell the compiler it's a type:
+            // template can also refer to a class (here inner class)
+            [[maybe_unused]] typename base_parser<T>::template token<int> t2{};
 
             std::println("parse");
         }
@@ -189,19 +243,29 @@ namespace n406
 
 namespace n407
 {
+    // This example is now obsolete. Compiler can deduce everything.
+
+    // Names are categorized as dependent (those that depend on
+    // a template parameter) and non-dependent (those that don’t depend on a template
+    // parameter). Name binding happens at the point of definition for non-dependent types
+    // and at the point of instantiation for dependent types. In some cases, the keywords
+    // typename and template are required to disambiguate the use of names and tell the
+    // compiler that a name refers to a type or a template.
+
     template <typename T>
     struct parser
     {
-        parser          *p1; // parser is the CI
-        parser<T>       *p2; // parser<T> is the CI
-        n407::parser<T> *p3; // ::parser<T> is the CI
-        // parser<T*> p4;     // parser<T*> is not the CI
+        // CI = current implementation
+        parser          *p1;        // parser is the CI
+        parser<T>       *p2;        // parser<T> is the CI
+        n407::parser<T> *p3;        // ::parser<T> is the CI
+        parser<T *>      p4;        // parser<T*> is the CI
 
         struct token
         {
-            token            *t1; // token is the CI
-            parser<T>::token *t2; // parser<T>::token is the CI
-                                  // typename parser<T*>::token* t3; // parser<T*>::token is not the CI
+            token              *t1; // token is the CI
+            parser<T>::token   *t2; // parser<T>::token is the CI
+            parser<T *>::token *t3; // parser<T*>::token is the CI
         };
     };
 
@@ -209,12 +273,14 @@ namespace n407
     struct parser<T *>
     {
         parser<T *> *p1; // parser<T*> is the CI
-        parser<T>   *p2; // parser<T> is not the CI
+        parser<T>   *p2; // parser<T> is the CI
     };
 } // namespace n407
 
 namespace n408
 {
+    // class template
+
     template <unsigned int N>
     struct factorial
     {
@@ -230,6 +296,8 @@ namespace n408
 
 namespace n409
 {
+    // variable template
+
     template <unsigned int N>
     inline constexpr unsigned int factorial = N * factorial<N - 1>;
 
@@ -239,6 +307,8 @@ namespace n409
 
 namespace n409b
 {
+    // function template
+
     template <unsigned int n>
     constexpr unsigned int
     factorial()
@@ -246,12 +316,6 @@ namespace n409b
         return n * factorial<n - 1>();
     }
 
-    template <>
-    constexpr unsigned int
-    factorial<1>()
-    {
-        return 1;
-    }
     template <>
     constexpr unsigned int
     factorial<0>()
@@ -262,12 +326,18 @@ namespace n409b
 
 namespace n410
 {
+    // just using constexpr (no templates)
+
     constexpr unsigned int
     factorial(unsigned int const n)
     {
         return n > 1 ? n * factorial(n - 1) : 1;
     }
+} // namespace n410
 
+namespace n410
+{
+    // wrapper wraps type T
     template <typename T>
     struct wrapper
     {
@@ -288,6 +358,8 @@ namespace n410
 
 namespace n411
 {
+    // variable template
+
     template <unsigned int N>
     inline constexpr unsigned int sum = N + sum<N - 1>;
 
@@ -1068,8 +1140,6 @@ namespace n436
 
 namespace n437
 {
-    using n436::wrapper;
-
     template <typename T, typename U>
     struct composition
     {
@@ -1381,8 +1451,9 @@ namespace n446
 {
     struct dictionary_traits
     {
-        using key_type                = int;
-        using map_type                = std::map<key_type, std::string>;
+        using key_type = int;
+        using map_type = std::map<key_type, std::string>;
+
         static constexpr int identity = 1;
     };
 
@@ -1419,122 +1490,147 @@ main()
         std::println("\n====================== using namespace n401 =============================");
         using namespace n401;
 
-        parser<int> p; // [6] template instantiation
+        // [6] template instantiation
+        parser<int> p;
         p.parse();
     }
 
-    // {
-    //     std::println("\n====================== using namespace n402 =============================");
-    //     using namespace n402;
-    //
-    //     handler<int>         h; // [5] template instantiation
-    //     parser<handler<int>> p; // [6] template instantiation
-    //     p.parse(h);
-    // }
+    {
+        std::println("\n====================== using namespace n402 =============================");
+        using namespace n402;
 
-    // {
-    //     std::println("\n====================== using namespace n403 =============================");
-    //     using namespace n403;
-    //
-    //     parser<int> p;
-    //     p.parse();
-    // }
+        // [5] template instantiation
+        handler<int> h;
 
-    // {
-    //     std::println("\n====================== using namespace n404 =============================");
-    //     using namespace n404;
-    //
-    //     parser<int> p1;
-    //     p1.parse();
-    //
-    //     parser<double> p2;
-    //     p2.parse();
-    // }
+        // [6] template instantiation
+        parser<handler<int>> p;
 
-    // {
-    //     std::println("\n====================== using namespace n405 =============================");
-    //     using namespace n405;
-    //
-    //     parser<int> p;
-    //     p.parse();
-    // }
+        p.parse(h);
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n406 =============================");
-    //     using namespace n406;
-    //
-    //     parser<int> p;
-    //     p.parse();
-    // }
+    {
+        std::println("\n====================== using namespace n403 =============================");
+        using namespace n403;
 
-    // {
-    //     std::println("\n====================== using namespace n407 =============================");
-    //     using namespace n407;
-    //
-    //     [[maybe_unused]]
-    //     parser<int> p;
-    // }
+        parser<int> p;
+        p.parse();
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n408 =============================");
-    //     using namespace n408;
-    //
-    //     std::println("{}", factorial<0>::value);
-    //     std::println("{}", factorial<1>::value);
-    //     std::println("{}", factorial<2>::value);
-    //     std::println("{}", factorial<3>::value);
-    //     std::println("{}", factorial<4>::value);
-    //     std::println("{}", factorial<5>::value);
-    //     std::println("{}", factorial<12>::value);
-    // }
+    {
+        std::println("\n====================== using namespace n404 =============================");
+        using namespace n404;
 
-    // {
-    //     std::println("\n====================== using namespace n409 =============================");
-    //     using namespace n409;
-    //
-    //     std::println("{}", factorial<0>);
-    //     std::println("{}", factorial<1>);
-    //     std::println("{}", factorial<2>);
-    //     std::println("{}", factorial<3>);
-    //     std::println("{}", factorial<4>);
-    //     std::println("{}", factorial<5>);
-    //     std::println("{}", factorial<12>);
-    // }
+        parser<int> p1;
+        p1.parse();
 
-    // {
-    //     std::println("\n====================== using namespace n409b ============================");
-    //     using namespace n409b;
-    //
-    //     std::println("{}", factorial<1>());
-    //     std::println("{}", factorial<2>());
-    //     std::println("{}", factorial<3>());
-    //     std::println("{}", factorial<4>());
-    //     std::println("{}", factorial<5>());
-    // }
+        std::println("------------------");
 
-    // {
-    //     std::println("\n====================== using namespace n410 =============================");
-    //     using namespace n410;
-    //
-    //     std::println("{}", factorial(0));
-    //     std::println("{}", factorial(1));
-    //     std::println("{}", factorial(2));
-    //     std::println("{}", factorial(3));
-    //     std::println("{}", factorial(4));
-    //     std::println("{}", factorial(5));
-    //
-    //     std::println("{}", typeid(manyfold_wrapper<0>::value_type).name());
-    //     std::println("{}", typeid(manyfold_wrapper<1>::value_type).name());
-    //     std::println("{}", typeid(manyfold_wrapper<2>::value_type).name());
-    //     std::println("{}", typeid(manyfold_wrapper<3>::value_type).name());
-    // }
+        parser<double> p2;
+        p2.parse();
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n411 =============================");
-    //     using namespace n411;
-    //
-    //     std::println("{}", sum<256>);
-    // }
+    {
+        std::println("\n====================== using namespace n405 =============================");
+        using namespace n405;
+
+        parser<int> p;
+        p.parse();
+    }
+
+    {
+        std::println("\n====================== using namespace n406 =============================");
+        using namespace n406;
+
+        parser<int> p;
+        p.parse();
+    }
+
+    {
+        std::println("\n====================== using namespace n446 =============================");
+        using namespace n446;
+
+        dictionary<dictionary_traits> d;
+        d.add(1, "2");
+    }
+
+    {
+        std::println("\n====================== using namespace n407 =============================");
+        using namespace n407;
+
+        [[maybe_unused]] parser<int> p;
+    }
+
+    {
+        std::println("\n====================== using namespace n408 =============================");
+        using namespace n408;
+
+        std::println("{}", factorial<0>::value);  // 1
+        std::println("{}", factorial<1>::value);  // 1
+        std::println("{}", factorial<2>::value);  // 2
+        std::println("{}", factorial<3>::value);  // 6
+        std::println("{}", factorial<4>::value);  // 24
+        std::println("{}", factorial<5>::value);  // 120
+        std::println("{}", factorial<12>::value); // 479001600
+    }
+
+    {
+        std::println("\n====================== using namespace n409 =============================");
+        using namespace n409;
+
+        std::println("{}", factorial<0>);  // 1
+        std::println("{}", factorial<1>);  // 1
+        std::println("{}", factorial<2>);  // 2
+        std::println("{}", factorial<3>);  // 6
+        std::println("{}", factorial<4>);  // 24
+        std::println("{}", factorial<5>);  // 120
+        std::println("{}", factorial<12>); // 479001600
+    }
+
+    {
+        std::println("\n====================== using namespace n409b ============================");
+        using namespace n409b;
+
+        std::println("{}", factorial<1>()); // 1
+        std::println("{}", factorial<2>()); // 2
+        std::println("{}", factorial<3>()); // 6
+        std::println("{}", factorial<4>()); // 24
+        std::println("{}", factorial<5>()); // 120
+    }
+
+    {
+        std::println("\n====================== using namespace n410 =============================");
+        using namespace n410;
+
+        std::println("{}", factorial(0)); // 1
+        std::println("{}", factorial(1)); // 1
+        std::println("{}", factorial(2)); // 2
+        std::println("{}", factorial(3)); // 6
+        std::println("{}", factorial(4)); // 24
+        std::println("{}", factorial(5)); // 120
+    }
+
+    {
+        std::println("\n====================== using namespace n410 =============================");
+        using namespace n410;
+
+        std::println("{}", demangle(typeid(manyfold_wrapper<0>::value_type).name()));
+        std::println("{}", demangle(typeid(manyfold_wrapper<1>::value_type).name()));
+        std::println("{}", demangle(typeid(manyfold_wrapper<2>::value_type).name()));
+        std::println("{}", demangle(typeid(manyfold_wrapper<3>::value_type).name()));
+
+        // Output:
+        // unsigned int
+        // n410::wrapper<unsigned int>
+        // n410::wrapper<n410::wrapper<unsigned int> >
+        // n410::wrapper<n410::wrapper<n410::wrapper<unsigned int> > >
+    }
+
+    {
+        std::println("\n====================== using namespace n411 =============================");
+        using namespace n411;
+
+        std::println("{}", sum<256>); // 32896
+    }
 
     // {
     //     std::println("\n====================== using namespace n412 =============================");
@@ -2109,12 +2205,5 @@ main()
     //
     //     executor e;
     //     e.run();
-    // }
-
-    // {
-    //     std::println("\n====================== using namespace n446 =============================");
-    //     using namespace n446;
-    //     dictionary<dictionary_traits> d;
-    //     d.add(1, "2");
     // }
 }
