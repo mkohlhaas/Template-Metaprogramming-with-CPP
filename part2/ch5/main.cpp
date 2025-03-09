@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <ostream>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -40,7 +41,7 @@ namespace n501
     {
         static_assert(is_floating_point<T>::value);
 
-        std::cout << "processing a real number: " << value << '\n';
+        std::println("processing a real number: {}", value);
     }
 } // namespace n501
 
@@ -146,14 +147,14 @@ namespace n503
     void
     handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 0] = 0)
     {
-        std::cout << "handle even array\n";
+        std::println("handle even array");
     }
 
     template <typename T, size_t N>
     void
     handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 1] = 0)
     {
-        std::cout << "handle odd array\n";
+        std::println("handle odd array");
     }
 } // namespace n503
 
@@ -180,16 +181,16 @@ namespace n504
 
     template <typename T>
     decltype(typename T::foo_type(), void())
-    handle(T const &v [[maybe_unused]])
+    handle(T const &)
     {
-        std::cout << "handle a foo\n";
+        std::println("handle a foo");
     }
 
     template <typename T>
     decltype(typename T::bar_type(), void())
-    handle(T const &v [[maybe_unused]])
+    handle(T const &)
     {
-        std::cout << "handle a bar\n";
+        std::println("handle a bar");
     }
 } // namespace n504
 
@@ -492,7 +493,7 @@ namespace n519
         // static_assert(has_common_type_v<Ts...>,
         //                    "Arguments must have a common type.");
 
-        std::cout << typeid(std::common_type_t<Ts...>).name() << '\n';
+        std::println("{}", typeid(std::common_type_t<Ts...>).name());
     }
 } // namespace n519
 
@@ -546,40 +547,54 @@ int
 main()
 {
     {
+        std::println("\n====================== using namespace n501 =============================");
         using namespace n501;
 
+        // floating points
         static_assert(is_floating_point<float>::value);
         static_assert(is_floating_point<double>::value);
         static_assert(is_floating_point<long double>::value);
+
+        // non-floating points
         static_assert(!is_floating_point<int>::value);
         static_assert(!is_floating_point<bool>::value);
 
-        process_real_number(42.0);
-        // process_real_number(42); // error: static assertion failed
+        process_real_number(42.0);  // 42
+        process_real_number(42.0f); // 42
+        process_real_number(42.0L); // 42
+        // process_real_number(42); // error: int (42) is not a floating point number
+        // process_real_number(true); // error: bool (true) is not a floating point number
     }
 
     {
+        std::println("\n====================== using namespace n502 =============================");
         using namespace n502;
 
         widget w{1, "one"};
         gadget g{2, "two"};
 
-        w.write(std::cout);
-        std::cout << g;
+        w.write(std::cout);      // 1, one
+        std::cout << g;          // 2, two
 
-        serialize(std::cout, w);
-        serialize(std::cout, g);
+        serialize(std::cout, w); // 1, one
+        serialize(std::cout, g); // 2, two
     }
 
     {
+        std::println("\n====================== using namespace n503 =============================");
+        using namespace n503;
+
         std::array<int, 5> arr1{1, 2, 3, 4, 5};
-        std::cout << *n503::begin(arr1) << '\n';
+        std::println("{}", *n503::begin(arr1));
 
         int arr2[]{5, 4, 3, 2, 1};
-        std::cout << *n503::begin(arr2) << '\n';
+        std::println("{}", *begin(arr2));
     }
 
     {
+        std::println("\n====================== using namespace n503 =============================");
+        using namespace n503;
+
         int a = 42;
         n503::increment(a); // OK
 
@@ -588,49 +603,65 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n503 =============================");
+        using namespace n503;
+
         int arr1[]{1, 2, 3, 4, 5};
-        n503::handle(arr1);
+        handle(arr1);
 
         int arr2[]{1, 2, 3, 4};
-        n503::handle(arr2);
+        handle(arr2);
     }
 
     {
+        std::println("\n====================== using namespace n504 =============================");
         using namespace n504;
 
         int_foo fi;
         int_bar bi;
-        int     x [[maybe_unused]] = 0;
+        int     x = 0;
         handle(fi);
         handle(bi);
         // handle(x);
+
+        std::println("{}", x);
     }
 
     {
-        n502::widget w{1, "one"};
-        n502::gadget g{2, "two"};
+        std::println("\n====================== using namespace n505 =============================");
+        using namespace n502;
+
+        widget w{1, "one"};
+        gadget g{2, "two"};
 
         n505::serialize(std::cout, w);
         n505::serialize(std::cout, g);
     }
 
     {
-        n502::widget w{1, "one"};
-        n502::gadget g{2, "two"};
+        std::println("\n====================== using namespace n506 =============================");
+        using namespace n502;
+
+        widget w{1, "one"};
+        gadget g{2, "two"};
 
         n506::serialize(std::cout, w);
         n506::serialize(std::cout, g);
     }
 
     {
-        n502::widget w{1, "one"};
-        n502::gadget g{2, "two"};
+        std::println("\n====================== using namespace n507 =============================");
+        using namespace n502;
+
+        widget w{1, "one"};
+        gadget g{2, "two"};
 
         n507::serialize(std::cout, w);
         n507::serialize(std::cout, g);
     }
 
     {
+        std::println("\n====================== using namespace n508 =============================");
         using namespace n508;
 
         integral_wrapper w1{42}; // OK
@@ -643,22 +674,29 @@ main()
     }
 
     {
-        n502::widget w{1, "one"};
-        n502::gadget g{2, "two"};
+        std::println("\n====================== using namespace n509 =============================");
+        using namespace n502;
+
+        widget w{1, "one"};
+        gadget g{2, "two"};
 
         n509::serialize(std::cout, w);
         n509::serialize(std::cout, g);
     }
 
     {
-        std::cout << n510::factorial<1>() << '\n';
-        std::cout << n510::factorial<2>() << '\n';
-        std::cout << n510::factorial<3>() << '\n';
-        std::cout << n510::factorial<4>() << '\n';
-        std::cout << n510::factorial<5>() << '\n';
+        std::println("\n====================== using namespace n510 =============================");
+        using namespace n510;
+
+        std::println("{}", factorial<1>());
+        std::println("{}", factorial<2>());
+        std::println("{}", factorial<3>());
+        std::println("{}", factorial<4>());
+        std::println("{}", factorial<5>());
     }
 
     {
+        std::println("\n====================== using namespace n511 =============================");
         using namespace n511;
 
         are_equal(1, 1);
@@ -668,75 +706,89 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n512 =============================");
         using namespace n512;
+
         f<int>();
         f<double>();
         // f<n502::widget>();
     }
 
     {
+        std::println("\n====================== using namespace n513 =============================");
         using namespace n513;
-        std::cout << as_string(nullptr) << '\n';
-        std::cout << as_string(true) << '\n';
-        std::cout << as_string('a') << '\n';
-        std::cout << as_string(42) << '\n';
-        std::cout << as_string(42.0) << '\n';
-        // std::cout << as_string("42") << '\n'; // error
+
+        std::println("{}", as_string(nullptr));
+        std::println("{}", as_string(true));
+        std::println("{}", as_string('a'));
+        std::println("{}", as_string(42));
+        std::println("{}", as_string(42.0));
+        // std::println("{}", as_string("42")); // error
     }
 
     {
+        std::println("\n====================== using namespace n514 =============================");
         using namespace n514;
 
-        std::cout << std::boolalpha;
-        std::cout << std::is_trivial_v<foo> << '\n';
-        std::cout << std::is_trivial_v<bar> << '\n';
-        std::cout << std::is_trivial_v<tar> << '\n';
+        // std::println("{}", std::boolalpha);
+        std::println("{}", std::is_trivial_v<foo>);
+        std::println("{}", std::is_trivial_v<bar>);
+        std::println("{}", std::is_trivial_v<tar>);
 
-        std::cout << std::is_trivially_copyable_v<foo> << '\n';
-        std::cout << std::is_trivially_copyable_v<bar> << '\n';
-        std::cout << std::is_trivially_copyable_v<tar> << '\n';
+        std::println("{}", std::is_trivially_copyable_v<foo>);
+        std::println("{}", std::is_trivially_copyable_v<bar>);
+        std::println("{}", std::is_trivially_copyable_v<tar>);
     }
 
     {
+        std::println("\n====================== using namespace n515 =============================");
         using namespace n515;
-        std::cout << as_string(nullptr) << '\n';
-        std::cout << as_string(true) << '\n';
-        std::cout << as_string('a') << '\n';
-        std::cout << as_string(42) << '\n';
-        std::cout << as_string(42.0) << '\n';
+
+        std::println("{}", as_string(nullptr));
+        std::println("{}", as_string(true));
+        std::println("{}", as_string('a'));
+        std::println("{}", as_string(42));
+        std::println("{}", as_string(42.0));
     }
 
     {
+        std::println("\n====================== using namespace n516 =============================");
         using namespace n516;
-        std::cout << as_string(nullptr) << '\n';
-        std::cout << as_string(true) << '\n';
-        std::cout << as_string('a') << '\n';
-        std::cout << as_string(42) << '\n';
-        std::cout << as_string(42.0) << '\n';
+
+        std::println("{}", as_string(nullptr));
+        std::println("{}", as_string(true));
+        std::println("{}", as_string('a'));
+        std::println("{}", as_string(42));
+        std::println("{}", as_string(42.0));
 
         // bool f = true;
-        // std::cout << as_string(f) << '\n';
+        // std::println("{}", f);
+        // std::println("{}", as_string(f));
 
         // int n = 42;
-        // std::cout << as_string(n) << '\n';
+        // std::println("{}", n);
+        // std::println("{}", as_string(n));
     }
 
     {
+        std::println("\n====================== using namespace n517 =============================");
         using namespace n517;
-        std::cout << as_string(nullptr) << '\n';
-        std::cout << as_string(true) << '\n';
-        std::cout << as_string('a') << '\n';
-        std::cout << as_string(42) << '\n';
-        std::cout << as_string(42.0) << '\n';
+
+        std::println("{}", as_string(nullptr));
+        std::println("{}", as_string(true));
+        std::println("{}", as_string('a'));
+        std::println("{}", as_string(42));
+        std::println("{}", as_string(42.0));
 
         bool f = true;
-        std::cout << as_string(f) << '\n';
+        std::println("{}", as_string(f));
 
         int n = 42;
-        std::cout << as_string(n) << '\n';
+        std::println("{}", as_string(n));
     }
 
     {
+        std::println("\n====================== using namespace n518 =============================");
         using namespace n518;
 
         static_assert(std::is_same_v<list_t<int, 1>, int>);
@@ -744,15 +796,18 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n519 =============================");
         using namespace n519;
 
         process(1);           // int
         process(1, 2, 3);     // int
         process(1, 2.0, '3'); // double
-                              // process(1, 2.0, "3");    // error
+        // process(1, 2.0, "3"); // error
     }
 
     {
+        std::println("\n=========================================================================");
+
         std::vector<int> v1{1, 2, 3, 4, 5};
         std::vector<int> v2(5);
 
