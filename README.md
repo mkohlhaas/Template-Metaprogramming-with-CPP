@@ -6,3 +6,4 @@ This is the code repository for _Template Metaprogramming with C++_, published b
 
 **Learn everything about C++ templates and unlock the power of template metaprogramming**
 
+- perfect forwarding (std::forward, std::forward_*)
