@@ -1,4 +1,5 @@
 #include <iostream>
+#include <print>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -695,30 +696,30 @@ namespace n633a
     };
 } // namespace n633a
 
-namespace n633b
-{
-    template <std::integral T>
-    struct wrapper
-    {
-        T value;
-    };
-
-    template <std::integral T>
-        requires(sizeof(T) == 4)
-    struct wrapper<T>
-    {
-        union {
-            T value;
-            struct
-            {
-                uint8_t byte4;
-                uint8_t byte3;
-                uint8_t byte2;
-                uint8_t byte1;
-            };
-        };
-    };
-} // namespace n633b
+// namespace n633b
+// {
+//     template <std::integral T>
+//     struct wrapper
+//     {
+//         T value;
+//     };
+//
+//     template <std::integral T>
+//         requires(sizeof(T) == 4)
+//     struct wrapper<T>
+//     {
+//         union {
+//             T value;
+//             struct
+//             {
+//                 uint8_t byte4;
+//                 uint8_t byte3;
+//                 uint8_t byte2;
+//                 uint8_t byte1;
+//             };
+//         };
+//     };
+// } // namespace n633b
 
 namespace n634
 {
@@ -802,252 +803,334 @@ int
 main()
 {
     {
+        std::println("\n====================== using namespace n601 =============================");
+
         using namespace n601;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
-        add("42"s, "1"s);
+        std::println("{}", add(42, 1));       // 43
+        std::println("{}", add(42.0, 1.0));   // 43
+        std::println("{}", add("42"s, "1"s)); // 421
+
         // add("42", "1");   // error: cannot add two pointers
     }
 
     {
+        std::println("\n====================== using namespace n602 =============================");
+
         using namespace n602;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
         // add("42"s, "1"s); // error: no matching overloaded function found
         // add("42", "1");   // error: no matching overloaded function found
     }
 
     {
+        std::println("\n====================== using namespace n603 =============================");
+
         using namespace n603;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
         // add("42"s, "1"s); // error: Arithmetic type required
         // add("42", "1");   // error: Arithmetic type required
     }
 
     {
+        std::println("\n====================== using namespace n604 =============================");
+
         using namespace n604;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
         // add("42"s, "1"s); // error: the associated constraints are not satisfied
         // add("42", "1");   // error: the associated constraints are not satisfied
     }
 
     {
+        std::println("\n====================== using namespace n605 =============================");
+
         using namespace n605;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
         // add("42"s, "1"s); // error: the associated constraints are not satisfied
         // add("42", "1");   // error: the associated constraints are not satisfied
     }
 
     {
+        std::println("\n====================== using namespace n606 =============================");
+
         using namespace n606;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
         // add("42"s, "1"s); // error: the associated constraints are not satisfied
         // add("42", "1");   // error: the associated constraints are not satisfied
     }
 
     {
+        std::println("\n====================== using namespace n607 =============================");
+
         using namespace n607;
         using namespace std::string_literals;
 
-        add(42, 1);
-        add(42.0, 1.0);
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
         // add("42"s, "1"s); // error: the associated constraints are not satisfied
         // add("42", "1");   // error: the associated constraints are not satisfied
     }
 
     {
-        using namespace n612;
+        std::println("\n====================== using namespace n608 =============================");
 
-        console_logger cl;
-        log_error(cl);
+        using namespace n608;
+        using namespace std::string_literals;
 
-        [[maybe_unused]] stream_logger sl;
-        // log_error(sl); // error: the associated constraints are not satisfied
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
+        std::println("{}", mul(42, 1));     // 42
+        std::println("{}", mul(42.0, 1.0)); // 42
+
+        // add("42"s, "1"s); // error: the associated constraints are not satisfied
+        // add("42", "1");   // error: the associated constraints are not satisfied
     }
+    // {
+    //     std::println("\n====================== using namespace n612 =============================");
+    //
+    //     using namespace n612;
+    //
+    //     console_logger cl;
+    //     log_error(cl);
+    //
+    //     [[maybe_unused]] stream_logger sl;
+    //     // log_error(sl); // error: the associated constraints are not satisfied
+    // }
 
-    {
-        using namespace n614;
+    // {
+    //     std::println("\n====================== using namespace n614 =============================");
+    //
+    //     using namespace n614;
+    //
+    //     invoke(f<int>, 42);
+    //     // invoke(g<int>, 42); // error
+    // }
 
-        invoke(f<int>, 42);
-        // invoke(g<int>, 42); // error
-    }
+    // {
+    //     std::println("\n====================== using namespace n616 =============================");
+    //
+    //     using namespace n616;
+    //
+    //     add(1, 2);
+    //     // add(1);
+    //     // add(1, 2.0);
+    // }
 
-    {
-        using namespace n616;
+    // {
+    //     std::println("\n====================== using namespace n622 =============================");
+    //
+    //     using namespace n622;
+    //
+    //     add(1, 2, 3);
+    //     // add(1, 42.0);
+    // }
 
-        add(1, 2);
-        // add(1);
-        // add(1, 2.0);
-    }
+    // {
+    //     std::println("\n====================== using namespace n623 =============================");
+    //
+    //     using namespace n623;
+    //
+    //     add(1, 2, 3);
+    //     // add(1, 42.0);
+    // }
 
-    {
-        using namespace n622;
+    // {
+    //     std::println("\n====================== using namespace n624 =============================");
+    //
+    //     using namespace n624;
+    //
+    //     add(1.0, 2.0);
+    //     add(1, 2);
+    // }
 
-        add(1, 2, 3);
-        // add(1, 42.0);
-    }
+    // {
+    //     std::println("\n====================== using namespace n625 =============================");
+    //
+    //     using namespace n625;
+    //
+    //     add(1.0, 2.0);
+    //     add(1, 2);
+    // }
 
-    {
-        using namespace n623;
+    // {
+    //     std::println("\n====================== using namespace n626 =============================");
+    //
+    //     using namespace n626;
+    //
+    //     add((short)1, (short)2);
+    //     // add(1, 2);
+    // }
 
-        add(1, 2, 3);
-        // add(1, 42.0);
-    }
+    // {
+    //     std::println("\n====================== using namespace n627 =============================");
+    //
+    //     using namespace n627;
+    //
+    //     add((short)1, (short)2);
+    //     // add(1, 2);
+    // }
 
-    {
-        using namespace n624;
+    // {
+    //     std::println("\n====================== using namespace n628 =============================");
+    //
+    //     using namespace n628;
+    //
+    //     add((short)1, (short)2);
+    //     add(1, 2);
+    // }
 
-        add(1.0, 2.0);
-        add(1, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n629 =============================");
+    //
+    //     using namespace n629;
+    //
+    //     add((short)1, (short)2);
+    //     add(1, 2);
+    // }
 
-    {
-        using namespace n625;
+    // {
+    //     std::println("\n====================== using namespace n630 =============================");
+    //
+    //     using namespace n630;
+    //
+    //     wrapper<int>          a [[maybe_unused]]{42};
+    //     wrapper<char const *> b{"42"};
+    //
+    //     // if(a == 42) {} // error
+    //     if (b == "42")
+    //     {
+    //     }
+    // }
 
-        add(1.0, 2.0);
-        add(1, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n631a ============================");
+    //
+    //     using namespace n631a;
+    //
+    //     wrapper<int> a [[maybe_unused]] = 42;
+    //
+    //     // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); // error
+    // }
 
-    {
-        using namespace n626;
+    // {
+    //     std::println("\n====================== using namespace n631b ============================");
+    //
+    //     using namespace n631b;
+    //
+    //     wrapper<int> a [[maybe_unused]] = 42;
+    //
+    //     // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); //error
+    // }
 
-        add((short)1, (short)2);
-        // add(1, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n631c ============================");
+    //
+    //     using namespace n631c;
+    //
+    //     wrapper<int> a [[maybe_unused]] = 42;
+    //
+    //     // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); //error
+    // }
 
-    {
-        using namespace n627;
+    // {
+    //     std::println("\n====================== using namespace n633a ============================");
+    //
+    //     using namespace n633a;
+    //
+    //     wrapper<int> a [[maybe_unused]]{42};
+    //     // wrapper<double> b{ 42.0 }; // error
+    // }
 
-        add((short)1, (short)2);
-        // add(1, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n633b ============================");
+    //
+    //     using namespace n633b;
+    //
+    //     wrapper<short> a{42};
+    //     std::cout << a.value << '\n';
+    //
+    //     wrapper<int> b{0x11223344};
+    //     std::cout << std::hex << b.value << '\n';
+    //     std::cout << std::hex << (int)b.byte1 << '\n';
+    //     std::cout << std::hex << (int)b.byte2 << '\n';
+    //     std::cout << std::hex << (int)b.byte3 << '\n';
+    //     std::cout << std::hex << (int)b.byte4 << '\n';
+    // }
 
-    {
-        using namespace n628;
+    // {
+    //     std::println("\n====================== using namespace n634 =============================");
+    //
+    //     using namespace n634;
+    //
+    //     std::cout << PI<double> << '\n'; // OK
+    //                                      // std::cout << PI<int> << '\n';     // error
+    // }
 
-        add((short)1, (short)2);
-        add(1, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n635a ============================");
+    //
+    //     using namespace n635a;
+    //
+    //     integral_vector<int> v1{1, 2, 3};
+    //     // integral_vector<double> v2 {1.0, 2.0, 3.0}; // error
+    // }
 
-    {
-        using namespace n629;
+    // {
+    //     std::println("\n====================== using namespace n635b ============================");
+    //
+    //     using namespace n635b;
+    //
+    //     integral_vector<int> v1{1, 2, 3};
+    //     // integral_vector<double> v2 {1.0, 2.0, 3.0}; // error
+    // }
 
-        add((short)1, (short)2);
-        add(1, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n636a ============================");
+    //
+    //     using namespace n636a;
+    //
+    //     add(4, 2);
+    //     add(4.0, 2);
+    //     add("4", "2");
+    // }
 
-    {
-        using namespace n630;
+    // {
+    //     std::println("\n====================== using namespace n636b ============================");
+    //
+    //     using namespace n636b;
+    //
+    //     add(4, 2);
+    //     // add(4.2, 0); // error
+    // }
 
-        wrapper<int>          a [[maybe_unused]]{42};
-        wrapper<char const *> b{"42"};
-
-        // if(a == 42) {} // error
-        if (b == "42")
-        {
-        }
-    }
-
-    {
-        using namespace n631a;
-
-        wrapper<int> a [[maybe_unused]] = 42;
-
-        // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); // error
-    }
-
-    {
-        using namespace n631b;
-
-        wrapper<int> a [[maybe_unused]] = 42;
-
-        // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); //error
-    }
-
-    {
-        using namespace n631c;
-
-        wrapper<int> a [[maybe_unused]] = 42;
-
-        // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); //error
-    }
-
-    {
-        using namespace n633a;
-
-        wrapper<int> a [[maybe_unused]]{42};
-        // wrapper<double> b{ 42.0 }; // error
-    }
-
-    {
-        using namespace n633b;
-
-        wrapper<short> a{42};
-        std::cout << a.value << '\n';
-
-        wrapper<int> b{0x11223344};
-        std::cout << std::hex << b.value << '\n';
-        std::cout << std::hex << (int)b.byte1 << '\n';
-        std::cout << std::hex << (int)b.byte2 << '\n';
-        std::cout << std::hex << (int)b.byte3 << '\n';
-        std::cout << std::hex << (int)b.byte4 << '\n';
-    }
-
-    {
-        using namespace n634;
-
-        std::cout << PI<double> << '\n'; // OK
-                                         // std::cout << PI<int> << '\n';     // error
-    }
-
-    {
-        using namespace n635a;
-
-        integral_vector<int> v1{1, 2, 3};
-        // integral_vector<double> v2 {1.0, 2.0, 3.0}; // error
-    }
-
-    {
-        using namespace n635b;
-
-        integral_vector<int> v1{1, 2, 3};
-        // integral_vector<double> v2 {1.0, 2.0, 3.0}; // error
-    }
-
-    {
-        using namespace n636a;
-
-        add(4, 2);
-        add(4.0, 2);
-        add("4", "2");
-    }
-
-    {
-        using namespace n636b;
-
-        add(4, 2);
-        // add(4.2, 0); // error
-    }
-
-    {
-        using namespace n636c;
-
-        add(1, 2, 3);
-    }
+    // {
+    //     std::println("\n====================== using namespace n636c ============================");
+    //
+    //     using namespace n636c;
+    //
+    //     add(1, 2, 3);
+    // }
 }
