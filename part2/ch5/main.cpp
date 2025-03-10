@@ -47,13 +47,15 @@ namespace n501
 
 namespace n502
 {
+    using namespace std;
+
     struct widget
     {
-        int         id;
-        std::string name;
+        int    id;
+        string name;
 
-        std::ostream &
-        write(std::ostream &os) const
+        ostream &
+        write(ostream &os) const
         {
             os << id << ',' << name << '\n';
             return os;
@@ -62,14 +64,14 @@ namespace n502
 
     struct gadget
     {
-        int         id;
-        std::string name;
+        int    id;
+        string name;
 
-        friend std::ostream &operator<<(std::ostream &os, gadget const &o);
+        friend ostream &operator<<(ostream &os, gadget const &o);
     };
 
-    std::ostream &
-    operator<<(std::ostream &os, gadget const &o)
+    ostream &
+    operator<<(ostream &os, gadget const &o)
     {
         os << o.id << ',' << o.name << '\n';
         return os;
@@ -90,12 +92,13 @@ namespace n502
     template <typename T>
     inline constexpr bool uses_write_v = uses_write<T>::value;
 
+    // class template with anonymous template parameter
     template <bool>
     struct serializer
     {
         template <typename T>
         static void
-        serialize(std::ostream &os, T const &value)
+        serialize(ostream &os, T const &value)
         {
             os << value;
         }
@@ -106,7 +109,7 @@ namespace n502
     {
         template <typename T>
         static void
-        serialize(std::ostream &os, T const &value)
+        serialize(ostream &os, T const &value)
         {
             value.write(os);
         }
@@ -114,7 +117,7 @@ namespace n502
 
     template <typename T>
     void
-    serialize(std::ostream &os, T const &value)
+    serialize(ostream &os, T const &value)
     {
         serializer<uses_write_v<T>>::serialize(os, value);
     }
@@ -140,21 +143,23 @@ namespace n503
     void
     increment(T &val)
     {
+        // Substituting for T any type for which the post-fix operator++ is not implemented is a failure.
+        // This failure is an error and will not be ignored by the compiler!
         val++;
     }
 
     template <typename T, size_t N>
     void
-    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 0] = 0)
+    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 0] = nullptr)
     {
-        std::println("handle even array");
+        std::println("handle even array: {} elements", N);
     }
 
     template <typename T, size_t N>
     void
-    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 1] = 0)
+    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 1] = nullptr)
     {
-        std::println("handle odd array");
+        std::println("handle odd array: {} elements", N);
     }
 } // namespace n503
 
@@ -174,9 +179,11 @@ namespace n504
 
     struct int_foo : foo<int>
     {
+        // ...
     };
     struct int_bar : bar<int>
     {
+        // ...
     };
 
     template <typename T>
@@ -207,14 +214,14 @@ namespace n505
         using type = T;
     };
 
-    template <typename T, typename enable_if<n502::uses_write_v<T>>::type * = nullptr>
+    template <typename T, enable_if<n502::uses_write_v<T>>::type * = nullptr>
     void
     serialize(std::ostream &os, T const &value)
     {
         value.write(os);
     }
 
-    template <typename T, typename enable_if<!n502::uses_write_v<T>>::type * = nullptr>
+    template <typename T, enable_if<!n502::uses_write_v<T>>::type * = nullptr>
     void
     serialize(std::ostream &os, T const &value)
     {
@@ -258,7 +265,8 @@ namespace n507
 
 namespace n508
 {
-    template <typename T, typename = typename std::enable_if_t<std::is_integral_v<T>>>
+    // anonymous type variable with a default type value
+    template <typename T, typename = std::enable_if_t<std::is_integral_v<T>, T>>
     struct integral_wrapper
     {
         T value;
@@ -268,7 +276,7 @@ namespace n508
         }
     };
 
-    template <typename T, typename = typename std::enable_if_t<std::is_floating_point_v<T>>>
+    template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
     struct floating_wrapper
     {
         T value;
@@ -316,11 +324,12 @@ namespace n510
 namespace n511
 {
     template <typename T>
-    bool
+    constexpr bool
     are_equal(T const &a, T const &b)
     {
         if constexpr (std::is_floating_point_v<T>)
         {
+            // epsilon calculation
             return std::abs(a - b) < 0.001;
         }
         else
@@ -338,10 +347,11 @@ namespace n512
     {
         if constexpr (std::is_arithmetic_v<T>)
         {
+            // ...
         }
         else
         {
-            static_assert(always_false<T>, "Must be arithmetic"); // ill-formed: invalid for every T
+            static_assert(always_false<T>, "Must be arithmetic");
         }
     }
 } // namespace n512
@@ -444,7 +454,7 @@ namespace n517
     std::string
     as_string(T &&value)
     {
-        using value_type = std::decay_t<T>;
+        using value_type = std::decay_t<T>; // stripping reference, and cv-qualifiers
 
         if constexpr (std::is_null_pointer_v<value_type>)
         {
@@ -473,6 +483,7 @@ namespace n518
 
 namespace n519
 {
+    // anonymous type variable (template parameter)
     template <typename, typename... Ts>
     struct has_common_type : std::false_type
     {
@@ -490,8 +501,7 @@ namespace n519
     void
     process(Ts &&...ts [[maybe_unused]])
     {
-        // static_assert(has_common_type_v<Ts...>,
-        //                    "Arguments must have a common type.");
+        static_assert(has_common_type_v<Ts...>, "Arguments must have a common type.");
 
         std::println("{}", typeid(std::common_type_t<Ts...>).name());
     }
@@ -550,18 +560,32 @@ main()
         std::println("\n====================== using namespace n501 =============================");
         using namespace n501;
 
+        // Type traits:
+        // 1. Enable us to INSPECT PROPERTIES of types
+        // 2. Perform TRANSFORMATIONS OF TYPES at compile-time,
+        //    such as adding or removing the const qualifier, or adding or removing pointer
+        //    or reference from a type.
+        //    These type traits are also called METAFUNCTIONS.
+
+        // Type traits are small class templates that contain a constant value whose value
+        // represents the answer to a question we ask about a type.
+
+        // The technique for building type traits that provide such information about types
+        // relies on template specialization.
+
         // floating points
         static_assert(is_floating_point<float>::value);
         static_assert(is_floating_point<double>::value);
         static_assert(is_floating_point<long double>::value);
 
+        process_real_number(42.0);  // processing a real number: 42
+        process_real_number(42.0f); // processing a real number: 42
+        process_real_number(42.0L); // processing a real number: 42
+
         // non-floating points
         static_assert(!is_floating_point<int>::value);
         static_assert(!is_floating_point<bool>::value);
 
-        process_real_number(42.0);  // 42
-        process_real_number(42.0f); // 42
-        process_real_number(42.0L); // 42
         // process_real_number(42); // error: int (42) is not a floating point number
         // process_real_number(true); // error: bool (true) is not a floating point number
     }
@@ -573,7 +597,9 @@ main()
         widget w{1, "one"};
         gadget g{2, "two"};
 
-        w.write(std::cout);      // 1, one
+        w.write(std::cout); // 1, one
+
+        // g.write(std::cout);   // error: No member named 'write' in 'n502::gadget'
         std::cout << g;          // 2, two
 
         serialize(std::cout, w); // 1, one
@@ -584,11 +610,13 @@ main()
         std::println("\n====================== using namespace n503 =============================");
         using namespace n503;
 
+        // SFINAE = Substitution Failure Is Not An Error
+
         std::array<int, 5> arr1{1, 2, 3, 4, 5};
-        std::println("{}", *n503::begin(arr1));
+        std::println("{}", *n503::begin(arr1)); // 1
 
         int arr2[]{5, 4, 3, 2, 1};
-        std::println("{}", *begin(arr2));
+        std::println("{}", *begin(arr2));       // 5
     }
 
     {
@@ -599,43 +627,51 @@ main()
         n503::increment(a); // OK
 
         std::string s{"42"};
-        // n503::increment(s);  // error
+        // error: Cannot increment value of type 'std::basic_string<char>'
+        // Error shows up in the template, not here.
+        // n503::increment(s);
     }
 
     {
         std::println("\n====================== using namespace n503 =============================");
         using namespace n503;
 
-        int arr1[]{1, 2, 3, 4, 5};
-        handle(arr1);
+        // Creating an array of size zero is a SFINAE error.
 
-        int arr2[]{1, 2, 3, 4};
-        handle(arr2);
+        int arr1[]{1, 2, 3, 4, 5}; //
+        handle(arr1);              // handle odd array: 5 elements
+
+        int arr2[]{1, 2, 3, 4};    //
+        handle(arr2);              // handle even array: 4 elements
     }
 
     {
         std::println("\n====================== using namespace n504 =============================");
         using namespace n504;
 
-        int_foo fi;
-        int_bar bi;
+        int_foo i_f;
+        int_bar i_b;
         int     x = 0;
-        handle(fi);
-        handle(bi);
-        // handle(x);
 
-        std::println("{}", x);
+        handle(i_f);           // handle a foo
+        handle(i_b);           // handle a bar
+
+        std::println("{}", x); // 0
+        // handle(x);          // error
     }
 
     {
         std::println("\n====================== using namespace n505 =============================");
         using namespace n502;
 
+        // std::enable_if is a metafunction to enable SFINAE
+        // and remove candidates from a function's overload set.
+
         widget w{1, "one"};
         gadget g{2, "two"};
 
-        n505::serialize(std::cout, w);
-        n505::serialize(std::cout, g);
+        n505::serialize(std::cout, w); // 1,one
+        n505::serialize(std::cout, g); // 2,two
     }
 
     {
@@ -645,8 +681,8 @@ main()
         widget w{1, "one"};
         gadget g{2, "two"};
 
-        n506::serialize(std::cout, w);
-        n506::serialize(std::cout, g);
+        n506::serialize(std::cout, w); // 1,one
+        n506::serialize(std::cout, g); // 2,two
     }
 
     {
@@ -656,53 +692,58 @@ main()
         widget w{1, "one"};
         gadget g{2, "two"};
 
-        n507::serialize(std::cout, w);
-        n507::serialize(std::cout, g);
+        n507::serialize(std::cout, w); // 1,one
+        n507::serialize(std::cout, g); // 2,two
     }
 
     {
         std::println("\n====================== using namespace n508 =============================");
         using namespace n508;
 
-        integral_wrapper w1{42}; // OK
-        // integral_wrapper w2{ 42.0 }; // error
-        // integral_wrapper w3{ "42" }; // error
+        integral_wrapper w1{42};   // OK
+        floating_wrapper w2{42.0}; // OK
 
-        // floating_wrapper w4{ 42 };   // error
-        floating_wrapper w5{42.0}; // OK
-                                   // floating_wrapper w6{ "42" }; // error
+        // integral_wrapper w3{ 42.0 }; // error
+        // integral_wrapper w4{ "42" }; // error
+
+        // floating_wrapper w5{ 42 };   // error
+        // floating_wrapper w6{"42"}; // error
     }
 
     {
         std::println("\n====================== using namespace n509 =============================");
         using namespace n502;
 
+        // 'constexpr if' is a compile-time version of the if-statement.
+        // The syntax for 'constexpr if' is 'if constexpr(condition)'.
+
         widget w{1, "one"};
         gadget g{2, "two"};
 
-        n509::serialize(std::cout, w);
-        n509::serialize(std::cout, g);
+        n509::serialize(std::cout, w); // 1,one
+        n509::serialize(std::cout, g); // 2,two
     }
 
     {
         std::println("\n====================== using namespace n510 =============================");
         using namespace n510;
 
-        std::println("{}", factorial<1>());
-        std::println("{}", factorial<2>());
-        std::println("{}", factorial<3>());
-        std::println("{}", factorial<4>());
-        std::println("{}", factorial<5>());
+        std::println("{}", factorial<1>()); // 1
+        std::println("{}", factorial<2>()); // 2
+        std::println("{}", factorial<3>()); // 6
+        std::println("{}", factorial<4>()); // 24
+        std::println("{}", factorial<5>()); // 120
     }
 
     {
         std::println("\n====================== using namespace n511 =============================");
         using namespace n511;
 
-        are_equal(1, 1);
-        are_equal(1.999998, 1.999997);
-        are_equal(std::string{"1"}, std::string{"1"});
-        // are_equal(n502::widget{ 1, "one" }, n502::widget{ 1, "two" });
+        std::println("{}", are_equal(1, 1));                               // true
+        std::println("{}", are_equal(1.999998, 1.999997));                 // true
+        std::println("{}", are_equal(1.999998, 2.999997));                 // false
+        std::println("{}", are_equal(std::string{"1"}, std::string{"1"})); // true
+        // are_equal(n502::widget{1, "one"}, n502::widget{1, "two"});      // error
     }
 
     {
@@ -718,11 +759,11 @@ main()
         std::println("\n====================== using namespace n513 =============================");
         using namespace n513;
 
-        std::println("{}", as_string(nullptr));
-        std::println("{}", as_string(true));
-        std::println("{}", as_string('a'));
-        std::println("{}", as_string(42));
-        std::println("{}", as_string(42.0));
+        std::println("{}", as_string(nullptr)); // null
+        std::println("{}", as_string(true));    // 1
+        std::println("{}", as_string('a'));     // 97
+        std::println("{}", as_string(42));      // 42
+        std::println("{}", as_string(42.0));    // 42.000000
         // std::println("{}", as_string("42")); // error
     }
 
@@ -731,42 +772,40 @@ main()
         using namespace n514;
 
         // std::println("{}", std::boolalpha);
-        std::println("{}", std::is_trivial_v<foo>);
-        std::println("{}", std::is_trivial_v<bar>);
-        std::println("{}", std::is_trivial_v<tar>);
+        std::println("{}", std::is_trivial_v<foo>);            // true
+        std::println("{}", std::is_trivial_v<bar>);            // false
+        std::println("{}", std::is_trivial_v<tar>);            // false
 
-        std::println("{}", std::is_trivially_copyable_v<foo>);
-        std::println("{}", std::is_trivially_copyable_v<bar>);
-        std::println("{}", std::is_trivially_copyable_v<tar>);
+        std::println("{}", std::is_trivially_copyable_v<foo>); // true
+        std::println("{}", std::is_trivially_copyable_v<bar>); // true
+        std::println("{}", std::is_trivially_copyable_v<tar>); // true
     }
 
     {
         std::println("\n====================== using namespace n515 =============================");
         using namespace n515;
 
-        std::println("{}", as_string(nullptr));
-        std::println("{}", as_string(true));
-        std::println("{}", as_string('a'));
-        std::println("{}", as_string(42));
-        std::println("{}", as_string(42.0));
+        std::println("{}", as_string(nullptr)); // null
+        std::println("{}", as_string(true));    // true
+        std::println("{}", as_string('a'));     // 97
+        std::println("{}", as_string(42));      // 42
+        std::println("{}", as_string(42.0));    // 42.000000
     }
 
     {
         std::println("\n====================== using namespace n516 =============================");
         using namespace n516;
 
-        std::println("{}", as_string(nullptr));
-        std::println("{}", as_string(true));
-        std::println("{}", as_string('a'));
-        std::println("{}", as_string(42));
-        std::println("{}", as_string(42.0));
+        std::println("{}", as_string(nullptr)); // null
+        std::println("{}", as_string(true));    // true
+        std::println("{}", as_string('a'));     // 97
+        std::println("{}", as_string(42));      // 42
+        std::println("{}", as_string(42.0));    // 42.000000
 
         // bool f = true;
-        // std::println("{}", f);
         // std::println("{}", as_string(f));
 
         // int n = 42;
-        // std::println("{}", n);
         // std::println("{}", as_string(n));
     }
 
@@ -774,17 +813,17 @@ main()
         std::println("\n====================== using namespace n517 =============================");
         using namespace n517;
 
-        std::println("{}", as_string(nullptr));
-        std::println("{}", as_string(true));
-        std::println("{}", as_string('a'));
-        std::println("{}", as_string(42));
-        std::println("{}", as_string(42.0));
+        std::println("{}", as_string(nullptr)); // null
+        std::println("{}", as_string(true));    //  true
+        std::println("{}", as_string('a'));     //  97
+        std::println("{}", as_string(42));      //  42
+        std::println("{}", as_string(42.0));    //  42.000000
 
         bool f = true;
-        std::println("{}", as_string(f));
+        std::println("{}", as_string(f));       //  true
 
         int n = 42;
-        std::println("{}", as_string(n));
+        std::println("{}", as_string(n));       //  42
     }
 
     {
@@ -796,26 +835,33 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n520 =============================");
+
+        // Without the n520 qualification, a process called ARGUMENT-DEPENDENT LOOKUP (ADL) would
+        // kick in. This would result in resolving the call to copy to the std::copy function
+        // because the arguments we pass are found in the std namespace!
+
+        std::vector<int> v1{1, 2, 3, 4, 5};                       // vector of size 5
+        std::vector<int> v2(5);                                   // vector of size 5
+
+        n520::copy(std::begin(v1), std::end(v1), std::begin(v2)); // copy v1 into v2
+
+        int a1[5] = {1, 2, 3, 4, 5};                              // array of size 5
+        int a2[5];                                                // array of size 5
+
+        n520::copy(a1, a1 + 5, a2);                               // copy a1 into a2
+    }
+
+    {
         std::println("\n====================== using namespace n519 =============================");
         using namespace n519;
+
+        int a = 1;
+        process(a);
 
         process(1);           // int
         process(1, 2, 3);     // int
         process(1, 2.0, '3'); // double
         // process(1, 2.0, "3"); // error
-    }
-
-    {
-        std::println("\n=========================================================================");
-
-        std::vector<int> v1{1, 2, 3, 4, 5};
-        std::vector<int> v2(5);
-
-        n520::copy(std::begin(v1), std::end(v1), std::begin(v2));
-
-        int a1[5] = {1, 2, 3, 4, 5};
-        int a2[5];
-
-        n520::copy(a1, a1 + 5, a2);
     }
 }
