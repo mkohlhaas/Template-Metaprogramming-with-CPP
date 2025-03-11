@@ -1,9 +1,9 @@
 #include <any>
-#include <format>
 #include <functional>
 #include <iostream>
 #include <list>
 #include <memory>
+#include <print>
 #include <ranges>
 #include <set>
 #include <string>
@@ -13,6 +13,8 @@
 
 namespace n701
 {
+    // polymorphic (game) classes
+
     struct game_unit
     {
         virtual void attack() = 0;
@@ -23,7 +25,7 @@ namespace n701
         void
         attack() override
         {
-            std::cout << "draw sword\n";
+            std::println("knight draws sword");
         }
     };
 
@@ -32,7 +34,16 @@ namespace n701
         void
         attack() override
         {
-            std::cout << "spell magic curse\n";
+            std::println("mage spells magic curse");
+        }
+    };
+
+    struct knight_mage : game_unit
+    {
+        void
+        attack() override
+        {
+            std::println("knight-mage draws magic sword");
         }
     };
 
@@ -45,15 +56,6 @@ namespace n701
         }
     }
 
-    struct knight_mage : game_unit
-    {
-        void
-        attack() override
-        {
-            std::cout << "draw magic sword\n";
-        }
-    };
-
     struct attack
     {
         int value;
@@ -64,6 +66,9 @@ namespace n701
         int value;
     };
 
+    // Based on the operands for the +-operator, the compiler is selecting the appropriate overload.
+    // This is called STATIC POLYMORPHISM. (All this happens at compile time.)
+
     attack
     operator+(attack const &a, int value)
     {
@@ -71,44 +76,58 @@ namespace n701
     }
 
     knight_mage
-    operator+(knight const &k [[maybe_unused]], mage const &m [[maybe_unused]])
+    operator+(knight const &, mage const &)
     {
         return knight_mage{};
     }
+
+    // Functions can also be overloaded.
 
     void
     increment(attack &a)
     {
         a.value++;
     }
+
     void
     increment(defence &d)
     {
         d.value++;
     }
 
-    // template <typename T>
-    // void increment(T& t) { t.value++; }
+    // We could replace both functions with a template.
+    template <typename T>
+    void
+    increment(T &t)
+    {
+        t.value++;
+    }
+
+    // Summary:
+    // Overloaded functions and templates are the mechanisms to implement static polymorphism.
+
 } // namespace n701
 
 namespace n702
 {
+    // CRTP
+
     template <typename T>
     struct Base
     {
         void
         f()
         {
-            static_cast<T *>(this)->f();
+            static_cast<T *>(this)->do_f();
         }
     };
 
     struct Derived : public Base<Derived>
     {
         void
-        f()
+        do_f()
         {
-            std::cout << "Derived::f()\n";
+            std::println("Derived::f()");
         }
     };
 
@@ -122,9 +141,12 @@ namespace n702
 
 namespace n703
 {
+    // [1] There is a base class template that defines the (static) interface.
     template <typename T>
     struct game_unit
     {
+        // [3] Member functions of the base class call member functions of its type template parameter (which are the
+        //     derived(!) classes).
         void
         attack()
         {
@@ -132,24 +154,27 @@ namespace n703
         }
     };
 
+    // [2] Derived classes are THEMSELVES(!) the template argument for the base class template.
     struct knight : game_unit<knight>
     {
         void
         do_attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
         }
     };
 
+    // [2] Derived classes are themselves the template argument for the base class template.
     struct mage : game_unit<mage>
     {
         void
         do_attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
         }
     };
 
+    // fight() must be a template function now.
     template <typename T>
     void
     fight(std::vector<game_unit<T> *> const &units)
@@ -163,10 +188,12 @@ namespace n703
 
 namespace n704
 {
+    // limiting number of instances of T to N
     template <typename T, size_t N>
     struct limited_instances
     {
         static std::atomic<size_t> count;
+
         limited_instances()
         {
             if (count >= N)
@@ -175,20 +202,25 @@ namespace n704
             }
             ++count;
         }
+
         ~limited_instances()
         {
             --count;
         }
     };
 
+    // initialization of non-const static data member
     template <typename T, size_t N>
     std::atomic<size_t> limited_instances<T, N>::count = 0;
 
     struct excalibur : limited_instances<excalibur, 1>
     {
+        // ...
     };
+
     struct book_of_magic : limited_instances<book_of_magic, 3>
     {
+        // ...
     };
 } // namespace n704
 
@@ -221,13 +253,13 @@ namespace n705
         void
         step_forth()
         {
-            std::cout << "knight moves forward\n";
+            std::println("knight moves forward");
         }
 
         void
         step_back()
         {
-            std::cout << "knight moves back\n";
+            std::println("knight moves back");
         }
     };
 
@@ -236,13 +268,13 @@ namespace n705
         void
         step_forth()
         {
-            std::cout << "mage moves forward\n";
+            std::println("mage moves forward");
         }
 
         void
         step_back()
         {
-            std::cout << "mage moves back\n";
+            std::println("mage moves back");
         }
     };
 } // namespace n705
@@ -254,13 +286,13 @@ namespace n706
         void
         step_forth()
         {
-            std::cout << "knight moves forward\n";
+            std::println("knight moves forward");
         }
 
         void
         step_back()
         {
-            std::cout << "knight moves back\n";
+            std::println("knight moves back");
         }
     };
 
@@ -269,13 +301,13 @@ namespace n706
         void
         step_forth()
         {
-            std::cout << "mage moves forward\n";
+            std::println("mage moves forward");
         }
 
         void
         step_back()
         {
-            std::cout << "mage moves back\n";
+            std::println("mage moves back");
         }
     };
 
@@ -325,9 +357,9 @@ namespace n707
     std::ostream &
     operator<<(std::ostream &os, hero const &obj)
     {
-        for (hero *u : obj.connections)
+        for (hero *c : obj.connections)
         {
-            os << obj.name << " --> [" << u->name << "]" << '\n';
+            os << obj.name << " --> [" << c->name << "]" << '\n';
         }
 
         return os;
@@ -335,6 +367,7 @@ namespace n707
 
     struct hero_party : std::vector<hero>
     {
+        // ...
     };
 } // namespace n707
 
@@ -347,17 +380,20 @@ namespace n708
         void ally_with(U &other);
     };
 
+    // CRTP
     struct hero : base_unit<hero>
     {
         hero(std::string_view n) : name(n)
         {
         }
 
+        // making hero into an iterable
         hero *
         begin()
         {
             return this;
         }
+
         hero *
         end()
         {
@@ -375,6 +411,7 @@ namespace n708
         friend std::ostream &operator<<(std::ostream &os, base_unit<U> &object);
     };
 
+    // CRTP (adding functionality to std::vector)
     struct hero_party : std::vector<hero>, base_unit<hero_party>
     {
     };
@@ -400,9 +437,9 @@ namespace n708
     {
         for (hero &obj : *static_cast<T *>(&object))
         {
-            for (hero *n : obj.connections)
+            for (hero *c : obj.connections)
             {
-                os << obj.name << " --> [" << n->name << "]" << '\n';
+                os << obj.name << " --> [" << c->name << "]" << '\n';
             }
         }
         return os;
@@ -413,6 +450,7 @@ namespace n709a
 {
     struct building
     {
+        // ...
     };
 } // namespace n709a
 
@@ -420,6 +458,7 @@ namespace n709b
 {
     struct building : std::enable_shared_from_this<building>
     {
+        // ...
     };
 } // namespace n709b
 
@@ -454,11 +493,12 @@ namespace n709c
     {
         building()
         {
-            std::cout << "building created\n";
+            std::println("building created");
         }
+
         ~building()
         {
-            std::cout << "building destroyed\n";
+            std::println("building destroyed");
         }
 
         void
@@ -480,14 +520,14 @@ namespace n709c
         void
         do_upgrade()
         {
-            std::cout << "upgrading\n";
+            std::println("upgrading");
             operational = false;
 
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(1000ms);
+            // using namespace std::chrono_literals;
+            // std::this_thread::sleep_for(1000ms);
 
             operational = true;
-            std::cout << "building is functional\n";
+            std::println("building is functional");
         }
 
         bool      operational = false;
@@ -502,7 +542,7 @@ namespace n710a
         void
         fight()
         {
-            std::cout << "hit once hard then run\n";
+            std::println("hit once hard then run");
         }
     };
 
@@ -511,7 +551,7 @@ namespace n710a
         void
         fight()
         {
-            std::cout << "duel until one falls\n";
+            std::println("duel until one falls");
         }
     };
 
@@ -521,7 +561,7 @@ namespace n710a
         void
         attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
             Strategy::fight();
         }
     };
@@ -532,7 +572,7 @@ namespace n710a
         void
         attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
             Strategy::fight();
         }
     };
@@ -545,13 +585,13 @@ namespace n710b
         void
         step_forth()
         {
-            std::cout << "knight moves forward\n";
+            std::println("knight moves forward");
         }
 
         void
         step_back()
         {
-            std::cout << "knight moves back\n";
+            std::println("knight moves back");
         }
     };
 
@@ -560,13 +600,13 @@ namespace n710b
         void
         step_forth()
         {
-            std::cout << "mage moves forward\n";
+            std::println("mage moves forward");
         }
 
         void
         step_back()
         {
-            std::cout << "mage moves back\n";
+            std::println("mage moves back");
         }
     };
 
@@ -600,7 +640,7 @@ namespace n710c
         void
         fight()
         {
-            std::cout << "attack! attack attack!\n";
+            std::println("attack! attack attack!");
         }
     };
 
@@ -609,7 +649,7 @@ namespace n710c
         void
         fight()
         {
-            std::cout << "attack then defend\n";
+            std::println("attack then defend");
         }
     };
 
@@ -619,7 +659,7 @@ namespace n710c
         void
         fight()
         {
-            std::cout << "fighting alone.";
+            std::println("fighting alone.");
             T::fight();
         }
     };
@@ -630,7 +670,7 @@ namespace n710c
         void
         fight()
         {
-            std::cout << "fighting with a team.";
+            std::println("fighting with a team.");
             T::fight();
         }
     };
@@ -647,7 +687,7 @@ namespace n710c
         void
         attack()
         {
-            std::cout << "draw sword.";
+            std::println("draw sword.");
             T::fight();
         }
     };
@@ -658,7 +698,7 @@ namespace n710c
         void
         attack()
         {
-            std::cout << "spell magic curse.";
+            std::println("spell magic curse.");
             T::fight();
         }
     };
@@ -761,7 +801,7 @@ namespace n712a
         void
         attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
         }
     };
 
@@ -770,7 +810,7 @@ namespace n712a
         void
         attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
         }
     };
 
@@ -827,7 +867,7 @@ namespace n712b
         void
         attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
         }
     };
 
@@ -836,7 +876,7 @@ namespace n712b
         void
         attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
         }
     };
 
@@ -880,7 +920,7 @@ namespace n712c
         void
         attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
         }
     };
 
@@ -889,7 +929,7 @@ namespace n712c
         void
         attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
         }
     };
 
@@ -946,7 +986,7 @@ namespace n712d
         void
         attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
         }
     };
 
@@ -955,7 +995,7 @@ namespace n712d
         void
         attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
         }
     };
 
@@ -1016,7 +1056,7 @@ namespace n712e
         void
         attack()
         {
-            std::cout << "draw sword\n";
+            std::println("draw sword");
         }
     };
 
@@ -1025,7 +1065,7 @@ namespace n712e
         void
         attack()
         {
-            std::cout << "spell magic curse\n";
+            std::println("spell magic curse");
         }
     };
 
@@ -1053,50 +1093,50 @@ namespace n712e
     }
 } // namespace n712e
 
-namespace n713
-{
-    class async_bool
-    {
-        std::function<bool()> check;
-
-      public:
-        async_bool() = delete;
-        // async_bool(std::function<bool()> checkIt) : check(checkIt)
-        // {
-        // }
-
-        async_bool(bool val) : check([val]() { return val; })
-        {
-        }
-
-        static async_bool
-        yes()
-        {
-            return async_bool{static_cast<bool>([]() { return true; })};
-        }
-
-        static async_bool
-        no()
-        {
-            return async_bool{static_cast<bool>([]() { return false; })};
-        }
-
-        bool
-        operator&&(bool fore) const
-        {
-            return fore && check();
-        }
-        bool
-        operator!() const
-        {
-            return !check();
-        }
-        operator bool() const
-        {
-            return check();
-        }
-    };
-} // namespace n713
+// namespace n713
+// {
+//     class async_bool
+//     {
+//         std::function<bool()> check;
+//
+//       public:
+//         async_bool() = delete;
+//         // async_bool(std::function<bool()> checkIt) : check(checkIt)
+//         // {
+//         // }
+//
+//         async_bool(bool val) : check([val]() { return val; })
+//         {
+//         }
+//
+//         static async_bool
+//         yes()
+//         {
+//             return async_bool{static_cast<bool>([]() { return true; })};
+//         }
+//
+//         static async_bool
+//         no()
+//         {
+//             return async_bool{static_cast<bool>([]() { return false; })};
+//         }
+//
+//         bool
+//         operator&&(bool fore) const
+//         {
+//             return fore && check();
+//         }
+//         bool
+//         operator!() const
+//         {
+//             return !check();
+//         }
+//         operator bool() const
+//         {
+//             return check();
+//         }
+//     };
+// } // namespace n713
 
 namespace n714
 {
@@ -1631,6 +1671,11 @@ int
 main()
 {
     {
+        std::println("\n====================== using namespace n701 =============================");
+
+        // - DYNAMIC POLYMORPHISM occurs at RUNTIME      with the help of INTERFACES           and VIRTUAL FUNCTIONS.
+        // - STATIC  POLYMORPHISM occurs at COMPILE-TIME with the help of OVERLOADED FUNCTIONS and TEMPLATES.
+
         using namespace n701;
 
         knight k;
@@ -1649,6 +1694,8 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n702 =============================");
+
         using namespace n702;
 
         Derived d;
@@ -1656,41 +1703,56 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n703 =============================");
+
+        // Can we get the benefits of dynamic polymorphism at compile time? Yes!
+        // -> Curiously Recurring Template Pattern (CRTP)
+
         using namespace n703;
 
         knight k;
         mage   m;
-        fight<knight>({&k});
-        fight<mage>({&m});
+
+        fight<knight>({&k}); // draw sword
+        fight<mage>({&m});   // spell magic curse
+        // fight({&k, &m});  // error
     }
 
     {
+        std::println("\n====================== using namespace n704 =============================");
+
+        // Limiting the object count with CRTP
+
         using namespace n704;
 
-        excalibur e1;
         try
         {
-            excalibur e2;
+            excalibur e1;
+            excalibur e2; // will throw an exception
         }
         catch (std::exception &e)
         {
-            std::cout << e.what() << '\n';
+            std::println("{}", e.what());
         }
 
-        book_of_magic b1;
-        book_of_magic b2;
-        book_of_magic b3;
         try
         {
-            book_of_magic b4;
+            book_of_magic b1;
+            book_of_magic b2;
+            book_of_magic b3;
+            book_of_magic b4; // will throw an exception
         }
         catch (std::exception &e)
         {
-            std::cout << e.what() << '\n';
+            std::println("{}", e.what());
         }
     }
 
     {
+        std::println("\n====================== using namespace n705 =============================");
+
+        // Adding functionality with CRTP
+
         using namespace n705;
 
         knight k;
@@ -1703,6 +1765,10 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n706 =============================");
+
+        // Differnt implementation with function templates.
+
         using namespace n706;
 
         knight k;
@@ -1715,55 +1781,69 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n707 =============================");
+
         using namespace n707;
 
-        hero k1("Arthur");
-        hero k2("Sir Lancelot");
-        hero k3("Sir Gawain");
+        hero h1("Arthur");
+        hero h2("Sir Lancelot");
+        hero h3("Sir Gawain");
 
-        k1.ally_with(k2);
-        k2.ally_with(k3);
+        h1.ally_with(h2);
+        h2.ally_with(h3);
 
-        std::cout << k1 << '\n';
-        std::cout << k2 << '\n';
-        std::cout << k3 << '\n';
+        std::cout << h1 << '\n';
+        std::cout << h2 << '\n';
+        std::cout << h3 << '\n';
     }
 
     {
+        std::println("\n====================== using namespace n708 =============================");
+
+        // Implementing the composite design pattern
+        // Composite pattern enables to compose objects into larger structures and treat both
+        // individual objects and compositions uniformly.
+
         using namespace n708;
 
-        hero k1("Arthur");
-        hero k2("Sir Lancelot");
+        hero h1("Arthur");
+        hero h2("Sir Lancelot");
 
         hero_party p1;
-        p1.emplace_back("Bors");
-
         hero_party p2;
+
+        p1.emplace_back("Bors");
         p2.emplace_back("Cador");
         p2.emplace_back("Constantine");
 
-        k1.ally_with(k2);
-        k1.ally_with(p1);
-
-        p1.ally_with(k2);
+        // all combinations possible (this was the goal) treating heros and hero_parties the same
+        h1.ally_with(h2);
+        h1.ally_with(p1);
+        p1.ally_with(h2);
         p1.ally_with(p2);
 
-        std::cout << k1 << '\n';
-        std::cout << k2 << '\n';
+        std::cout << h1 << '\n';
+        std::cout << h2 << '\n';
         std::cout << p1 << '\n';
         std::cout << p2 << '\n';
     }
 
     {
+        std::println("\n====================== using namespace n709a ============================");
+
+        // The CRTP in the standard library
+
         using namespace n709a;
 
         building *b = new building();
 
         std::shared_ptr<building> p1{b};
-        // std::shared_ptr<building> p2{ b }; // bad
+        // std::shared_ptr<building> p2{b}; // runtime error: free(): double free detected
     }
 
     {
+        std::println("\n====================== using namespace n709b ============================");
+
         using namespace n709b;
 
         building *b = new building();
@@ -1773,6 +1853,8 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n709c ============================");
+
         using namespace n709c;
 
         executor                  e;
@@ -1780,227 +1862,259 @@ main()
         b->set_executor(&e);
         b->upgrade();
 
-        std::cout << "main finished\n";
+        std::println("main finished");
     }
 
-    {
-        using namespace n710a;
+    // {
+    //     std::println("\n====================== using namespace n710a ============================");
+    //
+    //     using namespace n710a;
+    //
+    //     knight<last_man_standing> k;
+    //     mage<hit_and_run>         m;
+    //
+    //     k.attack();
+    //     m.attack();
+    // }
 
-        knight<last_man_standing> k;
-        mage<hit_and_run>         m;
+    // {
+    //     std::println("\n====================== using namespace n710b ============================");
+    //
+    //     using namespace n710b;
+    //
+    //     movable_unit<knight> k;
+    //     k.advance(3);
+    //     k.retreat(2);
+    //
+    //     movable_unit<mage> m;
+    //     m.advance(5);
+    //     m.retreat(3);
+    // }
 
-        k.attack();
-        m.attack();
-    }
+    // {
+    //     std::println("\n====================== using namespace n710c ============================");
+    //
+    //     using namespace n710c;
+    //
+    //     std::vector<std::unique_ptr<game_unit>> units;
+    //
+    //     units.emplace_back(new knight<aggressive_style>());
+    //     units.emplace_back(new knight<moderate_style>());
+    //     units.emplace_back(new mage<aggressive_style>());
+    //     units.emplace_back(new mage<moderate_style>());
+    //     units.emplace_back(new knight<lone_warrior<aggressive_style>>());
+    //     units.emplace_back(new knight<lone_warrior<moderate_style>>());
+    //     units.emplace_back(new knight<team_warrior<aggressive_style>>());
+    //     units.emplace_back(new knight<team_warrior<moderate_style>>());
+    //     units.emplace_back(new mage<lone_warrior<aggressive_style>>());
+    //     units.emplace_back(new mage<lone_warrior<moderate_style>>());
+    //     units.emplace_back(new mage<team_warrior<aggressive_style>>());
+    //     units.emplace_back(new mage<team_warrior<moderate_style>>());
+    //
+    //     for (auto &u : units)
+    //     {
+    //         u->attack();
+    //     }
+    // }
 
-    {
-        using namespace n710b;
+    // {
+    //     std::println("\n=========================================================================");
+    //
+    //     std::vector<int> v{1, 2, 3, 4, 5};
+    //     auto             sv = std::begin(v);
+    //     n711a::advance(sv, 2);
+    //
+    //     std::list<int> l{1, 2, 3, 4, 5};
+    //     auto           sl = std::begin(l);
+    //     n711a::advance(sl, 2);
+    // }
 
-        movable_unit<knight> k;
-        k.advance(3);
-        k.retreat(2);
+    // {
+    //     std::println("\n=========================================================================");
+    //
+    //     std::vector<int> v{1, 2, 3, 4, 5};
+    //     auto             sv = std::begin(v);
+    //     n711b::advance(sv, 2);
+    //
+    //     std::list<int> l{1, 2, 3, 4, 5};
+    //     auto           sl = std::begin(l);
+    //     n711b::advance(sl, 2);
+    // }
 
-        movable_unit<mage> m;
-        m.advance(5);
-        m.retreat(3);
-    }
+    // {
+    //     std::println("\n====================== using namespace n712a ============================");
+    //
+    //     using namespace n712a;
+    //
+    //     knight k;
+    //     mage   m;
+    //
+    //     knight_unit ku{k};
+    //     mage_unit   mu{m};
+    //
+    //     std::vector<game_unit *> v{&ku, &mu};
+    //     fight(v);
+    // }
 
-    {
-        using namespace n710c;
+    // {
+    //     std::println("\n====================== using namespace n712b ============================");
+    //
+    //     using namespace n712b;
+    //
+    //     knight k;
+    //     mage   m;
+    //
+    //     game_unit_wrapper ku{k};
+    //     game_unit_wrapper mu{m};
+    //
+    //     std::vector<game_unit *> v{&ku, &mu};
+    //     fight(v);
+    // }
 
-        std::vector<std::unique_ptr<game_unit>> units;
+    // {
+    //     std::println("\n====================== using namespace n712c ============================");
+    //
+    //     using namespace n712c;
+    //
+    //     knight k;
+    //     mage   m;
+    //
+    //     game g;
+    //     g.addUnit(k);
+    //     g.addUnit(m);
+    //
+    //     g.fight();
+    // }
 
-        units.emplace_back(new knight<aggressive_style>());
-        units.emplace_back(new knight<moderate_style>());
-        units.emplace_back(new mage<aggressive_style>());
-        units.emplace_back(new mage<moderate_style>());
-        units.emplace_back(new knight<lone_warrior<aggressive_style>>());
-        units.emplace_back(new knight<lone_warrior<moderate_style>>());
-        units.emplace_back(new knight<team_warrior<aggressive_style>>());
-        units.emplace_back(new knight<team_warrior<moderate_style>>());
-        units.emplace_back(new mage<lone_warrior<aggressive_style>>());
-        units.emplace_back(new mage<lone_warrior<moderate_style>>());
-        units.emplace_back(new mage<team_warrior<aggressive_style>>());
-        units.emplace_back(new mage<team_warrior<moderate_style>>());
+    // {
+    //     std::println("\n====================== using namespace n712d ============================");
+    //
+    //     using namespace n712d;
+    //
+    //     knight k;
+    //     mage   m;
+    //
+    //     std::vector<unit> v{unit(k), unit(m)};
+    //
+    //     fight(v);
+    // }
 
-        for (auto &u : units)
-        {
-            u->attack();
-        }
-    }
+    // {
+    //     std::println("\n====================== using namespace n712e ============================");
+    //
+    //     using namespace n712e;
+    //
+    //     knight k;
+    //     mage   m;
+    //
+    //     std::vector<std::pair<void *, fight_fn>> units{
+    //         {&k, &fight_knight},
+    //         {&m, &fight_mage},
+    //     };
+    //
+    //     fight(units);
+    // }
 
-    {
-        std::vector<int> v{1, 2, 3, 4, 5};
-        auto             sv = std::begin(v);
-        n711a::advance(sv, 2);
+    // {
+    //     std::println("\n====================== using namespace n713 =============================");
+    //
+    //     using namespace n713;
+    //
+    //     async_bool b1{false};
+    //     async_bool b2{true};
+    //     async_bool b3{static_cast<bool>(/* [] */() {
+    //         std::cout << "Y/N? ";
+    //         char c;
+    //         std::cin >> c;
+    //         return c == 'Y' || c == 'y';
+    //     })};
+    //
+    //     if (b1)
+    //     {
+    //         std::println("b1 is true");
+    //     }
+    //     if (b2)
+    //     {
+    //         std::println("b2 is true");
+    //     }
+    //     if (b3)
+    //     {
+    //         std::println("b3 is true");
+    //     }
+    // }
 
-        std::list<int> l{1, 2, 3, 4, 5};
-        auto           sl = std::begin(l);
-        n711a::advance(sl, 2);
-    }
+    // {
+    //     std::println("\n====================== using namespace n712d ============================");
+    //
+    //     using namespace n712d;
+    //
+    //     std::any u;
+    //
+    //     u = knight{};
+    //     if (u.has_value())
+    //     {
+    //         std::any_cast<knight>(u).attack();
+    //     }
+    //
+    //     u = mage{};
+    //     if (u.has_value())
+    //     {
+    //         std::any_cast<mage>(u).attack();
+    //     }
+    // }
 
-    {
-        std::vector<int> v{1, 2, 3, 4, 5};
-        auto             sv = std::begin(v);
-        n711b::advance(sv, 2);
+    // {
+    //     std::println("\n=========================================================================");
+    //
+    //     n716::vector<int> v1{1, 2, 3};
+    //     n716::vector<int> v2{4, 5, 6};
+    //     double            a{1.5};
+    //
+    //     n716::vector<double> v3 = v1 + a * v2;       // {7.0, 9.5, 12.0}
+    //     n716::vector<int>    v4 = v1 * v2 + v1 + v2; // {9, 17, 27}
+    // }
 
-        std::list<int> l{1, 2, 3, 4, 5};
-        auto           sl = std::begin(l);
-        n711b::advance(sl, 2);
-    }
+    // {
+    //     std::println("\n=========================================================================");
+    //
+    //     n717::vector<int> v1{1, 2, 3};
+    //     n717::vector<int> v2{4, 5, 6};
+    //     double            a{1.5};
+    //
+    //     n717::vector<double> v3 = v1 + a * v2;        // {7.0, 9.5, 12.0}
+    //
+    //     int c;
+    //     std::cin >> c;
+    //     n717::vector<double> v31 = v1 + c * v2;       // {7.0, 9.5, 12.0}
+    //     n717::vector<int>    v4  = v1 * v2 + v1 + v2; // {9, 17, 27}
+    // }
 
-    {
-        using namespace n712a;
+    // {
+    //     std::println("\n=========================================================================");
+    //
+    //     namespace rv = std::ranges::views;
+    //     std::vector<int> v1{1, 2, 3};
+    //     std::vector<int> v2{4, 5, 6};
+    //     double           a{1.5};
+    //
+    //     auto sv2 = v2 | rv::transform([&a](int val) { return a * val; });
+    //     // auto v3 = rv::zip_view(std::plus<>{}, v1, sv2);
+    //
+    //     for (auto e : sv2)
+    //     {
+    //         std::println("{}", e);
+    //     }
+    // }
 
-        knight k;
-        mage   m;
-
-        knight_unit ku{k};
-        mage_unit   mu{m};
-
-        std::vector<game_unit *> v{&ku, &mu};
-        fight(v);
-    }
-
-    {
-        using namespace n712b;
-
-        knight k;
-        mage   m;
-
-        game_unit_wrapper ku{k};
-        game_unit_wrapper mu{m};
-
-        std::vector<game_unit *> v{&ku, &mu};
-        fight(v);
-    }
-
-    {
-        using namespace n712c;
-
-        knight k;
-        mage   m;
-
-        game g;
-        g.addUnit(k);
-        g.addUnit(m);
-
-        g.fight();
-    }
-
-    {
-        using namespace n712d;
-
-        knight k;
-        mage   m;
-
-        std::vector<unit> v{unit(k), unit(m)};
-
-        fight(v);
-    }
-
-    {
-        using namespace n712e;
-
-        knight k;
-        mage   m;
-
-        std::vector<std::pair<void *, fight_fn>> units{
-            {&k, &fight_knight},
-            {&m, &fight_mage},
-        };
-
-        fight(units);
-    }
-
-    {
-        using namespace n713;
-
-        async_bool b1{false};
-        async_bool b2{true};
-        async_bool b3{static_cast<bool>([]() {
-            std::cout << "Y/N? ";
-            char c;
-            std::cin >> c;
-            return c == 'Y' || c == 'y';
-        })};
-
-        if (b1)
-        {
-            std::cout << "b1 is true\n";
-        }
-        if (b2)
-        {
-            std::cout << "b2 is true\n";
-        }
-        if (b3)
-        {
-            std::cout << "b3 is true\n";
-        }
-    }
-
-    {
-        using namespace n712d;
-
-        std::any u;
-
-        u = knight{};
-        if (u.has_value())
-        {
-            std::any_cast<knight>(u).attack();
-        }
-
-        u = mage{};
-        if (u.has_value())
-        {
-            std::any_cast<mage>(u).attack();
-        }
-    }
-
-    {
-        n716::vector<int> v1{1, 2, 3};
-        n716::vector<int> v2{4, 5, 6};
-        double            a{1.5};
-
-        n716::vector<double> v3 = v1 + a * v2;       // {7.0, 9.5, 12.0}
-        n716::vector<int>    v4 = v1 * v2 + v1 + v2; // {9, 17, 27}
-    }
-
-    {
-        n717::vector<int> v1{1, 2, 3};
-        n717::vector<int> v2{4, 5, 6};
-        double            a{1.5};
-
-        n717::vector<double> v3 = v1 + a * v2;        // {7.0, 9.5, 12.0}
-
-        int c;
-        std::cin >> c;
-        n717::vector<double> v31 = v1 + c * v2;       // {7.0, 9.5, 12.0}
-        n717::vector<int>    v4  = v1 * v2 + v1 + v2; // {9, 17, 27}
-    }
-
-    {
-        namespace rv = std::ranges::views;
-        std::vector<int> v1{1, 2, 3};
-        std::vector<int> v2{4, 5, 6};
-        double           a{1.5};
-
-        auto sv2 = v2 | rv::transform([&a](int val) { return a * val; });
-        // auto v3 = rv::zip_view(std::plus<>{}, v1, sv2);
-
-        for (auto e : sv2)
-        {
-            std::cout << e << '\n';
-        }
-    }
-
-    {
-        using namespace n715;
-
-        game_unit u{100, 50};
-        std::cout << std::format("{},{}\n", u.attack, u.defense);
-
-        upgrade_unit(u);
-        std::cout << std::format("{},{}\n", u.attack, u.defense);
-    }
+    // {
+    //     std::println("\n====================== using namespace n715 =============================");
+    //
+    //     using namespace n715;
+    //
+    //     game_unit u{100, 50};
+    //     std::println("{},{}", u.attack, u.defense);
+    //
+    //     upgrade_unit(u);
+    //     std::println("{},{}", u.attack, u.defense);
+    // }
 }
