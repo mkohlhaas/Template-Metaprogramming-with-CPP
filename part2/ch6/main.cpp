@@ -1,4 +1,3 @@
-#include <iostream>
 #include <print>
 #include <string>
 #include <string_view>
@@ -17,7 +16,7 @@ namespace n601
 
 namespace n602
 {
-    template <typename T, typename = typename std::enable_if_t<std::is_arithmetic_v<T>>>
+    template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
     T
     add(T const a, T const b)
     {
@@ -49,6 +48,9 @@ namespace n604
 
 namespace n605
 {
+    // REQUIRES CLAUSE doesn't use curly braces
+    // A requires clause determines whether a function participates in overload resolution
+    // or not. This happens based on the value of a compile-time Boolean expression.
     template <typename T>
     T
     add(T const a, T const b)
@@ -60,6 +62,10 @@ namespace n605
 
 namespace n606
 {
+    // REQUIRES EXPRESSION uses curly braces
+    // A requires expression determines whether a set of one or more expressions is
+    // well-formed, without having any side effects on the behavior of the program. A
+    // requires expression is a Boolean expression that can be used with a requires clause.
     template <typename T>
     concept arithmetic = requires { std::is_arithmetic_v<T>; };
 
@@ -124,10 +130,9 @@ namespace n610
 
     struct foo
     {
+        // ...
     };
 
-    static_assert(!is_container_v<foo>);
-    static_assert(is_container_v<std::vector<foo>>);
 } // namespace n610
 
 namespace n611
@@ -150,13 +155,11 @@ namespace n611
     {
     };
 
-    static_assert(!container<foo>);
-    static_assert(container<std::vector<foo>>);
-
     template <container C>
     void
     process(C &&c [[maybe_unused]])
     {
+        // ...
     }
 } // namespace n611
 
@@ -179,6 +182,7 @@ namespace n612
     void
     log_error(T &logger [[maybe_unused]])
     {
+        // ...
     }
 
     struct console_logger
@@ -186,14 +190,19 @@ namespace n612
         void
         error(std::string_view text [[maybe_unused]])
         {
+            // ...
         }
         void
+
         warning(std::string_view text [[maybe_unused]])
         {
+            // ...
         }
         void
+
         info(std::string_view text [[maybe_unused]])
         {
+            // ...
         }
     };
 
@@ -202,14 +211,19 @@ namespace n612
         void
         error(std::string_view text [[maybe_unused]], bool = false)
         {
+            // ...
         }
         void
+
         warning(std::string_view text [[maybe_unused]], bool = false)
         {
+            // ...
         }
         void
-        info(std::string_view text [[maybe_unused]], bool)
+
+        info(std::string_view text [[maybe_unused]], bool) // bool has no default value!
         {
+            // ...
         }
     };
 } // namespace n612
@@ -218,8 +232,8 @@ namespace n613
 {
     template <typename T>
     concept KVP = requires {
-        typename T::key_type;
-        typename T::value_type;
+        typename T::key_type;   // specify type requirements with typename
+        typename T::value_type; //
     };
 
     template <typename T, typename V>
@@ -232,20 +246,16 @@ namespace n613
         value_type value;
     };
 
-    static_assert(KVP<key_value_pair<int, std::string>>);
-    static_assert(!KVP<std::pair<int, std::string>>);
-
     template <typename T>
         requires std::is_arithmetic_v<T>
     struct container
-    { /* ... */
+    {
+        // ...
     };
 
     template <typename T>
     concept containerizeable = requires { typename container<T>; };
 
-    static_assert(containerizeable<int>);
-    static_assert(!containerizeable<std::string>);
 } // namespace n613
 
 namespace n614
@@ -254,25 +264,33 @@ namespace n614
     void
     f(T) noexcept
     {
+        // ...
+        // doesn't throw errors
+        // ...
     }
 
     template <typename T>
     void
     g(T)
     {
+        // ...
+        // could throw an error
+        // ...
     }
 
-    template <typename F, typename... T>
-    concept NonThrowing = requires(F &&func, T... t) {
-        { func(t...) } noexcept;
+    template <typename F, typename... Args>
+    concept NonThrowing = requires(F &&func, Args... args) {
+        // Checking expressions - general form:
+        // { expression } [noexcept] [-> type_constraint];
+        { func(args...) } noexcept; // checking for noexcept specifier
     };
 
-    template <typename F, typename... T>
-        requires NonThrowing<F, T...>
+    template <typename F, typename... Args>
+        requires NonThrowing<F, Args...>
     void
-    invoke(F &&func, T... t)
+    invoke(F &&func, Args... args)
     {
-        func(t...);
+        func(args...);
     }
 } // namespace n614
 
@@ -280,8 +298,8 @@ namespace n615
 {
     template <typename T>
     concept timer = requires(T t) {
-        { t.start() } -> std::same_as<void>;
-        { t.stop() } -> std::convertible_to<long long>;
+        { t.start() } -> std::same_as<void>;            // start() returns void
+        { t.stop() } -> std::convertible_to<long long>; // stop returns anything convertible to long long
     };
 
     struct timerA
@@ -289,7 +307,9 @@ namespace n615
         void
         start()
         {
+            // ...
         }
+
         long long
         stop()
         {
@@ -302,7 +322,9 @@ namespace n615
         void
         start()
         {
+            // ...
         }
+
         int
         stop()
         {
@@ -315,11 +337,17 @@ namespace n615
         void
         start()
         {
+            // ...
         }
+
         void
         stop()
         {
+            // ...
+            // void is not convertible to long long
+            // ...
         }
+
         long long
         getTicks()
         {
@@ -327,9 +355,6 @@ namespace n615
         }
     };
 
-    static_assert(timer<timerA>);
-    static_assert(timer<timerB>);
-    static_assert(!timer<timerC>);
 } // namespace n615
 
 namespace n616
@@ -351,10 +376,6 @@ namespace n616
     {
         return (... + t);
     }
-
-    static_assert(HomogenousRange<int, int>);
-    static_assert(!HomogenousRange<int>);
-    static_assert(!HomogenousRange<int, double>);
 } // namespace n616
 
 namespace n617
@@ -364,7 +385,7 @@ namespace n617
     T
     decrement(T value)
     {
-        return value--;
+        return --value;
     }
 } // namespace n617
 
@@ -376,6 +397,8 @@ namespace n618
     template <typename T>
     concept Signed = std::is_signed_v<T>;
 
+    // Composing constraints with && (conjunction) and || (disjunction)
+    // Conjunctions and disjunctions are short-circuited.
     template <typename T>
     concept SignedIntegral = Integral<T> && Signed<T>;
 
@@ -383,7 +406,7 @@ namespace n618
     T
     decrement(T value)
     {
-        return value--;
+        return --value;
     }
 } // namespace n618
 
@@ -431,6 +454,7 @@ namespace n621
     void
     f()
     {
+        // ...
     }
 
     // template <typename T>
@@ -438,13 +462,19 @@ namespace n621
     // void
     // f()
     // {
+    //    // ...
     // }
 
     template <typename T>
-        requires A<T> && (!A<T> || B<T>)
+        requires A<T> && (!A<T> || B<T>) // A && B -> false
     void f()
     {
+        // ...
     }
+
+    // When used inside a cast expression or a logical NOT, the && and || tokens define a logical expression!
+    // The entire expression is first checked for correctness, and then its Boolean value is determined.
+    // Both expressions need to be wrapped inside another set of parentheses!
 
     // logical operators
     template <typename T>
@@ -452,6 +482,7 @@ namespace n621
     void
     f()
     {
+        // ...
     }
 
     template <typename T>
@@ -459,13 +490,18 @@ namespace n621
     void
     f()
     {
+        // ...
     }
 } // namespace n621
 
 namespace n622
 {
+    // Conjunctions and disjunctions cannot be used to constrain template parameter packs.
+    // Here's a workaround:
+
     template <typename... T>
-        requires(std::is_integral_v<T> && ...)
+    //  requires std::is_integral_v<T> && ...  // error: this is not allowed in a conjunction
+        requires(std::is_integral_v<T> && ...) // now it's a fold expression of type-traits! (No short-circuiting!)
     auto
     add(T... args)
     {
@@ -479,7 +515,7 @@ namespace n623
     concept Integral = std::is_integral_v<T>;
 
     template <typename... T>
-        requires(Integral<T> && ...)
+        requires(Integral<T> && ...) // fold with concepts creates a conjunction (with short-circuiting!)
     auto
     add(T... args)
     {
@@ -536,6 +572,7 @@ namespace n626
     T
     add(T a, T b)
     {
+        std::println("{} {}", sizeof(a), sizeof(b));
         return a + b;
     }
 } // namespace n626
@@ -636,6 +673,7 @@ namespace n631b
     {
         T value;
 
+        // before C++20 (using SFINAE)
         template <typename U,
                   typename = std::enable_if_t<std::is_copy_constructible_v<U> && std::is_convertible_v<U, T>>>
         wrapper(U const &v) : value(v)
@@ -651,6 +689,7 @@ namespace n631c
     {
         T value;
 
+        // C++20
         wrapper(T const &v)
             requires std::is_copy_constructible_v<T>
             : value(v)
@@ -663,12 +702,17 @@ namespace n632a
 {
     void
     handle(int v [[maybe_unused]])
-    { /* do something else */
+    {
+        // ...
     }
 
-      // void handle(long v)
-    //    requires (sizeof(long) > sizeof(int))
-    //{ /* do something else */ }
+    // Non-templated function cannot have a requires clause
+    // void
+    // handle(long v)
+    //     requires(sizeof(long) > sizeof(int))
+    // {
+    //     // ...
+    // }
 } // namespace n632a
 
 namespace n632b
@@ -678,11 +722,11 @@ namespace n632b
     {
         if constexpr (sizeof(long) > sizeof(int))
         {
-            /* do something else */
+            // ...
         }
         else
         {
-            /* do something */
+            // ...
         }
     }
 } // namespace n632b
@@ -696,30 +740,34 @@ namespace n633a
     };
 } // namespace n633a
 
-// namespace n633b
-// {
-//     template <std::integral T>
-//     struct wrapper
-//     {
-//         T value;
-//     };
-//
-//     template <std::integral T>
-//         requires(sizeof(T) == 4)
-//     struct wrapper<T>
-//     {
-//         union {
-//             T value;
-//             struct
-//             {
-//                 uint8_t byte4;
-//                 uint8_t byte3;
-//                 uint8_t byte2;
-//                 uint8_t byte1;
-//             };
-//         };
-//     };
-// } // namespace n633b
+namespace n633b
+{
+    template <std::integral T>
+    struct wrapper
+    {
+        T value;
+    };
+
+    struct bytes
+    {
+        uint8_t byte4;
+        uint8_t byte3;
+        uint8_t byte2;
+        uint8_t byte1;
+    };
+
+    using Bytes = struct bytes;
+
+    template <std::integral T>
+        requires(sizeof(T) == 4)
+    struct wrapper<T>
+    {
+        union {
+            T     value;
+            Bytes bytes;
+        };
+    };
+} // namespace n633b
 
 namespace n634
 {
@@ -742,12 +790,19 @@ namespace n635b
 
 namespace n636a
 {
+    // In C++20 you can use the auto specifier in the function parameter list.
+    // This has the effect of transforming the function into a template function.
+    // Such a function using auto for function parameters is called an ABBREVIATED FUNCTION TEMPLATE.
+
+    // abbreviated function template
+    // primary
     auto
     add(auto a, auto b)
     {
         return a + b;
     }
 
+    // specialization
     template <>
     auto
     add(char const *a, char const *b)
@@ -758,6 +813,7 @@ namespace n636a
 
 namespace n636b
 {
+    // constrained abbreviated function template
     auto
     add(std::integral auto a, std::integral auto b)
     {
@@ -767,6 +823,8 @@ namespace n636b
 
 namespace n636c
 {
+    // constrained auto can also be used for variadic function templates
+
     auto
     add(std::integral auto... args)
     {
@@ -790,6 +848,8 @@ namespace n637a
 
 namespace n637b
 {
+    // confusing syntax (requires requires ...); prefer n637a
+
     template <typename T>
         requires requires(T a, T b) { a + b; } // requires clause with requires expression
     auto
@@ -870,6 +930,11 @@ main()
     {
         std::println("\n====================== using namespace n606 =============================");
 
+        // A concept is a set of named constraints.
+        // A concept is defined with the concept keyword and template syntax.
+        // Concepts are assigned a Boolean value, but concept names should not contain verbs,
+        // more like datatype names and attributes.
+
         using namespace n606;
         using namespace std::string_literals;
 
@@ -908,229 +973,381 @@ main()
         // add("42"s, "1"s); // error: the associated constraints are not satisfied
         // add("42", "1");   // error: the associated constraints are not satisfied
     }
-    // {
-    //     std::println("\n====================== using namespace n612 =============================");
-    //
-    //     using namespace n612;
-    //
-    //     console_logger cl;
-    //     log_error(cl);
-    //
-    //     [[maybe_unused]] stream_logger sl;
-    //     // log_error(sl); // error: the associated constraints are not satisfied
-    // }
 
-    // {
-    //     std::println("\n====================== using namespace n614 =============================");
-    //
-    //     using namespace n614;
-    //
-    //     invoke(f<int>, 42);
-    //     // invoke(g<int>, 42); // error
-    // }
+    {
+        std::println("\n====================== using namespace n610 =============================");
 
-    // {
-    //     std::println("\n====================== using namespace n616 =============================");
-    //
-    //     using namespace n616;
-    //
-    //     add(1, 2);
-    //     // add(1);
-    //     // add(1, 2.0);
-    // }
+        using namespace n610;
 
-    // {
-    //     std::println("\n====================== using namespace n622 =============================");
-    //
-    //     using namespace n622;
-    //
-    //     add(1, 2, 3);
-    //     // add(1, 42.0);
-    // }
+        static_assert(!is_container_v<foo>);
+        static_assert(is_container_v<std::vector<foo>>);
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n623 =============================");
-    //
-    //     using namespace n623;
-    //
-    //     add(1, 2, 3);
-    //     // add(1, 42.0);
-    // }
+    {
+        std::println("\n====================== using namespace n611 =============================");
 
-    // {
-    //     std::println("\n====================== using namespace n624 =============================");
-    //
-    //     using namespace n624;
-    //
-    //     add(1.0, 2.0);
-    //     add(1, 2);
-    // }
+        using namespace n611;
 
-    // {
-    //     std::println("\n====================== using namespace n625 =============================");
-    //
-    //     using namespace n625;
-    //
-    //     add(1.0, 2.0);
-    //     add(1, 2);
-    // }
+        static_assert(!container<foo>);
+        static_assert(container<std::vector<foo>>);
 
-    // {
-    //     std::println("\n====================== using namespace n626 =============================");
-    //
-    //     using namespace n626;
-    //
-    //     add((short)1, (short)2);
-    //     // add(1, 2);
-    // }
+        // process(foo{});                         // error
+        process(std::vector{foo{}, foo{}, foo{}}); // Ok
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n627 =============================");
-    //
-    //     using namespace n627;
-    //
-    //     add((short)1, (short)2);
-    //     // add(1, 2);
-    // }
+    {
+        std::println("\n====================== using namespace n612 =============================");
 
-    // {
-    //     std::println("\n====================== using namespace n628 =============================");
-    //
-    //     using namespace n628;
-    //
-    //     add((short)1, (short)2);
-    //     add(1, 2);
-    // }
+        using namespace n612;
 
-    // {
-    //     std::println("\n====================== using namespace n629 =============================");
-    //
-    //     using namespace n629;
-    //
-    //     add((short)1, (short)2);
-    //     add(1, 2);
-    // }
+        console_logger cl;
+        log_error(cl);
 
-    // {
-    //     std::println("\n====================== using namespace n630 =============================");
-    //
-    //     using namespace n630;
-    //
-    //     wrapper<int>          a [[maybe_unused]]{42};
-    //     wrapper<char const *> b{"42"};
-    //
-    //     // if(a == 42) {} // error
-    //     if (b == "42")
-    //     {
-    //     }
-    // }
+        stream_logger sl [[maybe_unused]];
+        // log_error(sl); // error: the associated constraints are not satisfied
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n631a ============================");
-    //
-    //     using namespace n631a;
-    //
-    //     wrapper<int> a [[maybe_unused]] = 42;
-    //
-    //     // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); // error
-    // }
+    {
+        std::println("\n====================== using namespace n614 =============================");
 
-    // {
-    //     std::println("\n====================== using namespace n631b ============================");
-    //
-    //     using namespace n631b;
-    //
-    //     wrapper<int> a [[maybe_unused]] = 42;
-    //
-    //     // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); //error
-    // }
+        using namespace n614;
 
-    // {
-    //     std::println("\n====================== using namespace n631c ============================");
-    //
-    //     using namespace n631c;
-    //
-    //     wrapper<int> a [[maybe_unused]] = 42;
-    //
-    //     // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42); //error
-    // }
+        invoke(f<int>, 42);
+        // invoke(g<int>, 42); // error
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n633a ============================");
-    //
-    //     using namespace n633a;
-    //
-    //     wrapper<int> a [[maybe_unused]]{42};
-    //     // wrapper<double> b{ 42.0 }; // error
-    // }
+    {
+        std::println("\n====================== using namespace n613 =============================");
 
-    // {
-    //     std::println("\n====================== using namespace n633b ============================");
-    //
-    //     using namespace n633b;
-    //
-    //     wrapper<short> a{42};
-    //     std::cout << a.value << '\n';
-    //
-    //     wrapper<int> b{0x11223344};
-    //     std::cout << std::hex << b.value << '\n';
-    //     std::cout << std::hex << (int)b.byte1 << '\n';
-    //     std::cout << std::hex << (int)b.byte2 << '\n';
-    //     std::cout << std::hex << (int)b.byte3 << '\n';
-    //     std::cout << std::hex << (int)b.byte4 << '\n';
-    // }
+        using namespace n613;
+        using namespace std;
 
-    // {
-    //     std::println("\n====================== using namespace n634 =============================");
-    //
-    //     using namespace n634;
-    //
-    //     std::cout << PI<double> << '\n'; // OK
-    //                                      // std::cout << PI<int> << '\n';     // error
-    // }
+        static_assert(KVP<key_value_pair<int, string>>);
+        static_assert(!KVP<pair<int, string>>); // std::pair's inner types are called first_type, second_type
 
-    // {
-    //     std::println("\n====================== using namespace n635a ============================");
-    //
-    //     using namespace n635a;
-    //
-    //     integral_vector<int> v1{1, 2, 3};
-    //     // integral_vector<double> v2 {1.0, 2.0, 3.0}; // error
-    // }
+        static_assert(containerizeable<int>);
+        static_assert(!containerizeable<string>);
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n635b ============================");
-    //
-    //     using namespace n635b;
-    //
-    //     integral_vector<int> v1{1, 2, 3};
-    //     // integral_vector<double> v2 {1.0, 2.0, 3.0}; // error
-    // }
+    {
+        std::println("\n====================== using namespace n615 =============================");
 
-    // {
-    //     std::println("\n====================== using namespace n636a ============================");
-    //
-    //     using namespace n636a;
-    //
-    //     add(4, 2);
-    //     add(4.0, 2);
-    //     add("4", "2");
-    // }
+        using namespace n615;
 
-    // {
-    //     std::println("\n====================== using namespace n636b ============================");
-    //
-    //     using namespace n636b;
-    //
-    //     add(4, 2);
-    //     // add(4.2, 0); // error
-    // }
+        static_assert(timer<timerA>);
+        static_assert(timer<timerB>);
 
-    // {
-    //     std::println("\n====================== using namespace n636c ============================");
-    //
-    //     using namespace n636c;
-    //
-    //     add(1, 2, 3);
-    // }
+        static_assert(!timer<timerC>);
+    }
+
+    {
+        std::println("\n====================== using namespace n616 =============================");
+
+        using namespace n616;
+
+        static_assert(HomogenousRange<int, int>);
+
+        static_assert(!HomogenousRange<int>);
+        static_assert(!HomogenousRange<int, double>);
+        static_assert(!HomogenousRange<float, double>);
+
+        std::println("{}", add(1, 2));     // 3
+        std::println("{}", add(1.0, 2.0)); // 3
+
+        // add(1);
+        // add(1, 2.0);
+        // add(1.0f, 2.0);
+    }
+
+    {
+        std::println("\n====================== using namespace n617 =============================");
+
+        using namespace n617;
+
+        std::println("{}", decrement(5)); // 4
+
+        // std::println("{}", decrement("foo")); // error
+    }
+
+    {
+        std::println("\n====================== using namespace n618 =============================");
+
+        using namespace n618;
+
+        std::println("{}", decrement(5)); // 4
+    }
+
+    {
+        std::println("\n====================== using namespace n619 =============================");
+
+        using namespace n619;
+
+        std::println("{}", add(5, 4)); // 9
+    }
+
+    {
+        std::println("\n====================== using namespace n620 =============================");
+
+        using namespace n620;
+
+        std::println("{}", add(5, 4)); // 9
+    }
+
+    {
+        std::println("\n====================== using namespace n621 =============================");
+
+        using namespace n621;
+
+        // f<1>();
+    }
+
+    {
+        std::println("\n====================== using namespace n622 =============================");
+
+        using namespace n622;
+
+        std::println("{}", add(1, 2, 3)); // 6
+        // add(1, 42.0);
+    }
+
+    {
+        std::println("\n====================== using namespace n623 =============================");
+
+        using namespace n623;
+
+        std::println("{}", add(1, 2, 3));       // 6
+        std::println("{}", add(1, 2, 3, 4));    // 10
+        std::println("{}", add(1, 2, 3, 4, 5)); // 15
+
+        // add(1, 42.0);
+    }
+
+    {
+        std::println("\n====================== using namespace n624 =============================");
+
+        // Constraints normalization is the process of transforming the constraint expression
+        // into conjunctions and disjunctions of atomic constraints.
+
+        using namespace n624;
+
+        std::println("{}", add(1, 2));     // 3
+        std::println("{}", add(1.0, 2.0)); // 3
+    }
+
+    {
+        std::println("\n====================== using namespace n625 =============================");
+
+        using namespace n625;
+
+        std::println("{}", add(1.0, 2.0)); // 3
+        std::println("{}", add(1, 2));     // 3
+    }
+
+    {
+        std::println("\n====================== using namespace n626 =============================");
+
+        using namespace n626;
+
+        std::println("{}", add((short)1, (short)2)); // 3
+        // std::println("{}", add(1, 2));            // could be either one
+    }
+
+    {
+        std::println("\n====================== using namespace n627 =============================");
+
+        using namespace n627;
+
+        std::println("{}", add((short)1, (short)2)); // 3
+        // std::println("{}", add(1, 2));            // could be either one (using type traits)
+    }
+
+    {
+        std::println("\n====================== using namespace n628 =============================");
+
+        using namespace n628;
+
+        std::println("{}", add((short)1, (short)2)); // 3
+        std::println("{}", add(1, 2));               // 3 (with concepts this is the more specific one)
+    }
+
+    {
+        std::println("\n====================== using namespace n629 =============================");
+
+        using namespace n629;
+
+        std::println("{}", add((short)1, (short)2)); // 3
+        std::println("{}", add(1, 2));               // 3 (!?)
+    }
+
+    {
+        std::println("\n====================== using namespace n630 =============================");
+
+        using namespace n630;
+
+        wrapper<int> a [[maybe_unused]]{42};
+
+        // error
+        // if (a == 42)
+        // {
+        //     // ...
+        // }
+
+        wrapper<char const *> b{"42"};
+
+        if (b == "42")
+        {
+            // ...
+        }
+    }
+
+    {
+        std::println("\n====================== using namespace n631a ============================");
+
+        using namespace n631a;
+
+        wrapper<int> a [[maybe_unused]] = 42;
+
+        // error: Call to deleted constructor of 'std::unique_ptr<int>'
+        // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42);
+    }
+
+    {
+        std::println("\n====================== using namespace n631b ============================");
+
+        using namespace n631b;
+
+        wrapper<int> a [[maybe_unused]] = 42;
+
+        // error: No viable conversion from 'unique_ptr<int>' to 'wrapper<std::unique_ptr<int>>'
+        // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42);
+    }
+
+    {
+        std::println("\n====================== using namespace n631c ============================");
+
+        using namespace n631c;
+
+        wrapper<int> a [[maybe_unused]] = 42;
+
+        // error: No viable conversion from 'unique_ptr<int>' to 'wrapper<std::unique_ptr<int>>'
+        // wrapper<std::unique_ptr<int>> p = std::make_unique<int>(42);
+    }
+
+    {
+        std::println("\n====================== using namespace n633a ============================");
+
+        // Constraining class templates
+
+        using namespace n633a;
+
+        wrapper<int> a [[maybe_unused]]{42};
+
+        // Constraints not satisfied for class template 'wrapper' [with T = double]
+        // wrapper<double> b{ 42.0 };
+    }
+
+    {
+        std::println("\n====================== using namespace n633b ============================");
+
+        using namespace n633b;
+
+        wrapper<short> a{42};
+        std::println("{}", a.value);              // 42
+
+        wrapper<int> b{0x11223344};
+        std::println("{:x}", b.value);            // 11223344
+        std::println("{:x}", (int)b.bytes.byte1); // 11
+        std::println("{:x}", (int)b.bytes.byte2); // 22
+        std::println("{:x}", (int)b.bytes.byte3); // 33
+        std::println("{:x}", (int)b.bytes.byte4); // 44
+    }
+
+    {
+        std::println("\n====================== using namespace n634 =============================");
+
+        // Constraining variable templates
+
+        using namespace n634;
+
+        std::println("{}", PI<double>);
+        // std::println("{}", PI<int>); // error: Constraints not satisfied for variable template 'PI' [with T = int]
+    }
+
+    {
+        std::println("\n====================== using namespace n635a ============================");
+
+        // Constraining template aliases
+
+        using namespace n635a;
+
+        integral_vector<int> v1{1, 2, 3};
+        // error: Constraints not satisfied for alias template 'integral_vector' [with T = double]
+        // integral_vector<double> v2{1.0, 2.0, 3.0};
+    }
+
+    {
+        std::println("\n====================== using namespace n637a ============================");
+
+        // Learning more ways to specify constraints
+
+        using namespace n637a;
+
+        std::println("{}", add(1, 2)); // 3
+    }
+
+    {
+        std::println("\n====================== using namespace n637b ============================");
+
+        // Learning more ways to specify constraints
+
+        using namespace n637b;
+
+        std::println("{}", add(1, 2)); // 3
+    }
+
+    {
+        std::println("\n====================== using namespace n635b ============================");
+
+        // Constraining template aliases
+
+        using namespace n635b;
+
+        integral_vector<int> v1{1, 2, 3};
+        // Constraints not satisfied for alias template 'integral_vector' [with T = double]
+        // integral_vector<double> v2 {1.0, 2.0, 3.0};
+    }
+
+    {
+        std::println("\n====================== using namespace n636a ============================");
+
+        // Using concepts to constrain auto parameters
+
+        using namespace n636a;
+
+        // no constraints
+        std::println("{}", add(4, 2));     // 6
+        std::println("{}", add(4.0, 2));   // 6
+        std::println("{}", add("4", "2")); // 42
+    }
+
+    {
+        std::println("\n====================== using namespace n636b ============================");
+
+        // Using concepts to constrain auto parameters
+
+        using namespace n636b;
+
+        // with constraints
+        std::println("{}", add(4, 2)); // 6
+        // std::println("{}", add(4.2, 0)); // error
+    }
+
+    {
+        std::println("\n====================== using namespace n636c ============================");
+
+        using namespace n636c;
+
+        add(1, 2, 3);
+        // add(1.0, 2.0, 3.0); // error
+    }
 }
