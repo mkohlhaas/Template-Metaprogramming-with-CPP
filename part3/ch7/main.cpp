@@ -470,8 +470,8 @@ namespace n709c
         execute(std::function<void(void)> const &task)
         {
             threads.push_back(std::thread([task]() {
-                using namespace std::chrono_literals;
-                std::this_thread::sleep_for(250ms);
+                // using namespace std::chrono_literals;
+                // std::this_thread::sleep_for(250ms);
 
                 task();
             }));
@@ -506,7 +506,8 @@ namespace n709c
         {
             if (exec)
             {
-                exec->execute([self = shared_from_this()]() { self->do_upgrade(); });
+                // exec->execute([self = this]()            { self->do_upgrade(); }); // This won't work!
+                exec->execute([self = shared_from_this()]() { self->do_upgrade(); }); // OK!
             }
         }
 
@@ -520,9 +521,10 @@ namespace n709c
         void
         do_upgrade()
         {
-            std::println("upgrading");
+            std::println("upgrading...");
             operational = false;
 
+            std::println("upgraded");
             // using namespace std::chrono_literals;
             // std::this_thread::sleep_for(1000ms);
 
@@ -555,6 +557,7 @@ namespace n710a
         }
     };
 
+    // mixin adds functionality to a class by inheritance (not CRTP)
     template <typename Strategy>
     struct knight : public Strategy
     {
@@ -640,7 +643,7 @@ namespace n710c
         void
         fight()
         {
-            std::println("attack! attack attack!");
+            std::println("attack attack attack");
         }
     };
 
@@ -659,7 +662,7 @@ namespace n710c
         void
         fight()
         {
-            std::println("fighting alone.");
+            std::println("fighting alone");
             T::fight();
         }
     };
@@ -670,7 +673,7 @@ namespace n710c
         void
         fight()
         {
-            std::println("fighting with a team.");
+            std::println("fighting with a team");
             T::fight();
         }
     };
@@ -687,7 +690,7 @@ namespace n710c
         void
         attack()
         {
-            std::println("draw sword.");
+            std::println("draw sword");
             T::fight();
         }
     };
@@ -698,7 +701,7 @@ namespace n710c
         void
         attack()
         {
-            std::println("spell magic curse.");
+            std::println("spell magic curse");
             T::fight();
         }
     };
@@ -825,6 +828,7 @@ namespace n712a
         knight_unit(knight &u) : k(u)
         {
         }
+
         void
         attack() override
         {
@@ -840,6 +844,7 @@ namespace n712a
         mage_unit(mage &u) : m(u)
         {
         }
+
         void
         attack() override
         {
@@ -935,12 +940,17 @@ namespace n712c
 
     struct game
     {
+        // In the type erasure pattern, the abstract base class is called
+        // a CONCEPT and the wrapper that inherits from it is called a MODEL.
+
+        // concept
         struct game_unit
         {
             virtual void attack() = 0;
             virtual ~game_unit()  = default;
         };
 
+        // model
         template <typename T>
         struct game_unit_wrapper : public game_unit
         {
@@ -962,6 +972,7 @@ namespace n712c
         void
         addUnit(T &unit)
         {
+            // using the copy constructor of game_unit_wrapper and unit
             units.push_back(std::make_unique<game_unit_wrapper<T>>(unit));
         }
 
@@ -1001,6 +1012,7 @@ namespace n712d
 
     struct unit
     {
+        // template constructor that enables us to create model objects from, e.g. knight and mage objects.
         template <typename T>
         unit(T &&obj) : unit_(std::make_shared<unit_model<T>>(std::forward<T>(obj)))
         {
@@ -1018,6 +1030,7 @@ namespace n712d
             virtual ~unit_concept() = default;
         };
 
+        // model always inherits from concept
         template <typename T>
         struct unit_model : public unit_concept
         {
@@ -1081,62 +1094,65 @@ namespace n712e
         reinterpret_cast<mage *>(m)->attack();
     }
 
-    using fight_fn = void (*)(void *);
+    using fight_fn              = void (*)(void *);
+    using mapping_void_fight_fn = std::pair<void *, fight_fn>;
 
     void
-    fight(std::vector<std::pair<void *, fight_fn>> const &units)
+    fight(std::vector<mapping_void_fight_fn> const &units)
     {
-        for (auto &u : units)
+        for (auto &unit : units)
         {
-            u.second(u.first);
+            unit.second(unit.first);
         }
     }
 } // namespace n712e
 
-// namespace n713
-// {
-//     class async_bool
-//     {
-//         std::function<bool()> check;
-//
-//       public:
-//         async_bool() = delete;
-//         // async_bool(std::function<bool()> checkIt) : check(checkIt)
-//         // {
-//         // }
-//
-//         async_bool(bool val) : check([val]() { return val; })
-//         {
-//         }
-//
-//         static async_bool
-//         yes()
-//         {
-//             return async_bool{static_cast<bool>([]() { return true; })};
-//         }
-//
-//         static async_bool
-//         no()
-//         {
-//             return async_bool{static_cast<bool>([]() { return false; })};
-//         }
-//
-//         bool
-//         operator&&(bool fore) const
-//         {
-//             return fore && check();
-//         }
-//         bool
-//         operator!() const
-//         {
-//             return !check();
-//         }
-//         operator bool() const
-//         {
-//             return check();
-//         }
-//     };
-// } // namespace n713
+namespace n713
+{
+    class async_bool
+    {
+        std::function<bool()> check;
+
+      public:
+        async_bool() = delete;
+        async_bool(std::function<bool()> checkIt) : check(checkIt)
+        {
+        }
+
+        async_bool(bool val) : check([val]() { return val; })
+        {
+        }
+
+        static async_bool
+        yes()
+        {
+            // https://stackoverflow.com/a/68522830/19369328
+            //                                      ^^
+            return async_bool{([]() { return true; }())};
+        }
+
+        static async_bool
+        no()
+        {
+            return async_bool{([]() { return false; }())};
+        }
+
+        bool
+        operator&&(bool fore) const
+        {
+            return fore && check();
+        }
+        bool
+        operator!() const
+        {
+            return !check();
+        }
+        operator bool() const
+        {
+            return check();
+        }
+    };
+} // namespace n713
 
 namespace n714
 {
@@ -1405,6 +1421,14 @@ namespace n715
         apply_functors<upgrade_types>{}(unit);
     }
 
+    // this doesn't work
+    // template <typename... Ts>
+    // struct transformer
+    // {
+    //     using input_types  = Ts...;
+    //     using output_types = std::add_const_t<Ts>...;
+    // };
+
     template <typename... Ts>
     struct transformer
     {
@@ -1455,7 +1479,9 @@ namespace n716
     operator+(vector<T> const &a, vector<U> const &b)
     {
         using result_type = decltype(std::declval<T>() + std::declval<U>());
+
         vector<result_type> result(a.size());
+
         for (std::size_t i = 0; i < a.size(); ++i)
         {
             result[i] = a[i] + b[i];
@@ -1467,8 +1493,10 @@ namespace n716
     auto
     operator*(vector<T> const &a, vector<U> const &b)
     {
-        using result_type = decltype(std::declval<T>() + std::declval<U>());
+        using result_type = decltype(std::declval<T>() * std::declval<U>());
+
         vector<result_type> result(a.size());
+
         for (std::size_t i = 0; i < a.size(); ++i)
         {
             result[i] = a[i] * b[i];
@@ -1480,9 +1508,10 @@ namespace n716
     auto
     operator*(S const &s, vector<T> const &v)
     {
-        using result_type = decltype(std::declval<T>() + std::declval<S>());
+        using result_type = decltype(std::declval<S>() + std::declval<T>());
 
         vector<result_type> result(v.size());
+
         for (std::size_t i = 0; i < v.size(); ++i)
         {
             result[i] = s * v[i];
@@ -1494,6 +1523,7 @@ namespace n716
 
 namespace n717
 {
+    // T is the result type
     template <typename T, typename C = std::vector<T>>
     struct vector
     {
@@ -1574,6 +1604,7 @@ namespace n717
         {
         }
 
+        // lazy evaluation: addition only occurs when invoking the subscript operator
         auto
         operator[](std::size_t const i) const
         {
@@ -1598,6 +1629,7 @@ namespace n717
         {
         }
 
+        // lazy evaluation: multiplication only occurs when invoking the subscript operator
         auto
         operator[](std::size_t const i) const
         {
@@ -1622,6 +1654,7 @@ namespace n717
         {
         }
 
+        // lazy evaluation: scalar multiplication only occurs when invoking the subscript operator
         auto
         operator[](std::size_t const i) const
         {
@@ -1652,7 +1685,7 @@ namespace n717
     auto
     operator*(vector<T, L> const &a, vector<U, R> const &b)
     {
-        using result_type = decltype(std::declval<T>() + std::declval<U>());
+        using result_type = decltype(std::declval<T>() * std::declval<U>());
 
         return vector<result_type, vector_mul<L, R>>(vector_mul<L, R>(a.data(), b.data()));
     }
@@ -1661,7 +1694,7 @@ namespace n717
     auto
     operator*(S const &a, vector<T, E> const &v)
     {
-        using result_type = decltype(std::declval<T>() + std::declval<S>());
+        using result_type = decltype(std::declval<T>() * std::declval<S>());
 
         return vector<result_type, vector_scalar_mul<S, E>>(vector_scalar_mul<S, E>(a, v.data()));
     }
@@ -1857,264 +1890,368 @@ main()
 
         using namespace n709c;
 
-        executor                  e;
+        executor e;
+
         std::shared_ptr<building> b = std::make_shared<building>();
         b->set_executor(&e);
         b->upgrade();
-
-        std::println("main finished");
     }
 
-    // {
-    //     std::println("\n====================== using namespace n710a ============================");
-    //
-    //     using namespace n710a;
-    //
-    //     knight<last_man_standing> k;
-    //     mage<hit_and_run>         m;
-    //
-    //     k.attack();
-    //     m.attack();
-    // }
+    {
+        std::println("\n====================== using namespace n710b ============================");
 
-    // {
-    //     std::println("\n====================== using namespace n710b ============================");
-    //
-    //     using namespace n710b;
-    //
-    //     movable_unit<knight> k;
-    //     k.advance(3);
-    //     k.retreat(2);
-    //
-    //     movable_unit<mage> m;
-    //     m.advance(5);
-    //     m.retreat(3);
-    // }
+        // Mixins
+        // We create instances of movable_unit<knight> and movable_unit<mage> instead
+        // of knight and mage as in the CRTP.
 
-    // {
-    //     std::println("\n====================== using namespace n710c ============================");
-    //
-    //     using namespace n710c;
-    //
-    //     std::vector<std::unique_ptr<game_unit>> units;
-    //
-    //     units.emplace_back(new knight<aggressive_style>());
-    //     units.emplace_back(new knight<moderate_style>());
-    //     units.emplace_back(new mage<aggressive_style>());
-    //     units.emplace_back(new mage<moderate_style>());
-    //     units.emplace_back(new knight<lone_warrior<aggressive_style>>());
-    //     units.emplace_back(new knight<lone_warrior<moderate_style>>());
-    //     units.emplace_back(new knight<team_warrior<aggressive_style>>());
-    //     units.emplace_back(new knight<team_warrior<moderate_style>>());
-    //     units.emplace_back(new mage<lone_warrior<aggressive_style>>());
-    //     units.emplace_back(new mage<lone_warrior<moderate_style>>());
-    //     units.emplace_back(new mage<team_warrior<aggressive_style>>());
-    //     units.emplace_back(new mage<team_warrior<moderate_style>>());
-    //
-    //     for (auto &u : units)
-    //     {
-    //         u->attack();
-    //     }
-    // }
+        using namespace n710b;
 
-    // {
-    //     std::println("\n=========================================================================");
-    //
-    //     std::vector<int> v{1, 2, 3, 4, 5};
-    //     auto             sv = std::begin(v);
-    //     n711a::advance(sv, 2);
-    //
-    //     std::list<int> l{1, 2, 3, 4, 5};
-    //     auto           sl = std::begin(l);
-    //     n711a::advance(sl, 2);
-    // }
+        movable_unit<knight> k;
+        k.advance(3);
+        k.retreat(2);
 
-    // {
-    //     std::println("\n=========================================================================");
-    //
-    //     std::vector<int> v{1, 2, 3, 4, 5};
-    //     auto             sv = std::begin(v);
-    //     n711b::advance(sv, 2);
-    //
-    //     std::list<int> l{1, 2, 3, 4, 5};
-    //     auto           sl = std::begin(l);
-    //     n711b::advance(sl, 2);
-    // }
+        movable_unit<mage> m;
+        m.advance(5);
+        m.retreat(3);
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n712a ============================");
-    //
-    //     using namespace n712a;
-    //
-    //     knight k;
-    //     mage   m;
-    //
-    //     knight_unit ku{k};
-    //     mage_unit   mu{m};
-    //
-    //     std::vector<game_unit *> v{&ku, &mu};
-    //     fight(v);
-    // }
+    {
+        std::println("\n====================== using namespace n710a ============================");
 
-    // {
-    //     std::println("\n====================== using namespace n712b ============================");
-    //
-    //     using namespace n712b;
-    //
-    //     knight k;
-    //     mage   m;
-    //
-    //     game_unit_wrapper ku{k};
-    //     game_unit_wrapper mu{m};
-    //
-    //     std::vector<game_unit *> v{&ku, &mu};
-    //     fight(v);
-    // }
+        // Mixins
+        //
+        // The point of mixins is that they are supposed to add functionality to classes
+        // WITHOUT being a base class to them, which is the key to the CRTP pattern.
+        // Instead, mixins are supposed to inherit from the classes they add functionality to,
+        // which is the CRTP upside down.
 
-    // {
-    //     std::println("\n====================== using namespace n712c ============================");
-    //
-    //     using namespace n712c;
-    //
-    //     knight k;
-    //     mage   m;
-    //
-    //     game g;
-    //     g.addUnit(k);
-    //     g.addUnit(m);
-    //
-    //     g.fight();
-    // }
+        using namespace n710a;
 
-    // {
-    //     std::println("\n====================== using namespace n712d ============================");
-    //
-    //     using namespace n712d;
-    //
-    //     knight k;
-    //     mage   m;
-    //
-    //     std::vector<unit> v{unit(k), unit(m)};
-    //
-    //     fight(v);
-    // }
+        knight<last_man_standing> k;
+        mage<hit_and_run>         m;
 
-    // {
-    //     std::println("\n====================== using namespace n712e ============================");
-    //
-    //     using namespace n712e;
-    //
-    //     knight k;
-    //     mage   m;
-    //
-    //     std::vector<std::pair<void *, fight_fn>> units{
-    //         {&k, &fight_knight},
-    //         {&m, &fight_mage},
-    //     };
-    //
-    //     fight(units);
-    // }
+        k.attack();
+        m.attack();
+    }
 
-    // {
-    //     std::println("\n====================== using namespace n713 =============================");
-    //
-    //     using namespace n713;
-    //
-    //     async_bool b1{false};
-    //     async_bool b2{true};
-    //     async_bool b3{static_cast<bool>(/* [] */() {
-    //         std::cout << "Y/N? ";
-    //         char c;
-    //         std::cin >> c;
-    //         return c == 'Y' || c == 'y';
-    //     })};
-    //
-    //     if (b1)
-    //     {
-    //         std::println("b1 is true");
-    //     }
-    //     if (b2)
-    //     {
-    //         std::println("b2 is true");
-    //     }
-    //     if (b3)
-    //     {
-    //         std::println("b3 is true");
-    //     }
-    // }
+    {
+        std::println("\n====================== using namespace n710c ============================");
 
-    // {
-    //     std::println("\n====================== using namespace n712d ============================");
-    //
-    //     using namespace n712d;
-    //
-    //     std::any u;
-    //
-    //     u = knight{};
-    //     if (u.has_value())
-    //     {
-    //         std::any_cast<knight>(u).attack();
-    //     }
-    //
-    //     u = mage{};
-    //     if (u.has_value())
-    //     {
-    //         std::any_cast<mage>(u).attack();
-    //     }
-    // }
+        using namespace n710c;
 
-    // {
-    //     std::println("\n=========================================================================");
-    //
-    //     n716::vector<int> v1{1, 2, 3};
-    //     n716::vector<int> v2{4, 5, 6};
-    //     double            a{1.5};
-    //
-    //     n716::vector<double> v3 = v1 + a * v2;       // {7.0, 9.5, 12.0}
-    //     n716::vector<int>    v4 = v1 * v2 + v1 + v2; // {9, 17, 27}
-    // }
+        std::vector<std::unique_ptr<game_unit>> units;
 
-    // {
-    //     std::println("\n=========================================================================");
-    //
-    //     n717::vector<int> v1{1, 2, 3};
-    //     n717::vector<int> v2{4, 5, 6};
-    //     double            a{1.5};
-    //
-    //     n717::vector<double> v3 = v1 + a * v2;        // {7.0, 9.5, 12.0}
-    //
-    //     int c;
-    //     std::cin >> c;
-    //     n717::vector<double> v31 = v1 + c * v2;       // {7.0, 9.5, 12.0}
-    //     n717::vector<int>    v4  = v1 * v2 + v1 + v2; // {9, 17, 27}
-    // }
+        // There are 12 combinations that we defined here.
+        // And this was all possible with only six classes:
+        //   knight           - mage
+        //   aggressive_style - moderate_style
+        //   lone_warrior     - team_warrior
+        // This shows how mixins help us add functionality
+        // while keeping the complexity of the code at a
+        // reduced level.
 
-    // {
-    //     std::println("\n=========================================================================");
-    //
-    //     namespace rv = std::ranges::views;
-    //     std::vector<int> v1{1, 2, 3};
-    //     std::vector<int> v2{4, 5, 6};
-    //     double           a{1.5};
-    //
-    //     auto sv2 = v2 | rv::transform([&a](int val) { return a * val; });
-    //     // auto v3 = rv::zip_view(std::plus<>{}, v1, sv2);
-    //
-    //     for (auto e : sv2)
-    //     {
-    //         std::println("{}", e);
-    //     }
-    // }
+        units.emplace_back(new knight<aggressive_style>());               // 1
+        units.emplace_back(new knight<moderate_style>());                 // 2
+        units.emplace_back(new mage<aggressive_style>());                 // 3
+        units.emplace_back(new mage<moderate_style>());                   // 4
+        units.emplace_back(new knight<lone_warrior<aggressive_style>>()); // 5
+        units.emplace_back(new knight<lone_warrior<moderate_style>>());   // 6
+        units.emplace_back(new knight<team_warrior<aggressive_style>>()); // 7
+        units.emplace_back(new knight<team_warrior<moderate_style>>());   // 8
+        units.emplace_back(new mage<lone_warrior<aggressive_style>>());   // 9
+        units.emplace_back(new mage<lone_warrior<moderate_style>>());     // 10
+        units.emplace_back(new mage<team_warrior<aggressive_style>>());   // 11
+        units.emplace_back(new mage<team_warrior<moderate_style>>());     // 12
 
-    // {
-    //     std::println("\n====================== using namespace n715 =============================");
-    //
-    //     using namespace n715;
-    //
-    //     game_unit u{100, 50};
-    //     std::println("{},{}", u.attack, u.defense);
-    //
-    //     upgrade_unit(u);
-    //     std::println("{},{}", u.attack, u.defense);
-    // }
+        auto i = 1;
+        for (auto &u : units)
+        {
+            std::println("{:} ==================", i++);
+            u->attack();
+        }
+    }
+
+    {
+        std::println("\n====================== using namespace n712e ============================");
+
+        // Type erasure
+        //
+        // The term type erasure describes a pattern in which type information is removed,
+        // allowing types that are not necessarily related to be treated in a generic way.
+        //
+        // True type erasure is achieved with templates!
+
+        using namespace n712e;
+
+        knight k;
+        mage   m;
+
+        // Classical C-style type erasure:
+        // basically this means using a lot of void* and reinterpret_casts! ;-)
+
+        std::vector<mapping_void_fight_fn> units{
+            {&k, &fight_knight},
+            {&m, &fight_mage},
+        };
+
+        fight(units);
+    }
+
+    {
+        std::println("\n====================== using namespace n712a ============================");
+
+        // Type erasure using polymorphism through inheritance.
+
+        using namespace n712a;
+
+        knight k;
+        mage   m;
+
+        knight_unit ku{k};
+        mage_unit   mu{m};
+
+        std::vector<game_unit *> v{&ku, &mu};
+
+        // It can be argued that types have not been completely erased.
+        // Both knight and mage are game_unit and the fight function handles
+        // anything that is a game_unit.
+        fight(v);
+    }
+
+    {
+        std::println("\n====================== using namespace n712b ============================");
+
+        // removing code duplication using templates
+
+        using namespace n712b;
+
+        knight k;
+        mage   m;
+
+        // game_unit_wrapper<knight> ku{k};
+        // game_unit_wrapper<mage>   mu{m};
+
+        // the same:
+        game_unit_wrapper ku{k};
+        game_unit_wrapper mu{m};
+
+        std::vector<game_unit *> v{&ku, &mu};
+        fight(v);
+    }
+
+    {
+        std::println("\n====================== using namespace n712c ============================");
+
+        // Putting the abstract base class and wrapper class template within another class.
+
+        using namespace n712c;
+
+        knight k;
+        mage   m;
+
+        game g;
+        g.addUnit(k);
+        g.addUnit(m);
+
+        g.fight();
+    }
+
+    {
+        std::println("\n====================== using namespace n712d ============================");
+
+        // General pattern (learn it!)
+
+        using namespace n712d;
+
+        knight k;
+        mage   m;
+
+        std::vector<unit> v{unit(k), unit(m)};
+
+        fight(v);
+    }
+
+    {
+        std::println("\n====================== using namespace n713 =============================");
+
+        // Template erasure pattern is used in std::function.
+
+        using namespace n713;
+
+        async_bool b1{false};
+        async_bool b2{true};
+        async_bool b3{([]() {
+            std::cout << "Y/N? ";
+            char c;
+            std::cin >> c;
+            return c == 'Y' || c == 'y';
+        }())};
+
+        if (b1)
+        {
+            std::println("b1 is true");
+        }
+
+        if (b2)
+        {
+            std::println("b2 is true");
+        }
+
+        if (b3)
+        {
+            std::println("b3 is true");
+        }
+    }
+
+    {
+        std::println("\n====================== using namespace n712d ============================");
+
+        // std::any: This is a class that represents a container to any value of a type that is copy-constructible.
+        // std::any also uses the template erasure pattern.
+
+        using namespace n712d;
+
+        std::any u;
+
+        u = knight{};
+        if (u.has_value())
+        {
+
+            std::any_cast<knight>(u).attack();
+        }
+
+        u = mage{};
+        if (u.has_value())
+        {
+            std::any_cast<mage>(u).attack();
+        }
+    }
+
+    {
+        std::println("\n====================== using namespace n711a ============================");
+
+        // Tag dispatching
+        //
+        // The term tag describes an empty class. A tag is only used to define a parameter - usually
+        // the last - of a function to decide whether to select it at compile-time.
+
+        // vector
+        std::vector<int> v{1, 2, 3, 4, 5};
+
+        auto sv = std::begin(v);
+        n711a::advance(sv, 2); // random-access iterator
+
+        // list
+        std::list<int> l{1, 2, 3, 4, 5};
+
+        auto sl = std::begin(l);
+        n711a::advance(sl, 2); // bidirectional iterator
+    }
+
+    {
+        std::println("\n====================== using namespace n711b ============================");
+
+        // Using concepts
+        //
+        // If your compiler supports concepts (C++20), you should prefer this alternative to tags.
+
+        // vector
+        std::vector<int> v{1, 2, 3, 4, 5};
+
+        auto sv = std::begin(v);
+        n711b::advance(sv, 2);
+
+        // list
+        std::list<int> l{1, 2, 3, 4, 5};
+
+        auto sl = std::begin(l);
+        n711b::advance(sl, 2);
+    }
+
+    {
+        std::println("\n====================== using namespace n716 =============================");
+
+        // Expression templates
+        //
+        // ... allow lazy evaluation of a computation at compile-time
+        // They are often used in the implementation of linear algebra libraries.
+
+        n716::vector<int> v1{1, 2, 3};
+        n716::vector<int> v2{4, 5, 6};
+        double            a{1.5};
+
+        n716::vector<double> v3 = v1 + a * v2;       // {7.0, 9.5, 12.0}; creates one temporary object
+        n716::vector<int>    v4 = v1 * v2 + v1 + v2; // {9, 17, 27}     ; creates two temporary objects
+    }
+
+    {
+        std::println("\n====================== using namespace n717 =============================");
+
+        // avoiding these temporaries
+
+        n717::vector<int> v1{1, 2, 3};
+        n717::vector<int> v2{4, 5, 6};
+        double            a{1.5};
+
+        n717::vector<double> v3 = v1 + a * v2;       // {7.0, 9.5, 12.0}
+
+        int c;
+        std::cin >> c;
+        n717::vector<double> v4 = v1 + c * v2;       // {7.0, 9.5, 12.0}
+        n717::vector<int>    v5 = v1 * v2 + v1 + v2; // {9, 17, 27}
+
+        std::println("{}", v5[0]);                   // 9
+        std::println("{}", v5[1]);                   // 17
+        std::println("{}", v5[2]);                   // 27
+    }
+
+    {
+        std::println("\n====================== ranges ===========================================");
+
+        // Using ranges as an alternative to expression templates
+        //
+        // A range is a generalization of a container - a class that
+        // allows you to iterate over its data (elements).
+        //
+        // They are lazy-evaluated and the time to construct, copy, or destroy them does not
+        // depend on the size of the underlying range.
+
+        namespace rv = std::ranges::views;
+
+        std::vector<int> v1{1, 2, 3};
+        std::vector<int> v2{4, 5, 6};
+        double           a{1.5};
+
+        auto sv2 = v2 | rv::transform([&a](int val) { return a * val; });
+
+        // auto v3 = rv::zip_with(std::plus<>{}, v1, sv2);
+
+        for (auto e : sv2)
+        {
+            std::println("{}", e); // 6  7.5  9
+        }
+    }
+
+    {
+        std::println("\n====================== using namespace n714 =============================");
+
+        // Typelists
+        //
+        // Today, perhaps many of the problems for which typelists represented the solution
+        // can be also solved using variadic templates.
+
+        using namespace n714;
+    }
+
+    {
+        std::println("\n====================== using namespace n715 =============================");
+
+        using namespace n715;
+
+        game_unit u{100, 50};
+        std::println("{},{}", u.attack, u.defense);
+
+        upgrade_unit(u);
+        std::println("{},{}", u.attack, u.defense);
+    }
 }
