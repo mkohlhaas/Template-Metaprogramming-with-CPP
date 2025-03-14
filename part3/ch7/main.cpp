@@ -1254,12 +1254,6 @@ namespace n714
             using type = typename pop_back_type<N - 1, typelist<Ts..., U>, typelist<Us...>>::type;
         };
 
-        template <typename... Ts, typename... Us>
-        struct pop_back_type<0, typelist<Ts...>, typelist<Us...>>
-        {
-            using type = typelist<Ts...>;
-        };
-
         template <typename... Ts, typename U, typename... Us>
         struct pop_back_type<0, typelist<Ts...>, typelist<U, Us...>>
         {
@@ -1289,7 +1283,7 @@ namespace n714
     } // namespace detail
 
     template <typename TL>
-    using length_t = typename detail::length<TL>::type;
+    using length_t = detail::length<TL>::type;
 
     template <typename TL>
     constexpr std::size_t length_v = length_t<TL>::value;
@@ -1300,43 +1294,42 @@ namespace n714
     static_assert(length_v<typelist<int>> == 1);
 
     template <typename TL>
-    using front_t = typename detail::front_type<TL>::type;
+    using front_t = detail::front_type<TL>::type;
 
     static_assert(std::is_same_v<front_t<typelist<>>, empty_type>);
     static_assert(std::is_same_v<front_t<typelist<int>>, int>);
     static_assert(std::is_same_v<front_t<typelist<int, double, char>>, int>);
 
     template <typename TL>
-    using back_t = typename detail::back_type<TL>::type;
+    using back_t = detail::back_type<TL>::type;
 
     static_assert(std::is_same_v<back_t<typelist<>>, empty_type>);
     static_assert(std::is_same_v<back_t<typelist<int>>, int>);
     static_assert(std::is_same_v<back_t<typelist<int, double, char>>, char>);
 
     template <typename TL, typename T>
-    using push_back_t = typename detail::push_back_type<TL, T>::type;
+    using push_back_t = detail::push_back_type<TL, T>::type;
 
     static_assert(std::is_same_v<push_back_t<typelist<>, int>, typelist<int>>);
     static_assert(std::is_same_v<push_back_t<typelist<char>, int>, typelist<char, int>>);
     static_assert(std::is_same_v<push_back_t<typelist<double, char>, int>, typelist<double, char, int>>);
 
     template <typename TL, typename T>
-    using push_front_t = typename detail::push_front_type<TL, T>::type;
+    using push_front_t = detail::push_front_type<TL, T>::type;
 
     static_assert(std::is_same_v<push_front_t<typelist<>, int>, typelist<int>>);
     static_assert(std::is_same_v<push_front_t<typelist<char>, int>, typelist<int, char>>);
     static_assert(std::is_same_v<push_front_t<typelist<double, char>, int>, typelist<int, double, char>>);
 
     template <typename TL>
-    using pop_front_t = typename detail::pop_front_type<TL>::type;
+    using pop_front_t = detail::pop_front_type<TL>::type;
 
     static_assert(std::is_same_v<pop_front_t<typelist<>>, typelist<>>);
     static_assert(std::is_same_v<pop_front_t<typelist<char>>, typelist<>>);
     static_assert(std::is_same_v<pop_front_t<typelist<double, char>>, typelist<char>>);
 
     template <typename TL>
-    using pop_back_t =
-        typename detail::pop_back_type<static_cast<std::ptrdiff_t>(length_v<TL>) - 1, typelist<>, TL>::type;
+    using pop_back_t = detail::pop_back_type<static_cast<std::ptrdiff_t>(length_v<TL>) - 1, typelist<>, TL>::type;
 
     static_assert(std::is_same_v<pop_back_t<typelist<>>, typelist<>>);
     static_assert(std::is_same_v<pop_back_t<typelist<double>>, typelist<>>);
@@ -1344,7 +1337,7 @@ namespace n714
     static_assert(std::is_same_v<pop_back_t<typelist<double, char, int>>, typelist<double, char>>);
 
     template <std::size_t I, typename TL>
-    using at_t = typename detail::at_type<I, 0, TL>::type;
+    using at_t = detail::at_type<I, 0, TL>::type;
 
     static_assert(std::is_same_v<at_t<0, typelist<>>, empty_type>);
     static_assert(std::is_same_v<at_t<0, typelist<int>>, int>);
@@ -2246,12 +2239,14 @@ main()
     {
         std::println("\n====================== using namespace n715 =============================");
 
+        // Using typelists
+
         using namespace n715;
 
         game_unit u{100, 50};
-        std::println("{},{}", u.attack, u.defense);
+        std::println("{},{}", u.attack, u.defense); // 100,50
 
         upgrade_unit(u);
-        std::println("{},{}", u.attack, u.defense);
+        std::println("{},{}", u.attack, u.defense); // 102,60
     }
 }
