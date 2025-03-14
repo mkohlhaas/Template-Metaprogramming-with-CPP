@@ -1,6 +1,7 @@
 #include <array>
 #include <cassert>
 #include <cstring>
+#include <print>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -27,6 +28,7 @@ namespace n801
         using const_iterator  = circular_buffer_iterator<T const, N>;
 
       public:
+        // ctors
         constexpr circular_buffer() = default;
 
         constexpr circular_buffer(value_type const (&values)[N]) : tail_(N - 1), size_(N)
@@ -39,26 +41,32 @@ namespace n801
             std::fill(data_.begin(), data_.end(), v);
         }
 
+        // state
+
         constexpr size_type
         size() const noexcept
         {
             return size_;
         }
+
         constexpr size_type
         capacity() const noexcept
         {
             return N;
         }
+
         constexpr bool
         empty() const noexcept
         {
             return size_ == 0;
         }
+
         constexpr bool
         full() const noexcept
         {
             return size_ == N;
         }
+
         constexpr void
         clear() noexcept
         {
@@ -66,6 +74,8 @@ namespace n801
             head_ = 0;
             tail_ = 0;
         };
+
+        // access elements
 
         constexpr reference
         operator[](size_type const pos)
@@ -86,8 +96,10 @@ namespace n801
             {
                 return data_[(head_ + pos) % N];
             }
-
-            throw std::out_of_range("Index is out of range");
+            else
+            {
+                throw std::out_of_range("Index is out of range");
+            }
         }
 
         constexpr const_reference
@@ -97,8 +109,10 @@ namespace n801
             {
                 return data_[(head_ + pos) % N];
             }
-
-            throw std::out_of_range("Index is out of range");
+            else
+            {
+                throw std::out_of_range("Index is out of range");
+            }
         }
 
         constexpr reference
@@ -108,7 +122,10 @@ namespace n801
             {
                 return data_[head_];
             }
-            throw std::logic_error("Buffer is empty");
+            else
+            {
+                throw std::logic_error("Buffer is empty");
+            }
         }
 
         constexpr const_reference
@@ -118,7 +135,10 @@ namespace n801
             {
                 return data_[head_];
             }
-            throw std::logic_error("Buffer is empty");
+            else
+            {
+                throw std::logic_error("Buffer is empty");
+            }
         }
 
         constexpr reference
@@ -128,7 +148,10 @@ namespace n801
             {
                 return data_[tail_];
             }
-            throw std::logic_error("Buffer is empty");
+            else
+            {
+                throw std::logic_error("Buffer is empty");
+            }
         }
 
         constexpr const_reference
@@ -138,8 +161,13 @@ namespace n801
             {
                 return data_[tail_];
             }
-            throw std::logic_error("Buffer is empty");
+            else
+            {
+                throw std::logic_error("Buffer is empty");
+            }
         }
+
+        // adding and removing elements
 
         constexpr void
         push_back(T const &value)
@@ -167,7 +195,7 @@ namespace n801
         {
             if (empty())
             {
-                data_[tail_] = value;
+                data_[tail_] = std::move(value);
                 size_++;
             }
             else if (!full())
@@ -186,18 +214,21 @@ namespace n801
         constexpr T
         pop_front()
         {
-            if (empty())
+            if (!empty())
+            {
+                size_type index = head_;
+                head_           = (head_ + 1) % N;
+                size_--;
+
+                return data_[index];
+            }
+            else
             {
                 throw std::logic_error("Buffer is empty");
             }
-
-            size_type index = head_;
-
-            head_ = (head_ + 1) % N;
-            size_--;
-
-            return data_[index];
         }
+
+        // iterators
 
         iterator
         begin()
@@ -248,11 +279,16 @@ namespace n801
         using difference_type   = std::ptrdiff_t;
 
       public:
+        // ctor
         explicit circular_buffer_iterator(circular_buffer<T, N> &buffer, size_type const index)
             : buffer_(buffer), index_(index)
         {
         }
 
+        // The member type iterator_category is an alias for std::random_access_iterator_tag.
+        // This implies that we need to provide all the operations supported for such an iterator!
+
+        // pre-increment
         self_type &
         operator++()
         {
@@ -265,6 +301,7 @@ namespace n801
             return *this;
         }
 
+        // post-increment
         self_type
         operator++(int)
         {
@@ -287,6 +324,7 @@ namespace n801
             return !(*this == other);
         }
 
+        // deref-operator
         const_reference
         operator*() const
         {
@@ -333,6 +371,7 @@ namespace n801
 
         // bidirectional iterator requirements
 
+        // pre-decrement
         self_type &
         operator--()
         {
@@ -345,6 +384,7 @@ namespace n801
             return *this;
         }
 
+        // post-decrement
         self_type
         operator--(int)
         {
@@ -376,9 +416,9 @@ namespace n801
         }
 
         self_type &
-        operator+=(difference_type const offset [[maybe_unused]])
+        operator+=(difference_type const offset)
         {
-            difference_type next = (index_ + next) % buffer_.get().capacity();
+            difference_type next = (index_ + offset) % buffer_.get().capacity();
             if (next >= buffer_.get().size())
             {
                 throw std::out_of_range("Iterator cannot be incremented past the bounds of the range");
@@ -415,7 +455,7 @@ namespace n801
         bool
         operator>(self_type const &other) const
         {
-            return other < *this;
+            return other <= *this;
         }
 
         bool
@@ -477,23 +517,25 @@ main()
     {
         using namespace n801;
 
+        // Custom Container
+
         {
-            circular_buffer<int, 3> a({1, 2, 3});
+            circular_buffer a({1, 2, 3});
             assert(a[0] == 1);
             assert(a[1] == 2);
             assert(a[2] == 3);
 
-            circular_buffer<int, 3> b = a;
+            circular_buffer b = a;
             assert(b[0] == 1);
             assert(b[1] == 2);
             assert(b[2] == 3);
 
-            circular_buffer<int, 3> c = std::move(b);
+            circular_buffer c = std::move(b);
             assert(c[0] == 1);
             assert(c[1] == 2);
             assert(c[2] == 3);
 
-            circular_buffer<int, 3> d(c);
+            circular_buffer d(c);
             assert(d[0] == 1);
             assert(d[1] == 2);
             assert(d[2] == 3);
@@ -509,35 +551,34 @@ main()
 
             try
             {
-                b.front();
-
-                assert(false);
+                b.front();     // throws an exception
+                assert(false); // never reached
             }
             catch (std::logic_error const &e)
             {
                 assert(strcmp(e.what(), "Buffer is empty") == 0);
+                std::println("1 - {}", e.what());
             }
 
             try
             {
-                b.back();
-
-                assert(false);
+                b.back();      // throws an exception
+                assert(false); // never reached
             }
             catch (std::logic_error const &e)
             {
                 assert(strcmp(e.what(), "Buffer is empty") == 0);
+                std::println("2 - {}", e.what());
             }
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
 
             assert(b.size() == 3);
             assert(b.capacity() == 3);
             assert(b.full());
             assert(!b.empty());
-
             assert(b.front() == 1);
             assert(b.back() == 3);
         }
@@ -549,13 +590,12 @@ main()
             assert(b.capacity() == 3);
             assert(b.full());
             assert(!b.empty());
-
             assert(b.front() == 42);
             assert(b.back() == 42);
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
 
             assert(b[0] == 1);
             assert(b[1] == 2);
@@ -571,7 +611,7 @@ main()
         }
 
         {
-            circular_buffer<int, 3> const b({1, 2, 3});
+            circular_buffer const b({1, 2, 3});
 
             assert(b[0] == 1);
             assert(b[1] == 2);
@@ -583,18 +623,18 @@ main()
 
             try
             {
-                b.at(3);
-
-                assert(false);
+                b.at(3);       // throws an exception
+                assert(false); // never reached
             }
             catch (std::out_of_range const &e)
             {
                 assert(strcmp(e.what(), "Index is out of range") == 0);
+                std::println("3 - {}", e.what());
             }
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
 
             assert(b[0] == 1);
             assert(b[1] == 2);
@@ -620,7 +660,7 @@ main()
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
 
             b.push_back(4);
             assert(b[0] == 2);
@@ -648,39 +688,39 @@ main()
 
             try
             {
-                b.pop_front();
-
-                assert(false);
+                b.pop_front(); // throws an exception
+                assert(false); // never reached
             }
             catch (std::logic_error const &e)
             {
                 assert(strcmp(e.what(), "Buffer is empty") == 0);
+                std::println("4 - {}", e.what());
             }
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
 
             assert(b.size() == 3);
             assert(b[0] == 1);
             assert(b[1] == 2);
             assert(b[2] == 3);
 
-            b.pop_front();
+            assert(b.pop_front() == 1);
             assert(b.size() == 2);
             assert(b[0] == 2);
             assert(b[1] == 3);
 
-            b.pop_front();
+            assert(b.pop_front() == 2);
             assert(b.size() == 1);
             assert(b[0] == 3);
 
-            b.pop_front();
+            assert(b.pop_front() == 3);
             assert(b.size() == 0);
         }
 
         {
-            circular_buffer<int, 4> b({1, 2, 3, 4});
+            circular_buffer b({1, 2, 3, 4});
 
             assert(b.size() == 4);
             assert(b[0] == 1);
@@ -702,7 +742,7 @@ main()
             assert(b[2] == 5);
             assert(b[3] == 6);
 
-            b.pop_front();
+            assert(b.pop_front() == 3);
             assert(b.size() == 3);
             assert(b[0] == 4);
             assert(b[1] == 5);
@@ -712,14 +752,16 @@ main()
         {
             circular_buffer<int, 3> b;
             auto                    s = b.begin();
+
             try
             {
-                *s;
-                assert(false);
+                *s;            // throws an exception
+                assert(false); // never reached
             }
             catch (std::logic_error const &e)
             {
                 assert(strcmp(e.what(), "Cannot dereferentiate the iterator") == 0);
+                std::println("5 - {}", e.what());
             }
         }
 
@@ -733,18 +775,22 @@ main()
             s++;
             try
             {
-                *s;
-                assert(false);
+                *s;            // throws an exception
+                assert(false); // never reached
             }
             catch (std::logic_error const &e)
             {
                 assert(strcmp(e.what(), "Cannot dereferentiate the iterator") == 0);
+                std::println("6 - {}", e.what());
             }
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
-            std::vector<int>        v;
+            // copy circular buffer into vector
+
+            circular_buffer  b({1, 2, 3});
+            std::vector<int> v;
+
             for (auto it = b.begin(); it != b.end(); ++it)
             {
                 v.push_back(*it);
@@ -753,12 +799,15 @@ main()
         }
 
         {
+            // copy circular buffer into vector
+
             circular_buffer<int, 4> b;
+            std::vector<int>        v;
+
             b.push_back(1);
             b.push_back(2);
             b.push_back(3);
 
-            std::vector<int> v;
             for (auto it = b.begin(); it != b.end(); ++it)
             {
                 v.push_back(*it);
@@ -767,8 +816,11 @@ main()
         }
 
         {
+            // copy circular buffer into vector
+
             circular_buffer<int, 3> b({1, 2, 3});
             std::vector<int>        v;
+
             for (auto const e : b)
             {
                 v.push_back(e);
@@ -777,14 +829,14 @@ main()
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
             *b.begin() = 0;
 
             assert(b.front() == 0);
         }
 
         {
-            circular_buffer<int, 3> b({1, 2, 3});
+            circular_buffer b({1, 2, 3});
             b.push_back(4);
 
             assert(b[0] == 2);
@@ -795,6 +847,8 @@ main()
 
     {
         using namespace n802;
+
+        // General-Purpose Algorithm
 
         {
             std::vector<int> v1;
@@ -855,13 +909,16 @@ main()
         using namespace n801;
         using namespace n802;
 
-        circular_buffer<int, 4> a({1, 2, 3, 4});
-        circular_buffer<int, 3> b({5, 6, 7});
+        // Custom Container & General-Purpose Algorithm
+
+        circular_buffer         a({1, 2, 3, 4});
+        circular_buffer         b({5, 6, 7});
         circular_buffer<int, 8> c(0);
 
         flatzip(a.begin(), a.end(), b.begin(), b.end(), c.begin());
 
         std::vector<int> v;
+
         for (auto e : c)
         {
             v.push_back(e);
