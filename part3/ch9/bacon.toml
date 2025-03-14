@@ -1,0 +1,23 @@
+default_job = "meson-compile"
+
+[jobs.meson-compile]
+command = ["meson", "compile", "-C", "build"]
+watch = ["."]
+need_stdout = true
+analyzer = "cpp"
+
+[jobs.meson-clean]
+command = ["meson", "compile", "--clean", "-C", "build"]
+watch = ["."]
+need_stdout = true
+analyzer = "cpp"
+
+[jobs.meson-exec]
+command = ["meson", "devenv", "-C", "build", "./ch9"]
+need_stdout = true
+allow_warnings = true
+
+[keybindings]
+c = "job:meson-compile"
+l = "job:meson-clean"
+e = "job:meson-exec"
