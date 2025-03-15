@@ -490,7 +490,7 @@ main()
         {
             if (is_abundant(i))
             {
-                std::println("{}", i);
+                std::print("{} ", i);
             }
         }
     }
@@ -504,7 +504,7 @@ main()
 
         for (int i : std::views::iota(1, 101) | std::views::filter(is_abundant))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -517,7 +517,7 @@ main()
 
         for (int i : std::ranges::filter_view(std::ranges::iota_view(1, 101), is_abundant))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -529,7 +529,7 @@ main()
         std::vector<int> nums{10, 12, 14, 16, 18, 20};
         for (int i : nums | std::views::filter(is_abundant))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -542,7 +542,7 @@ main()
         for (auto i : std::views::iota(1, 101) | std::views::filter(is_abundant) |
                           std::views::transform([](int const n) { return n / 2; }))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -554,7 +554,7 @@ main()
 
         for (auto i : std::views::iota(1, 101) | std::views::filter(is_abundant) | std::views::take(5))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -567,7 +567,7 @@ main()
         for (auto i :
              std::views::iota(1, 101) | std::views::reverse | std::views::filter(is_abundant) | std::views::take(5))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -579,7 +579,7 @@ main()
         for (auto i : std::views::iota(1, 101) | std::views::reverse | std::views::filter(is_abundant) |
                           std::views::take(5) | std::views::reverse)
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -594,7 +594,7 @@ main()
         for (auto i : std::views::iota(1, 101) | std::views::filter(is_abundant) | std::views::drop(5) |
                           std::views::reverse | std::views::drop(5) | std::views::reverse)
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -766,7 +766,7 @@ main()
         std::vector<std::string> words{"a", "join", "example"};
         for (auto s : words | rv::join)
         {
-            std::println("{}", s);
+            std::print("{} ", s);
         }
     }
 
@@ -781,7 +781,7 @@ main()
 
         for (int const i : v | rv::join)
         {
-            std::println("{}", i); // prints 1 2 3 4 5 6
+            std::print("{} ", i);
         }
 
         // for(int const i : v | rv::join_with(0))
@@ -842,12 +842,12 @@ main()
 
         for (auto i : std::ranges::iota_view(1, 10))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
 
         for (auto i : std::views::iota(1, 10))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -873,10 +873,10 @@ main()
         std::println("\n====================== 20 ===============================================");
 
         auto v1 = std::ranges::views::iota(1, 10);
-        std::ranges::for_each(v1, [](int const n) { std::println("{}", n); });
+        std::ranges::for_each(v1, [](int const n) { std::print("{} ", n); });
 
         auto v2 = std::ranges::views::iota(1) | std::ranges::views::take(9);
-        std::ranges::for_each(v2, [](int const n) { std::println("{}", n); });
+        std::ranges::for_each(v2, [](int const n) { std::print("{} ", n); });
     }
 
     {
@@ -981,45 +981,57 @@ main()
         std::println("step(1)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(1))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("step(2)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(2))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("step(3)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(3))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("step(4)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(4))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("step(5)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(5))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("step(2) | take(3)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(2) | std::views::take(3))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("step(2) | take(3)");
         auto r = n902::views::step(std::views::iota(1, 10), 2);
         auto t = std::ranges::take_view(r, 3);
         for (auto i : t)
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 
@@ -1042,13 +1054,15 @@ main()
         std::println("replicate(2)");
         for (auto i : std::views::iota(1, 5) | n903::views::replicate(2))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
+
+        std::println();
 
         std::println("replicate(2)");
         for (auto i : std::views::iota(1, 5) | n903::views::replicate(2) | std::views::take(5))
         {
-            std::println("{}", i);
+            std::print("{} ", i);
         }
     }
 }
