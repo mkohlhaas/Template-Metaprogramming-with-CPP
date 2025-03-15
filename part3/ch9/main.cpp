@@ -9,6 +9,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace n901
@@ -52,6 +53,7 @@ namespace n902
         constexpr step_sentinel(base end) : end_{end}
         {
         }
+
         constexpr bool is_at_end(step_iterator<R> it) const;
 
       private:
@@ -136,6 +138,7 @@ namespace n902
         {
             return base_;
         }
+
         constexpr R
         base() &&
         {
@@ -527,15 +530,17 @@ main()
         using namespace n901;
 
         std::vector<int> nums{10, 12, 14, 16, 18, 20};
+
         for (int i : nums | std::views::filter(is_abundant))
         {
             std::print("{} ", i);
         }
     }
 
-    // transform - get halves
     {
         std::println("\n====================== using namespace n901 =============================");
+
+        // transform - get halves
 
         using namespace n901;
 
@@ -546,9 +551,10 @@ main()
         }
     }
 
-    // take first N
     {
         std::println("\n====================== using namespace n901 =============================");
+
+        // take first N
 
         using namespace n901;
 
@@ -558,9 +564,10 @@ main()
         }
     }
 
-    // take last N in reverse order
     {
         std::println("\n====================== using namespace n901 =============================");
+
+        // take last N in reverse order
 
         using namespace n901;
 
@@ -571,9 +578,10 @@ main()
         }
     }
 
-    // take last N in ascending order
     {
         std::println("\n====================== using namespace n901 =============================");
+
+        // take last N in ascending order
 
         using namespace n901;
         for (auto i : std::views::iota(1, 101) | std::views::reverse | std::views::filter(is_abundant) |
@@ -583,9 +591,10 @@ main()
         }
     }
 
-    // all except for first N and last N
     {
         std::println("\n====================== using namespace n901 =============================");
+
+        // all except for first N and last N
 
         using namespace n901;
 
@@ -655,13 +664,18 @@ main()
     {
         std::println("\n====================== 6 ================================================");
 
+        using namespace std::ranges::views;
+
         std::println("square of even numbers (2):");
 
         std::vector<int> v{1, 5, 3, 2, 8, 7, 6, 4};
 
-        std::ranges::sort(v);
-        auto r = v | std::ranges::views::filter([](int const n) { return n % 2 == 0; }) | std::ranges::views::drop(2) |
-                 std::ranges::views::reverse | std::ranges::views::transform([](int const n) { return n * n; });
+        std::ranges::sort(v);                                     // 1, 2, 3, 4, 5, 6, 7, 8,
+        auto r = v                                                // 1, 2, 3, 4, 5, 6, 7, 8,
+                 | filter([](int const n) { return n % 2 == 0; }) // 2, 4, 6, 8
+                 | drop(2)                                        // 6, 8
+                 | reverse                                        // 8, 6
+                 | transform([](int const n) { return n * n; });  // 64, 36
 
         std::ranges::for_each(r, [](int const n) { std::println("{}", n); });
     }
@@ -711,10 +725,15 @@ main()
 
         std::vector<int> v{1, 5, 3, 2, 4, 7, 6, 8};
 
-        for (auto i : v | rv::reverse | rv::filter([](int const n) { return n % 2 == 1; }) | rv::take(2))
+        for (auto i : v                                                        // 1, 5, 3, 2, 4, 7, 6, 8
+                          | rv::reverse                                        // 8, 6, 7, 4, 2, 3, 5, 1
+                          | rv::filter([](int const n) { return n % 2 == 1; }) // 7, 3, 5, 1
+                          | rv::take(2))                                       // 7, 3
         {
-            std::println("{}", i);
+            std::print("{} ", i);                                              // 7 3
         }
+
+        std::println();
     }
 
     {
@@ -723,11 +742,14 @@ main()
         namespace rv = std::ranges::views;
 
         std::vector<int> v{1, 5, 3, 2, 4, 7, 16, 8};
-        for (auto i : v | rv::take_while([](int const n) { return n < 10; }) |
-                          rv::drop_while([](int const n) { return n % 2 == 1; }))
+        for (auto i : v                                                             // 1, 5, 3, 2, 4, 7, 16, 8
+                          | rv::take_while([](int const n) { return n < 10; })      // 1, 5, 3, 2, 4, 7
+                          | rv::drop_while([](int const n) { return n % 2 == 1; })) // 2, 4, 7
         {
-            std::println("{}", i);
+            std::print("{} ", i);                                                   // 2 4 7
         }
+
+        std::println();
     }
 
     {
@@ -740,19 +762,23 @@ main()
         std::println("keys:");
         for (auto i : v | rv::keys)
         {
-            std::println("{}", i);
+            std::print("{} ", i); // 1 2 3
         }
+
+        std::println();
 
         std::println("values:");
         for (auto i : v | rv::values)
         {
-            std::println("{}", i);
+            std::print("{} ", i); // 1.1. 2.2. 3.3
         }
+
+        std::println();
 
         std::println("elements:");
         for (auto i : v | rv::elements<2>)
         {
-            std::println("{}", i);
+            std::print("{} ", i); // one two three
         }
     }
 
@@ -766,7 +792,7 @@ main()
         std::vector<std::string> words{"a", "join", "example"};
         for (auto s : words | rv::join)
         {
-            std::print("{} ", s);
+            std::print("{} ", s); // a j o i n e x a m p l e
         }
     }
 
@@ -781,43 +807,81 @@ main()
 
         for (int const i : v | rv::join)
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 2 3 4 5 6
         }
 
-        // for(int const i : v | rv::join_with(0))
-        //   std::println("{}",i << ' ';  // print 1 2 3 0 4 0 5 6
+        std::println();
+
+        for (int const i : v | rv::join_with(0))
+        {
+            std::print("{} ", i); // 1 2 3 0 4 0 5 6
+        }
     }
 
     {
         std::println("\n====================== 15 ===============================================");
 
         namespace rv = std::ranges::views;
+
         std::string                text{"this is a demo!"};
         constexpr std::string_view delim{" "};
+
         for (auto const word : text | rv::split(delim))
         {
             std::println("{}", std::string_view(word.begin(), word.end()));
         }
+
+        // this
+        // is
+        // a
+        // demo!
     }
-
-    /*
-    {
-       std::array<int, 4> a{ 1, 2, 3, 4 };
-       std::vector<double> v{ 10.0, 20.0, 30.0 };
-
-       auto z = rv::zip(a, v) // { {1, 10.0}, {2, 20.0}, {3, 30.0} }
-    }
-
-    {
-       std::array<int, 4> a{ 1, 2, 3, 4 };
-       std::vector<double> v{ 10.0, 20.0, 30.0 };
-
-       auto z = rv::zip_transform(std::multiplies<double>(), a, v) // { {1, 10.0}, {2, 20.0}, {3, 30.0} }
-    }
-    */
 
     {
         std::println("\n====================== 16 ===============================================");
+
+        namespace rv = std::ranges::views;
+
+        int                 i_val;
+        double              f_val;
+        std::array<int, 4>  a{1, 2, 3, 4};
+        std::vector<double> v{10.0, 20.0, 30.0};
+
+        auto z = rv::zip(a, v); // { {1, 10.0}, {2, 20.0}, {3, 30.0} }
+
+        for (auto t : z)
+        {
+            std::tie(i_val, f_val) = t;
+            std::cout << i_val << " " << f_val << '\n';
+        }
+
+        // 1 10
+        // 2 20
+        // 3 30
+    }
+
+    {
+        std::println("\n====================== 17 ===============================================");
+
+        namespace rv = std::ranges::views;
+
+        std::array<int, 4>  a{1, 2, 3, 4};
+        std::vector<double> v{10.0, 20.0, 30.0};
+
+        auto z = rv::zip_transform(std::multiplies<double>(), a, v); // { 1 * 10.0, 2 * 20.0, 3 * 30.0 }
+
+        for (auto t : z)
+        {
+            std::cout << t << '\n';
+        }
+
+        // 10
+        // 40
+        // 90
+    }
+
+    {
+        std::println("\n====================== 18 ===============================================");
 
         std::vector<int> v{8, 5, 3, 2, 4, 7, 6, 1};
         auto             r = std::views::iota(1, 10);
@@ -838,12 +902,14 @@ main()
     }
 
     {
-        std::println("\n====================== 17 ===============================================");
+        std::println("\n====================== 19 ===============================================");
 
         for (auto i : std::ranges::iota_view(1, 10))
         {
             std::print("{} ", i);
         }
+
+        std::println();
 
         for (auto i : std::views::iota(1, 10))
         {
@@ -852,7 +918,7 @@ main()
     }
 
     {
-        std::println("\n====================== 18 ===============================================");
+        std::println("\n====================== 20 ===============================================");
 
         constexpr std::ranges::empty_view<int> ev;
         static_assert(std::ranges::empty(ev));
@@ -861,7 +927,7 @@ main()
     }
 
     {
-        std::println("\n====================== 19 ===============================================");
+        std::println("\n====================== 21 ===============================================");
 
         constexpr std::ranges::single_view<int> sv{42};
         static_assert(!std::ranges::empty(sv));
@@ -870,22 +936,26 @@ main()
     }
 
     {
-        std::println("\n====================== 20 ===============================================");
+        std::println("\n====================== 22 ===============================================");
 
         auto v1 = std::ranges::views::iota(1, 10);
         std::ranges::for_each(v1, [](int const n) { std::print("{} ", n); });
+
+        std::println();
 
         auto v2 = std::ranges::views::iota(1) | std::ranges::views::take(9);
         std::ranges::for_each(v2, [](int const n) { std::print("{} ", n); });
     }
 
     {
-        std::println("\n====================== 21 ===============================================");
+        std::println("\n====================== 23 ===============================================");
 
         auto                text   = "19.99 7.50 49.19 20 12.34";
         auto                stream = std::istringstream{text};
         std::vector<double> prices;
         double              price;
+
+        // You cannot specify a delimiter; it only works with whitespaces.
         while (stream >> price)
         {
             prices.push_back(price);
@@ -896,62 +966,85 @@ main()
     }
 
     {
-        std::println("\n====================== 22 ===============================================");
+        std::println("\n====================== 24 ===============================================");
 
         auto                text   = "19.99 7.50 49.19 20 12.34";
         auto                stream = std::istringstream{text};
         std::vector<double> prices;
+
         for (double const price : std::ranges::istream_view<double>(stream))
         {
             prices.push_back(price);
         }
+
         auto total = std::accumulate(prices.begin(), prices.end(), 0.0);
         std::println("total: {}", total);
-    }
-
-    {
-        std::println("\n====================== 23 ===============================================");
-
-        auto                text   = "19.99 7.50 49.19 20 12.34";
-        auto                stream = std::istringstream{text};
-        std::vector<double> prices;
-        std::ranges::for_each(std::ranges::istream_view<double>(stream),
-                              [&prices](double const price) { prices.push_back(price); });
-        auto total = std::accumulate(prices.begin(), prices.end(), 0.0);
-        std::println("total: {}", total);
-    }
-
-    {
-        std::println("\n====================== 24 ===============================================");
-
-        auto l_odd = [](int const n) { return n % 2 == 1; };
-
-        std::vector<int> v{1, 1, 2, 3, 5, 8, 13};
-        std::vector<int> o;
-        auto             e1 [[maybe_unused]] = std::copy_if(v.begin(), v.end(), std::back_inserter(o), l_odd);
-
-        int  arr[]               = {1, 1, 2, 3, 5, 8, 13};
-        auto e2 [[maybe_unused]] = std::copy_if(std::begin(arr), std::end(arr), std::back_inserter(o), l_odd);
     }
 
     {
         std::println("\n====================== 25 ===============================================");
 
-        auto l_odd = [](int const n) { return n % 2 == 1; };
+        using namespace std::ranges;
 
-        std::vector<int> v{1, 1, 2, 3, 5, 8, 13};
-        std::vector<int> o;
-        auto             e1 [[maybe_unused]] = std::ranges::copy_if(v, std::back_inserter(o), l_odd);
+        auto                text   = "19.99 7.50 49.19 20 12.34";
+        auto                stream = std::istringstream{text};
+        std::vector<double> prices;
 
-        int  arr[]               = {1, 1, 2, 3, 5, 8, 13};
-        auto e2 [[maybe_unused]] = std::ranges::copy_if(arr, std::back_inserter(o), l_odd);
+        // std::ranges::for_each(std::ranges::istream_view<double>(stream),
+        //                       [&prices](double const price) { prices.push_back(price); });
 
-        auto r [[maybe_unused]]  = std::ranges::views::iota(1, 10);
-        auto e3 [[maybe_unused]] = std::ranges::copy_if(r, std::back_inserter(o), l_odd);
+        // my preferred option with for_each
+        for_each(istream_view<double>(stream), [&prices](double const price) { prices.push_back(price); });
+
+        auto total = std::accumulate(prices.begin(), prices.end(), 0.0);
+        std::println("total: {}", total);
     }
 
     {
         std::println("\n====================== 26 ===============================================");
+
+        auto l_odd = [](int const n) { return n % 2 == 1; };
+
+        std::vector<int> o;
+
+        std::vector<int> v{1, 1, 2, 3, 5, 8, 13};
+        int              arr[] = {1, 1, 2, 3, 5, 8, 13};
+
+        std::copy_if(v.begin(), v.end(), std::back_inserter(o), l_odd);
+        std::copy_if(std::begin(arr), std::end(arr), std::back_inserter(o), l_odd);
+
+        for (auto v : o)
+        {
+            std::print("{} ", v); // 1 1 3 5 13 1 1 3 5 13
+        }
+        std::println();
+    }
+
+    {
+        std::println("\n====================== 27 ===============================================");
+
+        auto l_odd = [](int const n) { return n % 2 == 1; };
+
+        std::vector<int> o;
+
+        std::vector<int> v{1, 1, 2, 3, 5, 8, 13};
+        std::ranges::copy_if(v, std::back_inserter(o), l_odd);
+
+        int arr[] = {1, 1, 2, 3, 5, 8, 13};
+        std::ranges::copy_if(arr, std::back_inserter(o), l_odd);
+
+        auto r = std::ranges::views::iota(1, 10);
+        std::ranges::copy_if(r, std::back_inserter(o), l_odd);
+
+        for (auto v : o)
+        {
+            std::print("{} ", v); // 1 1 3 5 13 1 1 3 5 13 1 3 5 7 9
+        }
+        std::println();
+    }
+
+    {
+        std::println("\n====================== 28 ===============================================");
 
         namespace rv = std::ranges::views;
 
@@ -959,18 +1052,80 @@ main()
 
         std::vector<Item> copies;
 
-        std::ranges::copy_if(items, std::back_inserter(copies), [](Item const &i) { return i.name[0] == 'p'; });
+        std::ranges::copy_if(items,                                           //
+                             std::back_inserter(copies),                      //
+                             [](Item const &i) { return i.name[0] == 'p'; }); //
 
+        for (auto item : copies)
+        {
+            std::println("id: {}, name: {}, price: {}", item.id, item.name, item.price);
+        }
+
+        std::println();
         copies.clear();
 
         std::ranges::copy_if(
-            items, std::back_inserter(copies), [](std::string const &name) { return name[0] == 'p'; }, &Item::name);
+            items,                                                  //
+            std::back_inserter(copies),                             //
+            [](std::string const &name) { return name[0] == 'p'; }, //
+            &Item::name);                                           // projection for the lambda
 
+        for (auto item : copies)
+        {
+            std::println("id: {}, name: {}, price: {}", item.id, item.name, item.price);
+        }
+
+        std::println();
         copies.clear();
 
         std::vector<std::string> names;
-        std::ranges::copy_if(items | rv::transform(&Item::name), std::back_inserter(names),
-                             [](std::string const &name) { return name[0] == 'p'; });
+        std::ranges::copy_if(items | rv::transform(&Item::name),                      //
+                             std::back_inserter(names),                               //
+                             [](std::string const &name) { return name[0] == 'p'; }); //
+
+        for (auto name : names)
+        {
+            std::println("{}", name);
+        }
+    }
+
+    {
+        std::println("\n====================== 29 ===============================================");
+
+        namespace rv = std::ranges::views;
+
+        int i_val1;
+        int i_val2;
+
+        std::vector<int> v{1, 2, 3, 4};
+        for (auto i : v | rv::adjacent<2>)
+        {
+            // prints: (1, 2) (2, 3) (3, 4)
+            std::tie(i_val1, i_val2) = i;
+            std::println("({} {})", i_val1, i_val2);
+        }
+
+        // (1 2)
+        // (2 3)
+        // (3 4)
+    }
+
+    {
+        std::println("\n====================== 30 ===============================================");
+
+        namespace rv = std::views;
+
+        auto Fun = [](auto... n) { return (... * n); };
+
+        std::vector<int> v{1, 2, 3, 4, 5};
+        for (auto i : v | rv::adjacent_transform<3>(Fun))
+        {
+            std::println("{}", i);
+        }
+
+        // 6  [ = 1 * 2 * 3]
+        // 24 [ = 2 * 3 * 4]
+        // 60 [ = 3 * 4 * 5]
     }
 
     {
@@ -981,7 +1136,7 @@ main()
         std::println("step(1)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(1))
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 2 3 4 5 6 7 8 9
         }
 
         std::println();
@@ -989,7 +1144,7 @@ main()
         std::println("step(2)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(2))
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 3 5 7 9
         }
 
         std::println();
@@ -997,7 +1152,7 @@ main()
         std::println("step(3)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(3))
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 4 7
         }
 
         std::println();
@@ -1005,7 +1160,7 @@ main()
         std::println("step(4)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(4))
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 5 9
         }
 
         std::println();
@@ -1013,7 +1168,7 @@ main()
         std::println("step(5)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(5))
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 6
         }
 
         std::println();
@@ -1021,7 +1176,7 @@ main()
         std::println("step(2) | take(3)");
         for (auto i : std::views::iota(1, 10) | n902::views::step(2) | std::views::take(3))
         {
-            std::print("{} ", i);
+            std::print("{} ", i); // 1 3 5
         }
 
         std::println();
@@ -1029,6 +1184,7 @@ main()
         std::println("step(2) | take(3)");
         auto r = n902::views::step(std::views::iota(1, 10), 2);
         auto t = std::ranges::take_view(r, 3);
+
         for (auto i : t)
         {
             std::print("{} ", i);
