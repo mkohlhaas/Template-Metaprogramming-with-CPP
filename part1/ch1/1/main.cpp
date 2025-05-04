@@ -40,9 +40,9 @@ quicksort(void *arr, int const low, int const high, compare_fn cmp, swap_fn swap
 {
     if (low < high)
     {
-        int const pi = partition(arr, low, high, cmp, swap);
-        quicksort(arr, low, pi - 1, cmp, swap);
-        quicksort(arr, pi + 1, high, cmp, swap);
+        int const pivot = partition(arr, low, high, cmp, swap);
+        quicksort(arr, low, pivot - 1, cmp, swap);
+        quicksort(arr, pivot + 1, high, cmp, swap);
     }
 }
 
@@ -50,9 +50,9 @@ void
 swap_int(void *arr, int const i, int const j)
 {
     int *iarr = static_cast<int *>(arr);
-    int  t    = iarr[i];
+    int  tmp  = iarr[i];
     iarr[i]   = iarr[j];
-    iarr[j]   = t;
+    iarr[j]   = tmp;
 }
 
 bool
@@ -89,7 +89,6 @@ constexpr char32_t NewLineU32 [[maybe_unused]] = U'\n';
 int
 main()
 {
-
     int arr[] = {13, 1, 8, 3, 5, 2, 1};
     int n     = sizeof(arr) / sizeof(arr[0]);
     quicksort(arr, 0, n - 1, cmp_int, swap_int);

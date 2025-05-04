@@ -44,9 +44,9 @@ quicksort(T arr[], int const low, int const high)
 {
     if (low < high)
     {
-        int const pi = partition(arr, low, high);
-        quicksort(arr, low, pi - 1);
-        quicksort(arr, pi + 1, high);
+        int const pivot = partition(arr, low, high);
+        quicksort(arr, low, pivot - 1);
+        quicksort(arr, pivot + 1, high);
     }
 }
 

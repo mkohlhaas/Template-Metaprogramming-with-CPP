@@ -8,6 +8,7 @@
 #include <numeric>
 #include <ostream>
 #include <print>
+#include <type_traits>
 
 namespace n201
 {
@@ -20,6 +21,7 @@ namespace n201
 
     class foo
     {
+      private:
         int value;
 
       public:
@@ -387,7 +389,7 @@ namespace n212
         output() override
         {
             // the same:
-            (*action)();
+            // (*action)();
             action();
         }
     };
@@ -1193,7 +1195,8 @@ main()
         wrapper<int>    b(42);   // wraps an int
         wrapper<short>  c(42);   // wraps a short
         wrapper<double> d(42.0); // wraps a double
-        wrapper         e("42"); // wraps a char const *
+        wrapper         e(42.0); // wraps a double
+        wrapper         f("42"); // wraps a char const *
     }
 
     {
@@ -1201,7 +1204,7 @@ main()
         using namespace n203;
 
         wrapper<int> a(42); // wraps an int
-        use_wrapper(&a);
+        use_wrapper(&a);    // 42
     }
 
     {
@@ -1209,7 +1212,7 @@ main()
         using namespace n204;
 
         composition<int> c;
-        std::println("{}", c.add(41, 21));
+        std::println("{}", c.add(41, 21)); // 62
     }
 
     {
@@ -1217,8 +1220,8 @@ main()
         using namespace n205;
 
         composition c;
-        std::println("{}", c.add<int>(41, 21));
-        std::println("{}", c.add(41, 21));
+        std::println("{}", c.add<int>(41, 21)); // 62
+        std::println("{}", c.add(41, 21));      // 62
     }
 
     {
@@ -1230,9 +1233,9 @@ main()
 
         auto d = a.get();     // double
         auto n = a.as<int>(); // int
-        // int  n = a.as();   // error
-        std::println("{}", d);
-        std::println("{}", n);
+        // int  n = a.as();    // error
+        std::println("{}", d); // 42
+        std::println("{}", n); // 42
     }
 
     {
@@ -1251,8 +1254,8 @@ main()
         buffer<int, 3 * 5> b3;
 
         static_assert(std::is_same_v<decltype(b1), decltype(b2)>);
-        static_assert(!std::is_same_v<decltype(b2), decltype(b3)>);
-        static_assert(!std::is_same_v<decltype(b1), decltype(b3)>);
+        static_assert(not std::is_same_v<decltype(b2), decltype(b3)>);
+        static_assert(not std::is_same_v<decltype(b1), decltype(b3)>);
     }
 
     {
@@ -1262,12 +1265,12 @@ main()
         buffer<int, 10>    b1;
         buffer<int, 2 * 5> b2;
 
-        std::println("is same: {}", std::is_same_v<buffer<int, 10>, buffer<int, 2 * 5>>);
-        std::println("is same: {}", std::is_same_v<decltype(b1), decltype(b2)>);
+        std::println("is same: {}", std::is_same_v<buffer<int, 10>, buffer<int, 2 * 5>>); // is same: true
+        std::println("is same: {}", std::is_same_v<decltype(b1), decltype(b2)>);          // is same: true
 
         buffer<int, 3 * 5> b3;
         static_assert(std::is_same_v<decltype(b1), decltype(b2)>);
-        static_assert(!std::is_same_v<decltype(b1), decltype(b3)>);
+        static_assert(not std::is_same_v<decltype(b1), decltype(b3)>);
     }
 
     {
@@ -1277,10 +1280,10 @@ main()
         hello_command cmd;
 
         auto w1 = std::make_unique<smart_device<hello_command, &hello_command::say_hello_in_english>>(&cmd);
-        w1->output();
+        w1->output(); // Hello, world!
 
         auto w2 = std::make_unique<smart_device<hello_command, &hello_command::say_hello_in_spanish>>(&cmd);
-        w2->output();
+        w2->output(); // Hola mundo!
     }
 
     {
@@ -1290,10 +1293,10 @@ main()
         hello_command cmd;
 
         auto w1 = std::make_unique<smart_device<hello_command, &hello_command::say_hello_in_english>>(cmd);
-        w1->output();
+        w1->output(); // Hello, world!
 
         auto w2 = std::make_unique<smart_device<hello_command, &hello_command::say_hello_in_spanish>>(cmd);
-        w2->output();
+        w2->output(); // Hola mundo!
     }
 
     {
@@ -1301,12 +1304,12 @@ main()
         using namespace n212;
 
         auto w1 = std::make_unique<smart_device<&say_hello_in_english>>();
-        w1->output();
+        w1->output(); // Hello, world!
 
         auto w2 = std::make_unique<smart_device<&say_hello_in_spanish>>();
-        w2->output();
+        w2->output(); // Hola mundo!
 
-        static_assert(!std::is_same_v<decltype(w1), decltype(w2)>);
+        static_assert(not std::is_same_v<decltype(w1), decltype(w2)>);
     }
 
     {
@@ -1315,10 +1318,10 @@ main()
 
         // pointer to base class
         std::unique_ptr<device> w1 = std::make_unique<smart_device<&say_hello_in_english>>();
-        w1->output();
+        w1->output(); // Hello, world!
 
         std::unique_ptr<device> w2 = std::make_unique<smart_device<&say_hello_in_spanish>>();
-        w2->output();
+        w2->output(); // Hola mundo!
 
         // types are the same
         static_assert(std::is_same_v<decltype(w1), decltype(w2)>);
@@ -1354,11 +1357,13 @@ main()
         std::println("\n====================== using namespace n216 =============================");
         using namespace n216;
 
-        wrapping_pair<int, double> p1(42, 42.5);
-        std::println("{} {}", p1.item1.get(), p1.item2.get());
+        // wrapping_pair<int, double> p1(42, 42.5);
+        wrapping_pair p1(42, 42.5);
+        std::println("{} {}", p1.item1.get(), p1.item2.get()); // 42 42.5
+        // std::println("{} {}", p1.item1.value, p1.item2.value); // error: value is private
 
         wrapping_pair<int, double, simple_wrapper> p2(42, 42.5);
-        std::println("{} {}", p2.item1.value, p2.item2.value);
+        std::println("{} {}", p2.item1.value, p2.item2.value); // 42 42.5
     }
 
     {
@@ -1366,7 +1371,7 @@ main()
         using namespace n219;
 
         foo f{42, 42.5};
-        std::println("{} {}", f.a, f.b);
+        std::println("{} {}", f.a, f.b); // 42 42.5
     }
 
     {
