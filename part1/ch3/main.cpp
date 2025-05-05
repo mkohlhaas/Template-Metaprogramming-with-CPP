@@ -1,22 +1,29 @@
 #include <array>
+#include <cassert>
+#include <cstddef>
 #include <functional>
+#include <ios>
 #include <iostream>
 #include <print>
 #include <tuple>
+
+// Variadic Templates
+
+// Understanding the need for variadic templates
 
 namespace n301
 {
 #include <stdarg.h>
 
     int
-    min(int count, ...)
+    min(int a, ...)
     {
         va_list args;
-        va_start(args, count);
+        va_start(args, a);
 
         int val = va_arg(args, int);
 
-        for (int i = 1; i < count; i++)
+        for (int i = 1; i < a; i++)
         {
             int n = va_arg(args, int);
             if (n < val)
@@ -37,13 +44,13 @@ namespace n302
 
     template <typename T>
     T
-    min(int count, ...)
+    min(int a, ...)
     {
         va_list args;
-        va_start(args, count);
+        va_start(args, a);
         T val = va_arg(args, T);
 
-        for (int i = 1; i < count; i++)
+        for (int i = 1; i < a; i++)
         {
             T n = va_arg(args, T);
             if (n < val)
@@ -58,8 +65,12 @@ namespace n302
     }
 } // namespace n302
 
+// Variadic function templates
+
 namespace n303
 {
+    // Overloaded functions. Template functions cannot partially specialized!
+
     template <typename T>
     T
     min(T a)
@@ -74,11 +85,11 @@ namespace n303
         return a < b ? a : b;
     }
 
-    template <typename T, typename... Args>
+    template <typename T, typename... Ts> // template parameter pack -> (T1, T2, T3, ...)
     T
-    min(T a, Args... args)
+    min(T a, Ts... as)                    // function parameter pack -> (T1 a1, T2 a2, T3, a3, ...)
     {
-        return min(a, min(args...));
+        return min(a, min(as...));        // parameter pack expansion -> a1, a2, a3, ...
     }
 } // namespace n303
 
@@ -119,34 +130,44 @@ namespace n305
         return a < b ? a : b;
     }
 
-    template <typename T, typename... Args>
+    template <typename T, typename... Ts>
     T
-    min(T a, Args... args)
+    min(T a, Ts... args)
     {
         std::println("variadic: {}", __PRETTY_FUNCTION__);
         return min(a, min(args...));
     }
 } // namespace n305
 
+// Parameter packs
+
 namespace n306
 {
-    template <typename T, typename... Args>
+    // using `constexp if`-statement
+
+    template <typename T, typename... Ts>
     T
-    sum(T a, Args... args)
+    sum(T a, Ts... as)
     {
-        if constexpr (sizeof...(args) == 0)
+
+        // sizeof...(Ts) = sizeof...(as) = size of parameter pack Ts = number of elements in Ts
+        // sizeof(Ts)...                 = sizeof T1, sizeof T2, sizeof T3, ... (expansion of Ts)
+
+        if constexpr (sizeof...(as) == 0)
         {
             return a;
         }
         else
         {
-            return a + sum(args...);
+            return a + sum(as...);
         }
     }
 } // namespace n306
 
 namespace n307
 {
+    // classical approach
+
     template <typename T>
     T
     sum(T a)
@@ -154,24 +175,13 @@ namespace n307
         return a;
     }
 
-    template <typename T, typename... Args>
+    template <typename T, typename... Ts>
     T
-    sum(T a, Args... args)
+    sum(T a, Ts... as)
     {
-        return a + sum(args...);
+        return a + sum(as...);
     }
 } // namespace n307
-
-namespace n308
-{
-    template <typename T1, typename T2, typename T3, typename T4>
-    constexpr auto
-    get_type_sizes()
-    {
-        // return std::array<std::size_t, 4>{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
-        return std::array{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
-    }
-} // namespace n308
 
 namespace n309
 {
@@ -179,18 +189,35 @@ namespace n309
     auto
     get_type_sizes()
     {
-        // return std::array<std::size_t, sizeof...(Ts)>{sizeof(Ts)...};
-        return std::array{sizeof(Ts)...};
+        // sizeof...(Ts) is evaluated at compile-time
+        // sizeof(Ts)... is expanded  at compile-time
+        return std::array<std::size_t, sizeof...(Ts)>{sizeof(Ts)...};
     }
 } // namespace n309
 
+namespace n308
+{
+    // expands to something like this
+
+    template <typename T1, typename T2, typename T3, typename T4>
+    constexpr auto
+    get_type_sizes()
+    {
+        return std::array<std::size_t, 4>{sizeof(T1), sizeof(T2), sizeof(T3), sizeof(T4)};
+    }
+} // namespace n308
+
 namespace n310
 {
+    // Typically, the parameter pack is the trailing parameter of a function or template.
+    // However, if the compiler can deduce the arguments, then a parameter pack can be
+    // followed by other parameters including more parameter packs.
+
     template <typename... Ts, typename... Us>
     constexpr auto
-    multipacks(Ts... args1, Us... args2)
+    multipacks(Ts... ts, Us... us)
     {
-        std::println("{} {}", sizeof...(args1), sizeof...(args2));
+        std::println("{} {}", sizeof...(ts), sizeof...(us));
     }
 } // namespace n310
 
@@ -198,9 +225,9 @@ namespace n311
 {
     template <typename... Ts, typename... Us>
     constexpr auto
-    multipacks(Ts... args1, Us... args2)
+    multipacks(Ts... ts, Us... us)
     {
-        static_assert(sizeof...(args1) == sizeof...(args2), "Packs must be of equal sizes.");
+        static_assert(sizeof...(ts) == sizeof...(us), "Packs must be of equal sizes.");
     }
 } // namespace n311
 
@@ -218,227 +245,25 @@ namespace n312
         return (a + b) / c;
     }
 
-    // primary (is actually needed)
-    // template <typename F, typename G>
+    // primary
     template <typename, typename>
     struct func_pair;
 
     // specialization
     template <typename R1, typename... A1, typename R2, typename... A2>
-    struct func_pair<R1(A1...), R2(A2...)>
+    struct func_pair<R1(A1...), R2(A2...)> // this makes it a specialization
     {
         std::function<R1(A1...)> f;
         std::function<R2(A2...)> g;
     };
 } // namespace n312
 
-namespace n313
-{
-    // primary
-    template <typename T, typename... Ts>
-    struct tuple
-    {
-        tuple(T const &t, Ts const &...ts) : value(t), rest(ts...)
-        {
-        }
-
-        constexpr int
-        size() const
-        {
-            return 1 + rest.size();
-        }
-
-        T            value;
-        tuple<Ts...> rest;
-    };
-
-    // specialization
-    // tuple with one element
-    template <typename T>
-    struct tuple<T>
-    {
-        tuple(const T &t) : value(t)
-        {
-        }
-
-        constexpr int
-        size() const
-        {
-            return 1;
-        }
-
-        T value;
-    };
-
-    // primary class template
-    // Variadic class template to find return type.
-    template <size_t N, typename T, typename... Ts>
-    struct nth_type : nth_type<N - 1, Ts...>
-    {
-        static_assert(N < sizeof...(Ts) + 1, "index out of bounds");
-    };
-
-    // specialization (N == 0)
-    // We found the return type (it's T).
-    template <typename T, typename... Ts>
-    struct nth_type<0, T, Ts...>
-    {
-        using value_type = T;
-    };
-
-    // primary class template
-    // Variadic class template to find return value.
-    template <size_t N>
-    struct getter
-    {
-        template <typename... Ts>
-        // static typename nth_type<N, Ts...>::value_type &
-        static nth_type<N, Ts...>::value_type &
-        get(tuple<Ts...> &t)
-        {
-            return getter<N - 1>::get(t.rest);
-        }
-    };
-
-    // specialization
-    // recursive base case
-    template <>
-    struct getter<0>
-    {
-        template <typename T, typename... Ts>
-        static T &
-        get(tuple<T, Ts...> &t)
-        {
-            return t.value;
-        }
-    };
-
-    // function template
-    template <size_t N, typename... Ts>
-    // typename nth_type<N, Ts...>::value_type &
-    nth_type<N, Ts...>::value_type &
-    get(tuple<Ts...> &t)
-    {
-        return getter<N>::get(t);
-    }
-} // namespace n313
-
-namespace n314
-{
-    template <typename... T>
-    int
-    sum(T... args)
-    {
-        return (... + args); // unary left fold
-    }
-
-    template <typename... T>
-    int
-    sum_from_zero(T... args)
-    {
-        return (0 + ... + args); // binary left fold
-    }
-} // namespace n314
-
-namespace n315
-{
-    template <typename... T>
-    int
-    suml(T... args)
-    {
-        return (... + args); // unary left fold
-    }
-
-    template <typename... T>
-    int
-    sumr(T... args)
-    {
-        return (args + ...); // unary right fold
-    }
-
-    template <typename... T>
-    void
-    printl(T... args)
-    {
-        (..., (std::cout << args)) << '\n'; // using comma operator (unary left fold)
-    }
-
-    template <typename... T>
-    void
-    printr(T... args)
-    {
-        ((std::cout << args), ...) << '\n'; // using comma operator (unary right fold)
-    }
-
-    template <typename... T>
-    void
-    print(T... args)
-    {
-        (std::cout << ... << args) << '\n'; // binary left fold
-    }
-
-    template <typename T, typename... Args>
-    void
-    push_back_many(std::vector<T> &v, Args &&...args)
-    {
-        // (v.push_back(args), ...); // unary right fold
-        (..., v.push_back(args)); // unary left fold
-    }
-} // namespace n315
-
-namespace n316
-{
-    template <int... R>
-    constexpr int Sum = (... + R); // unary left fold
-
-    template <int... I>
-    constexpr auto indexes = std::make_index_sequence<5>();
-} // namespace n316
-
-namespace n317
-{
-    template <typename T, typename... Args>
-    struct foo
-    {
-    };
-
-    template <typename... Args>
-    using int_foo = foo<int, Args...>;
-
-    template <typename T, T... Ints>
-    struct integer_sequence
-    {
-    };
-
-    template <std::size_t... Ints>
-    using index_sequence = integer_sequence<std::size_t, Ints...>;
-
-    template <typename T, std::size_t N, T... Is>
-    struct make_integer_sequence : make_integer_sequence<T, N - 1, Is...>
-    {
-    };
-
-    template <typename T, T... Is>
-    struct make_integer_sequence<T, 0, Is...> : integer_sequence<T, Is...>
-    {
-    };
-
-    template <std::size_t N>
-    using make_index_sequence = make_integer_sequence<std::size_t, N>;
-
-    template <typename... T>
-    using index_sequence_for = make_index_sequence<sizeof...(T)>;
-
-    template <typename Tuple, std::size_t... Ints>
-    auto
-    select_tuple(Tuple &&tuple, index_sequence<Ints...>)
-    {
-        return std::make_tuple(std::get<Ints>(std::forward<Tuple>(tuple))...);
-    }
-} // namespace n317
+// Understanding parameter packs expansion
 
 namespace n318
 {
+    // Parameter packs can appear in a multitude of contexts.
+
     template <typename... T>
     struct outer
     {
@@ -590,6 +415,255 @@ namespace n318
     };
 } // namespace n318
 
+// Understanding parameter packs expansion
+
+// Variadic class templates
+
+namespace n313
+{
+    // primary
+    template <typename T, typename... Ts>
+    struct tuple // no angle brackets -> primary
+    {
+        tuple(T const &t, Ts const &...ts) : value(t), rest(ts...)
+        {
+        }
+
+        constexpr int
+        size() const
+        {
+            return 1 + rest.size();
+        }
+
+        T            value;
+        tuple<Ts...> rest;
+    };
+
+    // specialization
+    // tuple with one element
+    template <typename T>
+    struct tuple<T> // angle brackets -> specialization
+    {
+        tuple(const T &t) : value(t)
+        {
+        }
+
+        constexpr int
+        size() const
+        {
+            return 1;
+        }
+
+        T value;
+    };
+
+    // primary class template
+    // Variadic class template to find return type.
+    template <size_t N, typename T, typename... Ts>
+    struct nth_type : nth_type<N - 1, Ts...> // recursive inheritance
+    {
+        static_assert(N < sizeof...(Ts) + 1, "index out of bounds");
+    };
+
+    // specialization
+    template <typename T, typename... Ts>
+    struct nth_type<0, T, Ts...>
+    {
+        using value_type = T;
+    };
+
+    template <size_t N, typename... Ts>
+    using nth_type_t = nth_type<N, Ts...>::value_type;
+
+    // We need a class template bc it can be specialized, function templates can't.
+    //
+    // primary class template
+    // Variadic class template to find return value.
+    template <size_t N>
+    struct getter
+    {
+        template <typename... Ts>
+        static nth_type_t<N, Ts...> &
+        get(tuple<Ts...> &t)
+        {
+            return getter<N - 1>::get(t.rest);
+        }
+    };
+
+    // specialization
+    // recursive base case
+    template <>
+    struct getter<0>
+    {
+        template <typename T, typename... Ts>
+        static T &
+        get(tuple<T, Ts...> &t)
+        {
+            return t.value;
+        }
+    };
+
+    // nice wrapper API for getter template
+    //
+    // function template
+    template <size_t N, typename... Ts>
+    nth_type_t<N, Ts...> &
+    get(tuple<Ts...> &t)
+    {
+        return getter<N>::get(t);
+    }
+} // namespace n313
+
+// Fold expressions
+
+// Four types of folds: (op is a binary operator)
+// Unary  right fold (E op ...)      becomes (E1 op (... op (EN-1 op EN)))
+// Unary  left  fold (... op E)      becomes (((E1 op E2) op ...) op EN)
+// Binary right fold (E op ... op I) becomes (E1 op (... op (EN−1 op (EN op I))))
+// Binary left  fold (I op ... op E) becomes ((((I op E1) op E2) op ...) op EN)
+
+namespace n314
+{
+    template <typename... T>
+    int
+    sum(T... n)
+    {
+        return (... + n); // unary left fold: ((((arg0 + arg1) + arg2) + ... ) + argN)
+    }
+
+    template <typename... T>
+    int
+    sum_from_zero(T... n)
+    {
+        return (0 + ... + n); // binary left fold (has an init expression -> 0)
+    }
+} // namespace n314
+
+namespace n315
+{
+    template <typename... T>
+    int
+    suml(T... n)
+    {
+        return (... + n); // unary left fold
+    }
+
+    template <typename... T>
+    int
+    sumr(T... n)
+    {
+        return (n + ...); // unary right fold: (arg0 + (arg1 + (arg2 + (... + argN))))
+    }
+
+    // also works for expressions
+    template <typename... T>
+    void
+    printl(T... args)
+    {
+        // acts like repetition (replaces loops)
+        (..., (std::cout << args)) << '\n'; // using comma operator (unary left fold)
+    }
+
+    template <typename... T>
+    void
+    printr(T... args)
+    {
+        ((std::cout << args), ...) << '\n'; // using comma operator (unary right fold)
+    }
+
+    template <typename... T>
+    void
+    print(T... args)
+    {
+        (std::cout << ... << args) << '\n'; // binary left fold (init expression -> std::cout)
+    }
+
+    template <typename T, typename... Args>
+    void
+    push_back_many(std::vector<T> &v, Args &&...args)
+    {
+        // (v.push_back(args), ...); // unary right fold
+        (..., v.push_back(args)); // unary left fold
+    }
+} // namespace n315
+
+// Variadic alias templates
+
+namespace n317
+{
+    // Everything that can be templatized can also be made variadic.
+    // An alias template is an alias for a family of types.
+    // A variadic alias template is a name for a family of types with a variable number of template parameters.
+
+    namespace
+    {
+        template <typename T, typename... Args>
+        struct foo
+        {
+        };
+
+        // variadic alias template
+        template <typename... Args>
+        using int_foo = foo<int, Args...>;
+    } // namespace
+
+    namespace
+    {
+        template <typename T, T... Ints> // all Ints are of type T (not Ts or similar pattern)
+        struct integer_sequence
+        {
+        };
+
+        // variadic alias template
+        template <std::size_t... Ints>
+        using index_sequence = integer_sequence<std::size_t, Ints...>;
+
+        template <typename Tuple, std::size_t... Ints>
+        auto
+        select_tuple(Tuple &&tuple, index_sequence<Ints...>)
+        {
+            return std::make_tuple(std::get<Ints>(std::forward<Tuple>(tuple))...);
+        }
+
+        namespace
+        {
+            // primary (recursive inheritance)
+            template <typename T, std::size_t N, T... Is>
+            struct make_integer_sequence : make_integer_sequence<T, N - 1, Is...>
+            {
+            };
+
+            // specialization
+            template <typename T, T... Is>
+            struct make_integer_sequence<T, 0, Is...> : integer_sequence<T, Is...>
+            {
+            };
+
+            namespace
+            {
+                // variadic alias template
+                template <std::size_t N>
+                using make_index_sequence = make_integer_sequence<std::size_t, N>;
+
+                // variadic alias template
+                template <typename... T>
+                using index_sequence_for = make_index_sequence<sizeof...(T)>;
+            } // namespace
+        } // namespace
+    } // namespace
+} // namespace n317
+
+// Variadic variable templates
+
+namespace n316
+{
+    template <int... R>
+    constexpr int Sum = (... + R); // unary left fold
+
+    template <int... I>
+    constexpr auto indexes = std::make_index_sequence<5>();
+} // namespace n316
+
 int
 main()
 {
@@ -679,6 +753,7 @@ main()
         std::println("\n====================== using namespace n310 =============================");
         using namespace n310;
 
+        multipacks(1, 2, 3, 4, 5, 6);                               // 0,6
         multipacks<int>(1, 2, 3, 4, 5, 6);                          // 1,5
         multipacks<int, int, int>(1, 2, 3, 4, 5, 6);                // 3,3
         multipacks<int, int, int, int>(1, 2, 3, 4, 5, 6);           // 4,2
@@ -845,6 +920,8 @@ main()
 
         std::tuple<int, char, double> t1{42, 'x', 42.99};
 
-        auto t2 [[maybe_unused]] = select_tuple(t1, index_sequence<0, 2>{});
+        auto t2 = select_tuple(t1, index_sequence<0, 2>{});
+
+        assert((t2 == std::tuple{42, 42.99}));
     }
 }
