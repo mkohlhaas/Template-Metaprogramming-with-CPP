@@ -1,4 +1,4 @@
-#include <cxxabi.h> // gcc and clang…
+#include <cxxabi.h>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -8,10 +8,16 @@
 #include <utility>
 #include <vector>
 
+#pragma GCC diagnostic ignored "-Wunused"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
+// Advanced Template Concepts
+
 std::string
 demangle(const char *mangled_name)
 {
-
     std::string result;
     std::size_t len    = 0;
     int         status = 0;
@@ -19,7 +25,7 @@ demangle(const char *mangled_name)
 
     if (status == 0)
     {
-        result = ptr; // hope that this won't throw
+        result = ptr;
     }
     else
     {
@@ -27,39 +33,40 @@ demangle(const char *mangled_name)
     }
 
     ::free(ptr);
+
     return result;
 }
 
+// Understanding name binding and dependent names
+
 namespace n401
 {
-    // For non-dependent names, it is performed at the point of the template definition.
+    // Dependent names are names that depend on template parameters.
 
-    // [1] template declaration
-    template <typename T>
+    // Name lookup:
+    // - For non-dependent names, it is performed at the point of the template definition    (early-binding).
+    // - For     dependent names, it is performed at the point of     template instantiation (late-binding).
+
+    template <typename T> // [1] template declaration
     struct parser;
 
-    // [2] handle(double) definition
-    void
+    void                  // [2] handle(double) definition
     handle(double value)
     {
         std::println("processing a double: {}", value);
     }
 
-    // [3] template definition
-    template <typename T>
+    template <typename T> // [3] template definition
     struct parser
     {
         void
         parse()
         {
-            // [4] non-dependent name
-            handle(42);
+            handle(42); // [4] non-dependent name (calls handle(double))
         }
     };
 
-    // [5] handle(int) definition
-    // Not used!
-    void
+    void                // [5] handle(int) definition
     handle(int value)
     {
         std::println("processing an int: {}", value);
@@ -68,36 +75,28 @@ namespace n401
 
 namespace n402
 {
-    // For dependent names, it is performed at the point of template instantiation.
-
     // primary
-    // [1] template definition
-    template <typename T>
+    template <typename T> // [1] template definition
     struct handler
     {
         void
-        handle(T value)
+        handle(T value)   // handle is a dependent name
         {
             std::println("handler<T>: {}", value);
         }
     };
 
-    // [2] template definition
-    template <typename T>
+    template <typename T> // [2] template definition
     struct parser
     {
         void
         parse(T arg)
         {
-            // [3] dependent name (handle depends on arg of type T)
-            arg.handle(42);
+            arg.handle(42); // [3] dependent name (handle depends on template parameter arg)
         }
     };
 
-    // specialization
-    // [4] template specialization
-    // This time it will be used!
-    template <>
+    template <>             // [4] template specialization
     struct handler<int>
     {
         void
@@ -108,8 +107,16 @@ namespace n402
     };
 } // namespace n402
 
+// Two-phase name lookup
+
 namespace n403
 {
+    // - The first phase occurs at the point of the definition when the template syntax is
+    //   checked and names are categorized as dependent or non-dependent.
+    // - The second phase occurs at the point of instantiation when the template arguments
+    //   are substituted for the template parameters. Name binding for dependent names
+    //   happens at this point.
+
     template <typename T>
     struct base_parser
     {
@@ -126,8 +133,11 @@ namespace n403
         void
         parse()
         {
-            // init(); // error: Use of undeclared identifier 'init'
-            this->init(); // now init is a dependent type
+            // init(); error: Use of undeclared identifier 'init'
+            //         init is a non-dependent name and must be known at this point
+
+            this->init();           // now init is a dependent type
+            base_parser<T>::init(); // now init is a dependent type
 
             std::println("parse");
         }
@@ -169,6 +179,8 @@ namespace n404
     };
 } // namespace n404
 
+// Dependent type names
+
 namespace n405
 {
     template <typename T>
@@ -183,15 +195,59 @@ namespace n405
         void
         parse()
         {
-            // value_type v{}; // error: Unknown type name 'value_type'
+            // value_type v{};                 // error: Unknown type name 'value_type'
+            // value_type is a non-dependent name; not known at this point
+
             // base_parser<T>::value_type v{}; // error: Missing 'typename' prior to dependent type name
+            // A specialization of base_parser may follow and value_type could be defined as something else than a type.
+
             // tell the compiler explicitly that this is a type (by default the compiler assumes it's not a type):
-            [[maybe_unused]] typename base_parser<T>::value_type v{};
+            typename base_parser<T>::value_type v{};
 
             std::println("parse");
         }
     };
 } // namespace n405
+
+namespace n446
+{
+    // In C++20, typename is implicit in the following contexts:
+    // The compiler is now able to deduce type names in a multitude of contexts.
+    // - In using declarations
+    // - In the declaration of data members
+    // - In the declaration or definition of function parameters
+    // - In trailing return types
+    // - In default arguments of type-parameters of a template
+    // - In the type-id of a static_cast, const_cast, reinterpret_cast, or dynamic_cast statement
+
+    struct dictionary_traits
+    {
+        using key_type = int;
+        using map_type = std::map<key_type, std::string>;
+
+        static constexpr int identity = 1;
+    };
+
+    template <typename T>
+    struct dictionary : T::map_type                  // typename not needed
+                                                     // 'typename' is redundant; base classes are implicitly types
+    {
+        int         start_key{T::identity};          // typename not needed
+        T::key_type next_key;                        // typename not needed
+
+        using value_type = T::map_type::mapped_type; // typename not needed (would be std::string for dictionary_traits)
+
+        void
+        add(T::key_type const &, value_type const &) // typename not needed
+        {
+        }
+    };
+} // namespace n446
+
+// Dependent template names
+
+// NOTE: Write code without `template` and in case of error just add it (possibly with the help of language server).
+//       Write code with    `typename` and after it works try to remove it.
 
 namespace n406
 {
@@ -217,12 +273,13 @@ namespace n406
         void
         parse()
         {
-            // token and init are templated functions
+            // token and init are templated (class and function template)!!!
+            // Use `template` to refer to them.
 
             // Keep in mind that the template keyword can only follow the
-            // - scope resolution operator (::),
-            // - member access through pointer (->),
-            // - and the member access (.)
+            // - scope resolution operator (::),     X::template    foo<T>()
+            // - member access through pointer (->), this->template foo<T>()
+            // - and the member access (.)           obj.template   foo<T>()
 
             // error: Use 'template' keyword to treat 'init' as a dependent template name:
             // base_parser<T>::init<int>();
@@ -231,16 +288,18 @@ namespace n406
             // here it's obvious ('using') that we are dealing with a type -> typename not necessary
             // using token_type = typename base_parser<T>::template token<int>;
             using token_type = base_parser<T>::template token<int>;
-            [[maybe_unused]] token_type t1{};
+            token_type t1{};
 
             // must use typename to tell the compiler it's a type:
             // template can also refer to a class (here inner class)
-            [[maybe_unused]] typename base_parser<T>::template token<int> t2{};
+            typename base_parser<T>::template token<int> t2{};
 
             std::println("parse");
         }
     };
 } // namespace n406
+
+// Current instantiation
 
 namespace n407
 {
@@ -278,6 +337,8 @@ namespace n407
     };
 } // namespace n407
 
+// Exploring template recursion
+
 namespace n408
 {
     // class template
@@ -293,6 +354,10 @@ namespace n408
     {
         static constexpr unsigned int value = 1;
     };
+
+    // API
+    template <unsigned int N>
+    inline constexpr unsigned int factorial_v = factorial<N>::value;
 } // namespace n408
 
 namespace n409
@@ -327,7 +392,7 @@ namespace n409b
 
 namespace n410
 {
-    // just using constexpr (no templates)
+    // using constexpr of factorial function (no template!!!)
 
     constexpr unsigned int
     factorial(unsigned int const n)
@@ -368,6 +433,8 @@ namespace n411
     inline constexpr unsigned int sum<0> = 0;
 } // namespace n411
 
+// Function template argument deduction
+
 namespace n412
 {
     template <typename T>
@@ -386,6 +453,7 @@ namespace n412
         {
             return number;
         }
+
         int
         from_string(std::string text)
         {
@@ -412,24 +480,28 @@ namespace n412
         {
             return account;
         }
+
         int
         get_account_number()
         {
             return account.number;
         }
+
         bool
         can_withdraw(double const value)
         {
             return amount >= value;
         };
+
         transaction_t
         withdraw(double const value)
         {
             amount -= value;
             return transaction_t{-value};
         }
+
         balance_report_t
-        make_report(int const report_type [[maybe_unused]])
+        make_report(int const report_type)
         {
             return {};
         }
@@ -634,9 +706,9 @@ namespace n413
 {
     template <typename T, T i>
     void
-    process(double arr [[maybe_unused]][i])
+    process(double arr[i])
     {
-        using index_type [[maybe_unused]] = T;
+        using index_type = T;
 
         std::println("processing {} doubles", i);
         std::println("index type is {}", typeid(T).name());
@@ -663,62 +735,72 @@ namespace n415
         pf(T{}, 42);
     }
 
-    template <typename T>
-    void
-    alpha(T, int)
+    namespace
     {
-        std::println("alpha(T,int)");
-    }
+        template <typename T>
+        void
+        alpha(T, int)
+        {
+            std::println("alpha(T,int)");
+        }
+    } // namespace
 
-    void
-    beta(int, int)
+    namespace
     {
-        std::println("beta(int,int)");
-    }
-    void
-    beta(short, int)
-    {
-        std::println("beta(short,int)");
-    }
+        void
+        beta(int, int)
+        {
+            std::println("beta(int,int)");
+        }
 
-    void
-    gamma(short, int, long long)
+        void
+        beta(short, int)
+        {
+            std::println("beta(short,int)");
+        }
+    } // namespace
+
+    namespace
     {
-        std::println("gamma(short,int,long long)");
-    }
-    void
-    gamma(double, int)
-    {
-        std::println("gamma(double,int)");
-    }
+        void
+        gamma(short, int, long long)
+        {
+            std::println("gamma(short,int,long long)");
+        }
+        void
+        gamma(double, int)
+        {
+            std::println("gamma(double,int)");
+        }
+    } // namespace
 } // namespace n415
 
 namespace n416
 {
     template <size_t Size>
     void
-    process1(int a [[maybe_unused]][Size])
+    process1(int a[Size])
     {
         std::println("process(int[Size])");
     }
 
     template <size_t Size>
     void
-    process2(int a [[maybe_unused]][5][Size])
+    process2(int a[5][Size])
     {
         std::println("process(int[5][{}])", Size);
     }
 
     template <size_t Size>
     void
-    process3(int (&a [[maybe_unused]])[Size])
+    process3(int (&a)[Size]) // reference
     {
         std::println("process(int[{}]&)", Size);
     }
 
     template <size_t Size>
     void
-    process4(int (*a [[maybe_unused]])[Size])
+    process4(int (*a)[Size]) // pointer
     {
         std::println("process(int[{}]*)", Size);
     }
@@ -740,6 +822,8 @@ namespace n417
     }
 } // namespace n417
 
+// Class template argument deduction
+
 namespace n418
 {
     template <typename T>
@@ -748,6 +832,9 @@ namespace n418
         T data;
     };
 
+    // Before C++17, template argument deduction only worked for functions but not classes.
+
+    // but easy to write maker helper function
     template <typename T>
     constexpr wrapper<T>
     make_wrapper(T &&data)
@@ -759,11 +846,14 @@ namespace n418
     template <typename T>
     wrapper(T) -> wrapper<T>;
 
+    // maker helper function using template function argument deduction
     template <typename T, typename... Ts, typename Allocator = std::allocator<T>>
     auto
     make_vector(T &&first, Ts &&...args)
     {
-        return std::vector<std::decay_t<T>, Allocator>{std::forward<T>(first), std::forward<Ts>(args)...};
+        return std::vector<std::decay_t<T>, Allocator> //
+            {std::forward<T>(first),                   //
+             std::forward<Ts>(args)...};
     }
 } // namespace n418
 
@@ -810,147 +900,197 @@ namespace n420
     };
 
     // deduction guide
+    // function template
     template <typename Iter>
+    // "constructor"               ->     return type
     range_t(Iter first, Iter last) -> range_t<typename std::iterator_traits<Iter>::value_type>;
 } // namespace n420
 
+// Forwarding references
+
 namespace n421
 {
-    struct foo
+    struct wrapper
     {
         int data;
     };
 
-    void
-    f(foo &v)
+    namespace
     {
-        std::println("f(foo&): {}", v.data);
-    }
+        void
+        f(wrapper &v) // accepts lvalues
+        {
+            std::println("f(wrapper&): {}", v.data);
+        }
 
-    // void
-    // f(foo const &v [[maybe_unused]])
-    // {
-    //     std::println("f(foo const &)");
-    // }
+        void
+        f(wrapper const &v) // accepts const lvalues and rvalues
+        {
+            std::println("f(wrapper const &): {}", v.data);
+        }
+    } // namespace
 
-    void
-    g(foo &v)
+    namespace
     {
-        std::println("g(foo&): {}", v.data);
-    }
+        // lvalue
+        void
+        g(wrapper &v) // accepts lvalues
+        {
+            std::println("g(wrapper&): {}", v.data);
+        }
 
-    void
-    g(foo &&v)
-    {
-        std::println("g(foo&&): {}", v.data);
-    }
+        // rvalue
+        void
+        g(wrapper &&v) // accepts rvalues
+        {
+            std::println("g(wrapper&&): {}", v.data);
+        }
 
-    void
-    h(foo &&v)
+        // const lvalue
+        void
+        g(wrapper const &v) // accepts const lvalues and rvalues
+        {
+            std::println("g(wrapper&&): {}", v.data);
+        }
+    } // namespace
+
+    namespace
     {
-        std::println("h(foo&&): {}", v.data);
-    }
+        void
+        h(wrapper &&v)
+        {
+            std::println("h(wrapper&&): {}", v.data);
+        }
+    } // namespace
 } // namespace n421
 
 namespace n422
 {
-    struct foo
+    struct wrapper
     {
         int data;
     };
 
-    void
-    g(foo &v)
+    namespace
     {
-        std::println("g(foo&): {}", v.data);
-    }
+        void
+        g(wrapper &v)
+        {
+            std::println("g(wrapper&): {}", v.data);
+        }
 
-    void
-    g(foo &&v)
-    {
-        std::println("g(foo&&): {}", v.data);
-    }
+        void
+        g(wrapper &&v)
+        {
+            std::println("g(wrapper&&): {}", v.data);
+        }
+    } // namespace
 
-    void
-    h(foo &v)
+    namespace
     {
-        g(v);
-    }
+        void
+        h(wrapper &v)
+        {
+            g(v);
+        }
 
-    void
-    h(foo &&v)
-    {
-        g(v);
-    }
+        void
+        h(wrapper &&v)
+        {
+            g(v);
+        }
+    } // namespace
 } // namespace n422
 
 namespace n423
 {
-    struct foo
+    struct wrapper
     {
         int data;
     };
 
-    void
-    g(foo &v)
+    namespace
     {
-        std::println("g(foo&): {}", v.data);
-    }
+        void
+        g(wrapper &v)
+        {
+            std::println("g(wrapper&): {}", v.data);
+        }
 
-    void
-    g(foo &&v)
-    {
-        std::println("g(foo&&): {}", v.data);
-    }
+        void
+        g(wrapper &&v)
+        {
+            std::println("g(wrapper&&): {}", v.data);
+        }
+    } // namespace
 
-    void
-    h(foo &v)
+    namespace
     {
-        g(std::forward<foo &>(v));
-    }
+        // template<class T>
+        // void wrapper(T&& arg)
+        // {
+        //     // arg is always lvalue
+        //     foo(std::forward<T>(arg)); // Forward as lvalue or as rvalue, depending on T
+        // }
+        //
+        // std::forward<T>(arg)
+        //
+        // When arg is a forwarding reference, this overload forwards the argument
+        // to another function with the VALUE CATEGORY it had when passed to
+        // the calling function.
 
-    void
-    h(foo &&v)
-    {
-        g(std::forward<foo &&>(v));
-    }
+        void
+        h(wrapper &v)
+        {
+            g(std::forward<wrapper &>(v)); // not a function template, we need to specify explicitly the original type
+        }
+
+        void
+        h(wrapper &&v)
+        {
+            g(std::forward<wrapper &&>(v)); // not a function template, we need to specify explicitly the original type
+        }
+    } // namespace
 } // namespace n423
 
 namespace n424
 {
-    // template <typename T>
-    // void
-    // f(T &arg [[maybe_unused]])
-    // {
-    //     std::println("f(T&)");
-    // }
-
-    template <typename T>
-    void
-    f(T &&arg [[maybe_unused]]) // forwarding reference (can take l-values and r-values)
+    namespace
     {
-        std::println("f(T&&)");
-    }
+        // template <typename T>
+        // void
+        // f(T &)
+        // {
+        //     std::println("f(T&)");
+        // }
 
-    template <typename T>
-    void
-    f(T const &&arg [[maybe_unused]]) // rvalue reference
-    {
-        std::println("f(T const&&)");
-    }
+        template <typename T>
+        void
+        f(T &&) // forwarding reference (can take l-values and r-values)
+        {
+            std::println("f(T&&)");
+        }
 
-    template <typename T>
-    void
-    f(std::vector<T> &&arg [[maybe_unused]]) // rvalue reference
-    {
-        std::println("f(vector<T>&&)");
-    }
+        template <typename T>
+        void
+        f(T const &&) // rvalue reference (not a forwarding/universal reference!)
+        {
+            std::println("f(T const&&)");
+        }
+
+        template <typename T>
+        void
+        f(std::vector<T> &&) // rvalue reference
+        {
+            std::println("f(vector<T>&&)");
+        }
+    } // namespace
 
     template <typename T>
     struct S
     {
         void
-        f(T &&arg [[maybe_unused]]) // rvalue reference
+        f(T &&) // rvalue (not a forwarding/universal reference!)
         {
             std::println("S.f(T&&)");
         }
@@ -965,13 +1105,13 @@ namespace n425
     };
 
     void
-    g(foo &v [[maybe_unused]])
+    g(foo &v)
     {
         std::println("g(foo&)");
     }
 
     void
-    g(foo &&v [[maybe_unused]])
+    g(foo &&v)
     {
         std::println("g(foo&&)");
     }
@@ -999,13 +1139,13 @@ namespace n426
     };
 
     void
-    g(foo &v [[maybe_unused]])
+    g(foo &v)
     {
         std::println("g(foo&)");
     }
 
     void
-    g(foo &&v [[maybe_unused]])
+    g(foo &&v)
     {
         std::println("g(foo&&)");
     }
@@ -1035,13 +1175,13 @@ namespace n427
     };
 
     void
-    g(foo &v [[maybe_unused]])
+    g(foo &v)
     {
         std::println("g(foo&)");
     }
 
     void
-    g(foo &&v [[maybe_unused]])
+    g(foo &&v)
     {
         std::println("g(foo&&)");
     }
@@ -1054,6 +1194,8 @@ namespace n427
         // g(std::forward<T &&>(v)); // the same, doesn't matter
     }
 } // namespace n427
+
+// The decltype specifier
 
 namespace n428
 {
@@ -1115,7 +1257,7 @@ namespace n430
 
 namespace n431
 {
-    // In C++11, we can use the auto specifier with a trailing return type using decltype.
+    // C++11: we can use the auto specifier with a trailing return type using decltype.
 
     template <typename T, typename U>
     auto
@@ -1140,6 +1282,7 @@ namespace n432
 namespace n433
 {
     // Just using auto has the same effect than decltype(auto) in this case.
+    // no const and ref specifiers involved
 
     template <typename T, typename U>
     auto
@@ -1159,7 +1302,7 @@ namespace n434
     }
 
     template <typename T>
-    auto
+    auto // const and ref qualifiers are being discarded
     func_caller(T &&ref)
     {
         return func(std::forward<T>(ref));
@@ -1176,29 +1319,32 @@ namespace n435
     }
 
     template <typename T>
-    decltype(auto)
+    decltype(auto) // perfect returning (= perfect forwarding of return type)
     func_caller(T &&ref)
     {
         return func(std::forward<T>(ref));
     }
 } // namespace n435
 
+// The std::declval type operator
+
 namespace n436
 {
     template <typename T, typename U>
     struct composition
     {
-        // needs an empty constructor for T and U
-        using result_type = decltype(T{} + U{});
+        // uses default constructor for T and U
+        using result_type = decltype(T{} + U{}); // not decltype(T + U) because these are types
     };
 
+    // wrapper has no default constructor
     struct wrapper
     {
+        int value;
+
         wrapper(int const v) : value(v)
         {
         }
-
-        int value;
 
         friend wrapper
         operator+(int const a, wrapper const &w)
@@ -1223,6 +1369,7 @@ namespace n437
         using result_type = decltype(std::declval<T>() + std::declval<U>());
     };
 
+    // wrapper has no default constructor
     struct wrapper
     {
         wrapper(int const v) : value(v)
@@ -1245,8 +1392,17 @@ namespace n437
     };
 } // namespace n437
 
+// Understanding friendship in templates
+
 namespace n438
 {
+    // Friends have access to all - including the non-public - members of a class.
+
+    // If you need to grant access to some private members but not all, this is
+    // possible with the help of the client-attorney pattern.
+    //
+    // https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Friendship_and_the_Attorney-Client
+
     struct wrapper
     {
         wrapper(int const v) : value(v)
@@ -1284,6 +1440,7 @@ namespace n439
         friend struct printer;
     };
 
+    // T not used in print()
     template <typename T>
     void
     print(wrapper const &w)
@@ -1291,6 +1448,7 @@ namespace n439
         std::println("{}", w.value);
     }
 
+    // T not used in printer
     template <typename T>
     struct printer
     {
@@ -1304,6 +1462,8 @@ namespace n439
 
 namespace n440
 {
+    // declarations
+
     struct wrapper;
 
     template <typename T>
@@ -1311,6 +1471,8 @@ namespace n440
 
     template <typename T>
     struct printer;
+
+    // definitions
 
     struct wrapper
     {
@@ -1328,7 +1490,7 @@ namespace n440
     // is not a friend
     template <typename T>
     void
-    print(wrapper const &w [[maybe_unused]])
+    print(wrapper const &w)
     {
         // error: 'value' is a private member of 'n440::wrapper'
         // std::println("{}", w.value);
@@ -1347,7 +1509,7 @@ namespace n440
     struct printer
     {
         void
-        operator()(wrapper const &w [[maybe_unused]])
+        operator()(wrapper const &w)
         {
             // error: 'value' is a private member of 'n440::wrapper'
             // std::println("{}", w.value);
@@ -1391,7 +1553,7 @@ namespace n441
 
     // is not a friend
     void
-    print(wrapper<char> const &w [[maybe_unused]])
+    print(wrapper<char> const &w)
     {
         // std::println("{}", w.value << '\n'; // error
     }
@@ -1399,8 +1561,19 @@ namespace n441
 
 namespace n442
 {
+
+    // declarations
+
+    template <typename T>
+    struct wrapper;
+
+    template <typename T>
+    void print(wrapper<T> const &w);
+
     template <typename T>
     struct printer;
+
+    // definitions
 
     template <typename T>
     struct wrapper
@@ -1412,17 +1585,19 @@ namespace n442
       private:
         T value;
 
-        friend void print<int>(wrapper<int> const &); // clang throwing wrong error
+        friend void print<int>(wrapper<int> const &);
         friend struct printer<int>;
     };
 
+    // is not a friend
     template <typename T>
     void
-    print(wrapper<T> const &)
+    print(wrapper<T> const &w)
     {
-        // ...
+        // std::println("{}", w.value);
     }
 
+    // is a friend
     template <>
     void
     print<int>(wrapper<int> const &w)
@@ -1430,16 +1605,19 @@ namespace n442
         std::println("{}", w.value);
     }
 
+    // is not a friend
     template <typename T>
     struct printer
     {
         void
-        operator()(wrapper<T> const &)
+        operator()(wrapper<T> const &w)
         {
             // ...
+            // std::println("{}", w.value);
         }
     };
 
+    // is a friend
     template <>
     struct printer<int>
     {
@@ -1453,8 +1631,14 @@ namespace n442
 
 namespace n443
 {
+    // BAD EXAMPLE !!!
+
+    // declarations
+
     template <typename T>
     struct printer;
+
+    // definitions
 
     template <typename T>
     struct wrapper
@@ -1466,13 +1650,16 @@ namespace n443
       private:
         T value;
 
+        // every wrapper is a friend (U can be different from T)
         template <typename U>
         friend void print(wrapper<U> const &);
 
+        // every printer is a friend (U can be different from T)
         template <typename U>
         friend struct printer;
     };
 
+    // friend
     template <typename T>
     void
     print(wrapper<T> const &w)
@@ -1480,6 +1667,7 @@ namespace n443
         std::println("{}", w.value);
     }
 
+    // friend
     template <typename T>
     struct printer
     {
@@ -1493,8 +1681,18 @@ namespace n443
 
 namespace n444
 {
+    // declarations
+
+    template <typename T>
+    struct wrapper;
+
+    template <typename T>
+    void print(wrapper<T> const &w);
+
     template <typename T>
     struct printer;
+
+    // definitions
 
     template <typename T>
     struct wrapper
@@ -1506,10 +1704,11 @@ namespace n444
       private:
         T value;
 
-        friend void print<T>(wrapper<T> const &); // wrong error message from clang
+        friend void print<T>(wrapper<T> const &);
         friend struct printer<T>;
     };
 
+    // friend
     template <typename T>
     void
     print(wrapper<T> const &w)
@@ -1517,6 +1716,7 @@ namespace n444
         std::println("{}", w.value);
     }
 
+    // friend
     template <typename T>
     struct printer
     {
@@ -1539,7 +1739,7 @@ namespace n445
 
       private:
         std::string ConnectionString;
-        friend T; // T is a friend of connection
+        friend T; // T (= a type - can be a struct or class) is a friend of connection
     };
 
     struct executor
@@ -1554,37 +1754,34 @@ namespace n445
     };
 } // namespace n445
 
-namespace n446
-{
-    struct dictionary_traits
-    {
-        using key_type = int;
-        using map_type = std::map<key_type, std::string>;
-
-        static constexpr int identity = 1;
-    };
-
-    template <typename T>
-    struct dictionary : T::map_type
-    {
-        int         start_key{T::identity};
-        T::key_type next_key;
-
-        using value_type = T::map_type::mapped_type;
-
-        void
-        add(T::key_type const &, value_type const &)
-        {
-        }
-    };
-} // namespace n446
-
+#if 1
 namespace std
 {
-    // deduction guides
+    // When encountering the name of a class template in a variable declaration or
+    // function-style cast, the compiler proceeds to build a set of so-called deduction guides.
+    //
+    // There are fictional function templates representing constructor signatures of a fictional
+    // class type. Users can also provide deduction guides and these are added to the list
+    // of compiler-generated guides.
+    //
+    // This set of implicitly deduced guides is generated from the constructors of the class
+    // template. This includes the default constructor, the copy constructor, the move
+    // constructor, and all the conversion constructors, with the arguments copied in the exact
+    // order. If the constructor is explicit, then so is the deduction guide. However, if the class
+    // template does not have any user-defined constructor, a deduction guide is created for
+    // a hypothetical default constructor. A deduction guide for a hypothetical copy constructor
+    // is always created.
+    //
+    // The syntax is similar to that of functions with a trailing return type but without the auto keyword.
+    // Deduction guides can be either functions or function templates.
+    //
+    // They MUST be provided in the same namespace as the class template they apply to.
+
+    // custom deduction guides for std::pair
 
     // function template
     template <typename T>
+    // "constructor"        ->     return type
     pair(T &, char const *) -> pair<T, std::string>;
 
     // function template
@@ -1595,9 +1792,10 @@ namespace std
     template <typename T>
     pair(char const *, T &&) -> pair<std::string, T>;
 
-    // normal function
+    // function
     pair(char const *, char const *) -> pair<std::string, std::string>;
 } // namespace std
+#endif
 
 int
 main()
@@ -1606,22 +1804,19 @@ main()
         std::println("\n====================== using namespace n401 =============================");
         using namespace n401;
 
-        // [6] template instantiation
-        parser<int> p;
-        p.parse();
+        parser<int> p; // [6] template instantiation
+        p.parse();     // processing a double: 42
     }
 
     {
         std::println("\n====================== using namespace n402 =============================");
         using namespace n402;
 
-        // [5] template instantiation
-        handler<int> h;
+        handler<int> h;         // [5] template instantiation
 
-        // [6] template instantiation
-        parser<handler<int>> p;
+        parser<handler<int>> p; // [6] template instantiation
 
-        p.parse(h);
+        p.parse(h);             // handler<int> : 42
     }
 
     {
@@ -1629,7 +1824,8 @@ main()
         using namespace n403;
 
         parser<int> p;
-        p.parse();
+        p.parse(); // init
+                   // parse
     }
 
     {
@@ -1637,12 +1833,14 @@ main()
         using namespace n404;
 
         parser<int> p1;
-        p1.parse();
+        p1.parse(); // specialized init
+                    // parse
 
         std::println("------------------");
 
         parser<double> p2;
-        p2.parse();
+        p2.parse(); // init
+                    // parse
     }
 
     {
@@ -1650,7 +1848,7 @@ main()
         using namespace n405;
 
         parser<int> p;
-        p.parse();
+        p.parse(); // parse
     }
 
     {
@@ -1658,7 +1856,8 @@ main()
         using namespace n406;
 
         parser<int> p;
-        p.parse();
+        p.parse(); // init
+                   // parse
     }
 
     {
@@ -1673,7 +1872,7 @@ main()
         std::println("\n====================== using namespace n407 =============================");
         using namespace n407;
 
-        [[maybe_unused]] parser<int> p;
+        parser<int> p;
     }
 
     {
@@ -1687,6 +1886,14 @@ main()
         std::println("{}", factorial<4>::value);  // 24
         std::println("{}", factorial<5>::value);  // 120
         std::println("{}", factorial<12>::value); // 479001600
+
+        std::println("{}", factorial_v<0>);       // 1
+        std::println("{}", factorial_v<1>);       // 1
+        std::println("{}", factorial_v<2>);       // 2
+        std::println("{}", factorial_v<3>);       // 6
+        std::println("{}", factorial_v<4>);       // 24
+        std::println("{}", factorial_v<5>);       // 120
+        std::println("{}", factorial_v<12>);      // 479001600
     }
 
     {
@@ -1734,6 +1941,9 @@ main()
         std::println("{}", demangle(typeid(manyfold_wrapper<2>::value_type).name()));
         std::println("{}", demangle(typeid(manyfold_wrapper<3>::value_type).name()));
 
+        // std::println("{}", demangle(typeid(manyfold_wrapper<3000>::value_type).name()));
+        // error: limit for recursively nested template exceeded (GCC 900, Clang 1024)
+
         // Output:
         // unsigned int
         // n410::wrapper<unsigned int>
@@ -1745,7 +1955,13 @@ main()
         std::println("\n====================== using namespace n411 =============================");
         using namespace n411;
 
+        std::println("{}", sum<100>); // 5050
         std::println("{}", sum<256>); // 32896
+        std::println("{}", sum<900>); // 405450
+
+        static_assert(sum<100> == (100 * (100 + 1)) / 2);
+        static_assert(sum<256> == (256 * (256 + 1)) / 2);
+        static_assert(sum<900> == (900 * (900 + 1)) / 2);
     }
 
     {
@@ -1764,6 +1980,7 @@ main()
         account_t ac{42}; //
         process01(ac);    // T
         process02(ac);    // T const
+
         // process03(ac); // T volatile (obsolete)
     }
 
@@ -1852,7 +2069,7 @@ main()
         process13(wd);                       // TT<T>
         process14(ia);                       // TT<5>
 
-        wrapper<account_t> wa1{{42}};        //
+        wrapper<account_t> wa1{{42}};        // NOTE: double braces
         process15(wa1);                      // TT<C>
         std::println("{}", wa1.data.number); // 42
 
@@ -1874,7 +2091,10 @@ main()
         std::println("\n====================== using namespace n414 =============================");
         using namespace n414;
 
+        // doesn't deduce from default params
         // process();   // error: No matching function for call to 'process'
+
+        // must explicitly specify template argument
         process<int>(); // 0, 42
         process(10);    // 10, 42
     }
@@ -1885,19 +2105,33 @@ main()
 
         // invoke(&alpha); // error: alpha is a templated function
         // invoke(&beta);  // error: two matching beta functions
-        invoke(&gamma);
+
+        invoke(&gamma); // gamma(double,int)
     }
 
     {
         std::println("\n====================== using namespace n416 =============================");
         using namespace n416;
 
+        // C-style arrays
+
+        // A limitation of the compiler is the argument deduction of the primary
+        // dimension of an array. The reason is this is not part of function parameter types.
+        // The exceptions to this limitation are the cases when the dimension refers to a
+        // reference or pointer type.
+
         int arr1[10];
         int arr2[5][10];
 
         // process1(arr1);   // error: no matching function (compiler cannot deduce primary dimension of array)
-        process2(arr2);  // process(int[5][10])
-        process3(arr1);  // process(int[10]&)
+
+        // primary dimension explicitly specified
+        process2(arr2); // process(int[5][10])
+
+        // reference to an array
+        process3(arr1); // process(int[10]&)
+
+        // pointer to an array
         process4(&arr1); // process(int[10]*)
     }
 
@@ -1906,32 +2140,38 @@ main()
         using namespace n417;
 
         ncube<5> cube;
-        process<6>(cube); // 5
+
         // process(cube);    // error
         // process<5>(cube); // error
+
+        // must specify N
+        process<6>(cube); // 5
     }
 
     {
         std::println("\n====================== using namespace n418 =============================");
+
+        std::pair<int, double> p1{42, 42.0}; // types explicitly specified
+        std::pair              p2{42, 42.0}; // compiler can deduce types
+
+        std::vector<int> v1{1, 2, 3, 4, 5};  // types explicitly specified
+        std::vector      v2{1, 2, 3, 4, 5};  // compiler can deduce types
+
         using namespace n418;
 
-        [[maybe_unused]] std::pair<int, double> p1{42, 42.0};
-        [[maybe_unused]] std::pair              p2{42, 42.0};
-
-        [[maybe_unused]] std::vector<int> v1{1, 2, 3, 4, 5};
-        [[maybe_unused]] std::vector      v2{1, 2, 3, 4, 5};
-
-        [[maybe_unused]] wrapper<int> w1{42};
-        [[maybe_unused]] wrapper      w2{42};
+        wrapper<int> w1{42};                 // types explicitly specified
+        wrapper      w2{42};                 // compiler can deduce types
     }
 
     {
         std::println("\n====================== using namespace n418 =============================");
+
+        auto p = std::make_pair(42, 42.0);                       // pair<int, double>
+
         using namespace n418;
 
-        auto p = std::make_pair(42, 42.0);
-        auto v = make_vector(1, 2, 3, 4, 5);
-        auto w = make_wrapper(42);
+        auto v = make_vector(1, 2, 3, 4, 5);                     // vector<int>
+        auto w = make_wrapper(42);                               // wrapper<int>
 
         std::println("first: {} second: {}", p.first, p.second); // first: 42 second: 42
         std::println("size: {}", v.size());                      // size: 5
@@ -1942,11 +2182,11 @@ main()
         std::println("\n====================== using namespace n419 =============================");
         using namespace n419;
 
-        auto p = new point_t(1, 2);
+        auto p = new point_t(1, 2);                           // point_t<int> * (deduced by compiler)
         std::println("x: {}, y: {}", p->get_x(), p->get_y()); // x: 1, y: 2
 
         std::mutex mt;
-        auto       lock = std::lock_guard(mt);
+        auto       lock = std::lock_guard(mt);                // std::lock_guard<mutex> (deduced by compiler)
     }
 
     {
@@ -1961,12 +2201,17 @@ main()
     }
 
     {
-        // with custom deduction guides (activate namespace std at line 1489)
-        auto      one = 1;
-        std::pair p0{one, "one"};   // std::pair<int, std::string>
-        std::pair p1{1, "one"};     // std::pair<int, std::string>
-        std::pair p2{"two", 2};     // std::pair<std::string, int>
-        std::pair p3{"3", "three"}; // std::pair<std::string, std::string>
+        auto one = 1;
+
+        // (de-)activate namespace std just before main() function
+        // ----------------------------------------------------------------------------------------------------------
+        //                          |   without deduction guides              |    with deduction guides            |
+        // ----------------------------------------------------------------------------------------------------------
+        std::pair p0{one, "one"};   // std::pair<int, const char *>           | std::pair<int, std::string>         |
+        std::pair p1{1, "one"};     // std::pair<int, const char *>           | std::pair<int, std::string>         |
+        std::pair p2{"two", 2};     // std::pair<const char *, int>           | std::pair<std::string, int>         |
+        std::pair p3{"3", "three"}; // std::pair<const char *, const char *>  | std::pair<std::string, std::string> |
+        // ----------------------------------------------------------------------------------------------------------
 
         std::println("{} {}", p1.first, p1.second);
         std::println("{} {}", p2.first, p2.second);
@@ -1978,27 +2223,26 @@ main()
         using namespace n420;
 
         int     arr[] = {1, 2, 3, 4, 5};
-        range_t r(std::begin(arr), std::end(arr));
+        range_t r(std::begin(arr), std::end(arr)); // range_t<int>
     }
 
     {
-        std::pair<int, std::string> p1{1, "one"}; // [1] OK
-        std::pair                   p2{2, "two"}; // [2] OK
+        std::pair<int, std::string> p1{1, "one"};
+        std::pair                   p2{2, "two"};
 
-        // Class template argument deduction only works if no template arguments are provided.
-        // std::pair<> p3{ 3, "three" };                // [3] error
-        // std::pair<int> p4{ 4, "four" };              // [4] error
+        // Class template argument deduction only works if NO template arguments are provided.
+        // std::pair<>    p3{3, "three"}; // error: Too few template arguments for class template 'pair'
+        // std::pair<int> p4{4, "four"};  // error: Too few template arguments for class template 'pair'
     }
 
     {
         std::vector v1{42, 48}; // vector<int>
         std::vector v2{v1, v1}; // vector<vector<int>>
-        // deduction depends on both the number of arguments and their type:
-        std::vector v3{v1}; // vector<int> (!!!)
+        std::vector v3{v1};     // vector<int> (!!!) (deduction depends on both the number of arguments and their type)
 
-        std::println("{}", typeid(decltype(v1)).name());
-        std::println("{}", typeid(decltype(v2)).name());
-        std::println("{}", typeid(decltype(v3)).name());
+        std::println("{}", demangle(typeid(decltype(v1)).name())); // std::vector<int>
+        std::println("{}", demangle(typeid(decltype(v2)).name())); // std::vector<std::vector<int>>
+        std::println("{}", demangle(typeid(decltype(v3)).name())); // std::vector<int>
 
         // v3 is a copy of v1
         std::println("{}", v1[0]); // 42
@@ -2015,46 +2259,46 @@ main()
         std::println("\n====================== using namespace n421 =============================");
         using namespace n421;
 
-        foo  x  = {42}; // x is l-value
-        foo &rx = x;    // rx is l-value
+        wrapper  x  = {42}; // x  is l-value
+        wrapper &rx = x;    // rx is l-value
 
-        f(x);           // f(foo&): 42
-        f(rx);          // f(foo&): 42
-        // f(foo{42});  // error: foo{42} is an r-value (a temporary object); with a 'foo const &' it would work
+        f(x);               // f(wrapper&): 42
+        f(rx);              // f(wrapper&): 42
+        f(wrapper{42}); // error: wrapper{42} is an r-value (a temporary object); with a 'wrapper const &' it would work
     }
 
     {
         std::println("\n====================== using namespace n421 =============================");
         using namespace n421;
 
-        foo  x  = {42}; // x is l-value
-        foo &rx = x;    // rx is l-value
+        wrapper        x  = {42}; // x  is l-value
+        wrapper const &rx = x;    // rx is l-value
 
-        g(x);           // g(foo&): 42
-        g(rx);          // g(foo&): 42
-        g(foo{42});     // g(foo&&): 42
+        g(x);                     // g(wrapper&): 42
+        g(rx);                    // g(wrapper&): 42
+        g(wrapper{42});           // g(wrapper&&): 42
     }
 
     {
         std::println("\n====================== using namespace n421 =============================");
         using namespace n421;
 
-        foo  x  = {42}; // x is l-value
-        foo &rx = x;    // rx is l-value
+        wrapper  x  = {42}; // x  is an l-value
+        wrapper &rx = x;    // rx is an l-value
 
         // Passing rvalues to a function has following purposes:
         // - temporary object:
-        //   either the object is temporary and does not exist outside the call and the function can do anything with
-        //   it, or
+        //   either the object is temporary and does not exist outside the call and
+        //   the function can do anything with it, or
         // - ownership (move semantics):
         //   the function is supposed to take ownership of the object that is received
         //   This is the purpose of the move constructor and the move assignment operator.
 
-        // h(x);                            // error: cannot bind an lvalue to an rvalue reference
-        // h(rx);                           // error
-        h(foo{42});       // h(foo&&): 42
-        h(std::move(x));  // h(foo&&): 42 (std::move makes sort of a cast from an lvalue to an rvalue)
-        h(std::move(rx)); // h(foo&&): 42
+        // h(x);          // error: cannot bind an lvalue to an rvalue reference
+        // h(rx);         // error
+        h(wrapper{42});   // h(wrapper&&): 42
+        h(std::move(x));  // h(wrapper&&): 42 (std::move makes sort of a cast from an lvalue to an rvalue)
+        h(std::move(rx)); // h(wrapper&&): 42
     }
 
     {
@@ -2064,20 +2308,20 @@ main()
         // One purpose of rvalue references is to enable MOVE SEMANTICS.
         // But it has yet another one and that is to enable PERFECT FORWARDING.
 
-        foo x{42};
+        wrapper x{42};
 
-        h(x);       // g(foo&): 42
-        h(foo{42}); // g(foo&): 42
+        h(x);           // g(wrapper&): 42
+        h(wrapper{42}); // g(wrapper&): 42 (not what we want!!!)
     }
 
     {
         std::println("\n====================== using namespace n423 =============================");
         using namespace n423;
 
-        foo x{42};
+        wrapper x{42};
 
-        h(x);       // g(foo&): 42
-        h(foo{42}); // g(foo&&): 42
+        h(x);           // g(wrapper&): 42
+        h(wrapper{42}); // g(wrapper&&): 42 (now perfectly forwarded!!!)
     }
 
     {
@@ -2085,7 +2329,8 @@ main()
         using namespace n424;
 
         // In templates, rvalue references work slightly differently, and sometimes they are
-        // rvalue references, but other times they are actually lvalue references
+        // rvalue references, but other times they are actually lvalue references. So
+        // they accept everything.
         //
         // References that exhibit this behavior are called FORWARDING REFERENCES.
         // Often referred to as UNIVERSAL REFERENCES.
@@ -2093,8 +2338,8 @@ main()
         // Forwarding references can take l-values and r-values.
         //
         // Forwarding references are only present in the context of an rvalue reference to a template parameter.
-        // It has to have the form T&& and nothing else.
-        // T const&&, std::vector<T>&&, etc. are not forwarding references.
+        // It has to have the form T&& and nothing else. (T const&&, std::vector<T>&&, etc. are not forwarding
+        // references.)
 
         int x = 42;
         f(x);                    // f(T&&)
@@ -2129,6 +2374,8 @@ main()
         // The rule is pretty simple: an rvalue reference to an rvalue reference collapses to an rvalue
         // reference; all other combinations collapse to an lvalue reference.
 
+        // Minimizes &
+
         // Type | Type of reference | Type of variable | Case
         // --------------------------------------------------
         // T&   | T&                | T&               | [1]
@@ -2160,21 +2407,26 @@ main()
         // When auto&& is found, it means a forwarding reference.
         // The same does not apply for anything else, such as cv-qualified forms like auto const&&.
 
-        int    x  = 42;
-        auto  &r  = x;  // int&  (l-value reference)
+        int   x = 42;
+        auto &r = x;    // int&  (l-value reference)
+
         auto &&rx = x;  // int&  (forwarding reference collapses to l-value reference) [3]
         auto &&rc = 42; // int&& (forwarding reference collapses to r-value reference) [4]
+
         // rcx is not a forwarding reference (bc of const), but an r-value reference:
         // auto const &&rcx = x; // error: Rvalue reference to type 'const int' cannot bind to lvalue of type 'int'
 
         std::vector v{42};
-        auto      &&rv = v[0];  // int& [3]
 
-        std::println("{}", x);  // 42
-        std::println("{}", rc); // 42
-        std::println("{}", r);  // 42
-        std::println("{}", rx); // 42
-        std::println("{}", rv); // 42
+        auto  &rv2 = v[0];       // int& [3]
+        auto &&rv1 = v[0];       // int& [3]
+
+        std::println("{}", x);   // 42
+        std::println("{}", rc);  // 42
+        std::println("{}", r);   // 42
+        std::println("{}", rx);  // 42
+        std::println("{}", rv1); // 42
+        std::println("{}", rv2); // 42
     }
 
     {
@@ -2211,21 +2463,27 @@ main()
         h(x);       // g(foo&)
         h(foo{42}); // g(foo&&)
     }
+
     {
         std::println("\n====================== using namespace n428 =============================");
         using namespace n428;
 
-        // 'decltype' rules:
-        // R1 :If the expression is an identifier or a class member access, then the result is the
-        //     type of the entity that is named by the expression. If the entity does not exist,
+        // `decltype` is a type specifier used to deduce the type of an expression.
+        //
+        // Typically used in function templates with the `auto` specifier to specify the return type.
+
+        // Rules:
+        //
+        // R1 :If the expression is an IDENTIFIER or a class member access, then the result is the
+        //     TYPE OF THE ENTITY that is named by the expression. If the entity does not exist,
         //     or it is a function that has an overload set (more than one function with the same
         //     name exists), then the compiler will generate an error.
-        // R2: If the expression is a function call or an overloaded operator function, then the
-        //     result is the return type of the function. If the overloaded operator is wrapped in
+        // R2: If the expression is a FUNCTION CALL or an overloaded operator function, then the
+        //     result is the RETURN TYPE of the function. If the overloaded operator is wrapped in
         //     parentheses, these are ignored.
-        // R3: If the expression is an lvalue, then the result type is an lvalue reference to the type
-        //     of expression.
-        // R4: If the expression is something else, then the result type is the type of the expression.
+        // R3: If the expression is an LVALUE, then the result type is an lvalue
+        //     REFERENCE TO THE TYPE OF EXPRESSION.
+        // R4: If the expression is SOMETHING ELSE, then the result type is the TYPE OF THE EXPRESSION.
 
         int          a  = 42;
         int         &ra = a;
@@ -2237,30 +2495,32 @@ main()
         wrapper      w1{1};
         wrapper     *w2 = new wrapper{2};
 
-        [[maybe_unused]] decltype(a)         e1;            // R1, int
-        [[maybe_unused]] decltype(ra)        e2 = a;        // R1, int&
-        [[maybe_unused]] decltype(f)         e3;            // R1, int
-        [[maybe_unused]] decltype(d)         e8 = 1;        // R1, const double
-        [[maybe_unused]] decltype(arr)       e9;            // R1, long[10]
-        [[maybe_unused]] decltype(w1.val)    e11;           // R1, int
-        [[maybe_unused]] decltype(w1.get())  e12;           // R1, int
-        [[maybe_unused]] decltype(w2->val)   e13;           // R1, int
-        [[maybe_unused]] decltype(w2->get()) e14;           // R1, int
-        [[maybe_unused]] decltype(p)         e19 = nullptr; // R1, char*
-        // [[maybe_unused]] decltype(g)      e5;   // R1, error: Reference to overloaded function could not be resolved
+        decltype(a)         e1;            // R1, int
+        decltype(ra)        e2 = a;        // R1, int&
+        decltype(f)         e3;            // R1, int [!!]
+        decltype(d)         e8 = 1;        // R1, const double
+        decltype(arr)       e9;            // R1, long[10]
+        decltype(w1.val)    e11;           // R1, int
+        decltype(w1.get())  e12;           // R1, int
+        decltype(w2->val)   e13;           // R1, int
+        decltype(w2->get()) e14;           // R1, int
+        decltype(p)         e19 = nullptr; // R1, char*
 
-        [[maybe_unused]] decltype(f())  e4;             // R2, int
-        [[maybe_unused]] decltype(g(1)) e6;             // R2, int
+        //  decltype(g)      e5;   // R1, error: Reference to overloaded function could not be resolved [!!]
 
-        [[maybe_unused]] decltype(arr[1]) e10 = l;      // R3, long&
-        [[maybe_unused]] decltype(*p)     e20 = c;      // R3, char&
-        [[maybe_unused]] decltype(p[0])   e21 = c;      // R3, char&
-        [[maybe_unused]] decltype(a = 0)  e18 = a;      // R3, int& (assignment operator returns an l-value)
+        decltype(f())  e4; // R2, int
+        decltype(g(1)) e6; // R2, int
 
-        [[maybe_unused]] decltype(&f)    e7  = nullptr; // R4, int(*)()
-        [[maybe_unused]] decltype(42)    e15 = 1;       // R4, int
-        [[maybe_unused]] decltype(1 + 2) e16;           // R4, int
-        [[maybe_unused]] decltype(a + 1) e17;           // R4, int
+                           // only interesting case: EXPRESSION of an lvalue turns to lvalue reference.
+        decltype(arr[1]) e10 = l;      // R3, long&
+        decltype(*p)     e20 = c;      // R3, char&
+        decltype(p[0])   e21 = c;      // R3, char&
+        decltype(a = 0)  e18 = a;      // R3, int& (assignment operator returns an l-value) [!!]
+
+        decltype(&f)    e7  = nullptr; // R4, int(*)() [!!]
+        decltype(42)    e15 = 1;       // R4, int
+        decltype(1 + 2) e16;           // R4, int (rvalue) [!!]
+        decltype(a + 1) e17;           // R4, int (rvalue) [!!]
 
         delete w2;
     }
@@ -2270,7 +2530,7 @@ main()
 
         int a = 42;
 
-        // a is not evaluated
+        // a is not evaluated (only type is deduced)
         decltype(a = 1) e = a;
 
         std::println("{}", a); // 42
@@ -2285,15 +2545,15 @@ main()
         // used with the decltype specifier contains a template, the template is instantiated before
         // the expression is evaluated at compile time:
 
-        [[maybe_unused]] decltype(wrapper<double>::data) e1; // double
+        decltype(wrapper<double>::data) e1; // double
 
-        int a [[maybe_unused]] = 42;
+        int a = 42;
 
         //  wrapper<char> is instantiated here even if the type is only deduced from the variable a (due to the use of
-        //  the comma operator)
-        [[maybe_unused]] decltype(wrapper<char>::data, a) e2 = a; // R3, int&
-
-        [[maybe_unused]] decltype(a) e3 = a;                      // R1, int
+        //  the comma operator -> expression)
+        decltype(a)                     e2 = a; // R1, int
+        decltype(wrapper<int>::data)    e3 = a; // R1, int
+        decltype(wrapper<int>::data, a) e4 = a; // R3, int&
     }
 
     {
@@ -2304,26 +2564,32 @@ main()
         foo const     cf;
         volatile foo *pf = &f;
 
-        [[maybe_unused]] decltype(f.a) e1 = 0;      // int
-        [[maybe_unused]] decltype(f.b) e2 = 0;      // int volatile
-        [[maybe_unused]] decltype(f.c) e3 = 0;      // int const
+        // only target type is relevant (e.g. specifiers of the object are ignored)
 
-        [[maybe_unused]] decltype(cf.a) e4 = 0;     // int
-        [[maybe_unused]] decltype(cf.b) e5 = 0;     // int volatile
-        [[maybe_unused]] decltype(cf.c) e6 = 0;     // int const
+        decltype(f.a) e1 = 0;   // int
+        decltype(f.b) e2 = 0;   // int volatile
+        decltype(f.c) e3 = 0;   // int const
 
-        [[maybe_unused]] decltype(pf->a) e7 = 0;    // int
-        [[maybe_unused]] decltype(pf->b) e8 = 0;    // int volatile
-        [[maybe_unused]] decltype(pf->c) e9 = 0;    // int const
+        decltype(cf.a) e4 = 0;  // int
+        decltype(cf.b) e5 = 0;  // int volatile
+        decltype(cf.c) e6 = 0;  // int const
 
-        [[maybe_unused]] decltype(foo{}.a) e10 = 0; // int
-        [[maybe_unused]] decltype(foo{}.b) e11 = 0; // int volatile
-        [[maybe_unused]] decltype(foo{}.c) e12 = 0; // int const
+        decltype(pf->a) e7 = 0; // int
+        decltype(pf->b) e8 = 0; // int volatile
+        decltype(pf->c) e9 = 0; // int const
+
+                                // lvalue or rvalue does not affect the deduced type
+        decltype(foo{}.a) e10 = 0; // int
+        decltype(foo{}.b) e11 = 0; // int volatile
+        decltype(foo{}.c) e12 = 0; // int const
     }
 
     {
         std::println("\n====================== using namespace n429 =============================");
         using namespace n429;
+
+        // Parentheses around the expression make a difference!
+        // The const or volatile specifiers of the used object are now relevant!
 
         foo           f;
         foo const     cf;
@@ -2333,23 +2599,21 @@ main()
         int volatile y = 2;
         int const z    = 3;
 
-        // parenthesized expressions create references
+        decltype((f.a)) e1 = x;      // int&                 (l-value reference)
+        decltype((f.b)) e2 = y;      // int volatile &       (l-value reference)
+        decltype((f.c)) e3 = z;      // int const &          (l-value reference)
 
-        [[maybe_unused]] decltype((f.a)) e1 = x;      // int&
-        [[maybe_unused]] decltype((f.b)) e2 = y;      // int volatile&
-        [[maybe_unused]] decltype((f.c)) e3 = z;      // int const&
+        decltype((cf.a)) e4 = x;     // int const &          (l-value reference)
+        decltype((cf.b)) e5 = y;     // int const volatile & (l-value reference)
+        decltype((cf.c)) e6 = z;     // int const &          (l-value reference)
 
-        [[maybe_unused]] decltype((cf.a)) e4 = x;     // int const&
-        [[maybe_unused]] decltype((cf.b)) e5 = y;     // int const volatile&
-        [[maybe_unused]] decltype((cf.c)) e6 = z;     // int const&
+        decltype((pf->a)) e7 = x;    // int volatile &       (l-value reference)
+        decltype((pf->b)) e8 = y;    // int volatile &       (l-value reference)
+        decltype((pf->c)) e9 = z;    // int const volatile & (l-value reference)
 
-        [[maybe_unused]] decltype((pf->a)) e7 = x;    // int volatile&
-        [[maybe_unused]] decltype((pf->b)) e8 = y;    // int volatile&
-        [[maybe_unused]] decltype((pf->c)) e9 = z;    // int const volatile&
-
-        [[maybe_unused]] decltype((foo{}.a)) e10 = 0; // int&&           (r-value reference)
-        [[maybe_unused]] decltype((foo{}.b)) e11 = 0; // int volatile&&  (r-value reference)
-        [[maybe_unused]] decltype((foo{}.c)) e12 = 0; // int const&&     (r-value reference)
+        decltype((foo{}.a)) e14 = 0; // int &&               (r-value reference)
+        decltype((foo{}.b)) e15 = 0; // int volatile &&      (r-value reference)
+        decltype((foo{}.c)) e16 = 0; // int const &&         (r-value reference)
     }
 
     {
@@ -2363,12 +2627,14 @@ main()
         // Because decltype is a type specifier, the redundant const and volatile qualifiers
         // and reference specifiers are ignored.
 
-        [[maybe_unused]] decltype(ra)     &e1    = a; // int&
-        [[maybe_unused]] decltype(ra)      e2    = a; // int&
-        [[maybe_unused]] decltype(c) const e3    = 1; // int const
-        [[maybe_unused]] decltype(c)       e4    = 1; // int const
-        [[maybe_unused]] decltype(d) volatile e5 = 1; // int volatile
-        [[maybe_unused]] decltype(d) e6          = 1; // int volatile
+        decltype(ra)                 e2 = a;       // int&
+        decltype(ra) & /* ignored */ e1 = a;       // int&
+
+        decltype(c)                     e4 = 1;    // int const
+        decltype(c) const /* ignored */ e3 = 1;    // int const
+
+        decltype(d) e6                        = 1; // int volatile
+        decltype(d) volatile /* ignored */ e5 = 1; // int volatile
     }
 
     {
@@ -2379,8 +2645,8 @@ main()
         // where the return value of a function depends on its template arguments
         // and is not known before instantiation.
 
-        auto m1 = minimum(1, 5);
-        auto m2 = minimum(18.49, 9.99);
+        auto m1 = minimum(1, 5);        // int
+        auto m2 = minimum(18.49, 9.99); // double
         // auto m3 = minimum(1, 9.99);  // error: arguments of different type
 
         std::println("{}", m1); // 1
@@ -2391,39 +2657,39 @@ main()
         std::println("\n====================== using namespace n431 =============================");
         using namespace n431;
 
-        auto m1 = minimum(1, 5);
-        auto m2 = minimum(18.49, 9.99);
-        auto m3 = minimum(1, 9.99);
+        auto m1 = minimum(1, 5);        // int
+        auto m2 = minimum(18.49, 9.99); // double
+        auto m3 = minimum(1, 9.99);     // double
 
-        std::println("{}", m1); // 1
-        std::println("{}", m2); // 9.9
-        std::println("{}", m3); // 1
+        std::println("{}", m1);         // 1
+        std::println("{}", m2);         // 9.9
+        std::println("{}", m3);         // 1
     }
 
     {
         std::println("\n====================== using namespace n432 =============================");
         using namespace n432;
 
-        auto m1 = minimum(1, 5);
-        auto m2 = minimum(18.49, 9.99);
-        auto m3 = minimum(1, 9.99);
+        auto m1 = minimum(1, 5);        // int
+        auto m2 = minimum(18.49, 9.99); // double
+        auto m3 = minimum(1, 9.99);     // double
 
-        std::println("{}", m1); // 1
-        std::println("{}", m2); // 9.9
-        std::println("{}", m3); // 1
+        std::println("{}", m1);         // 1
+        std::println("{}", m2);         // 9.9
+        std::println("{}", m3);         // 1
     }
 
     {
         std::println("\n====================== using namespace n433 =============================");
         using namespace n433;
 
-        auto m1 = minimum(1, 5);
-        auto m2 = minimum(18.49, 9.99);
-        auto m3 = minimum(1, 9.99);
+        auto m1 = minimum(1, 5);        // int
+        auto m2 = minimum(18.49, 9.99); // double
+        auto m3 = minimum(1, 9.99);     // double
 
-        std::println("{}", m1); // 1
-        std::println("{}", m2); // 9.9
-        std::println("{}", m3); // 1
+        std::println("{}", m1);         // 1
+        std::println("{}", m2);         // 9.9
+        std::println("{}", m3);         // 1
     }
 
     {
@@ -2433,8 +2699,8 @@ main()
         int a = 42;
 
         // const and ref qualifiers are being discarded with auto
-        decltype(func(a))        r1 = func(a);        // int const&
-        decltype(func_caller(a)) r2 = func_caller(a); // int
+        decltype(func(a))        r1 = func(a);        // int const &
+        decltype(func_caller(a)) r2 = func_caller(a); // int (const and ref qualifiers are being discarded)
 
         std::println("{}", r1);                       // 42
         std::println("{}", r2);                       // 42
@@ -2454,7 +2720,7 @@ main()
         // const and ref qualifiers are not being discarded with decltype(auto)
         // -> perfect forwarding
         decltype(func(a))        r1 = func(a);        // int const&
-        decltype(func_caller(a)) r2 = func_caller(a); // int const&
+        decltype(func_caller(a)) r2 = func_caller(a); // int const& (perfectly returned)
 
         std::println("{}", r1);                       // 42
         std::println("{}", r2);                       // 42
@@ -2464,7 +2730,7 @@ main()
         std::println("\n====================== using namespace n436 =============================");
         using namespace n436;
 
-        // using decltype
+        // using onyl decltype
 
         // int{}, double{} no problem
         static_assert(std::is_same_v<double, composition<int, double>::result_type>);
@@ -2477,7 +2743,7 @@ main()
         std::println("\n====================== using namespace n437 =============================");
         using namespace n437;
 
-        // now but with decltype and std::declval
+        // now using decltype with std::declval
         // std::declval produces a value of a type T without using a default constructor.
 
         static_assert(std::is_same_v<double, composition<int, double>::result_type>);
@@ -2497,8 +2763,10 @@ main()
         using namespace n439;
 
         wrapper w{42};
+
         print<int>(w);        // 42
         print<char>(w);       // 42
+
         printer<int>()(w);    // 42
         printer<double>()(w); // 42
     }
@@ -2508,8 +2776,10 @@ main()
         using namespace n440;
 
         wrapper w{42};
+
         print<int>(w);        // 42
         print<char>(w);       // [empty]
+
         printer<int>()(w);    // 42
         printer<double>()(w); // [empty]
     }
@@ -2518,11 +2788,13 @@ main()
         std::println("\n====================== using namespace n442 =============================");
         using namespace n442;
 
-        wrapper w1{42};
-        print<int>(w1);      // 42
-        printer<int>{}(w1);  //
+        // friends
+        wrapper<int> w1{42};
+        print<int>(w1);     // 42
+        printer<int>{}(w1); //
 
-        wrapper w2{'a'};
+        // not friends
+        wrapper<char> w2{'a'};
         print<char>(w2);     // [empty]
         printer<char>{}(w2); //
     }
@@ -2531,30 +2803,52 @@ main()
         std::println("\n====================== using namespace n443 =============================");
         using namespace n443;
 
-        wrapper w1{42};
-        print(w1);           // 42
-        printer<int>{}(w1);  // 42
+        // friend
+        wrapper<int> w1{42};
+        print(w1);          // 42
+        printer<int>{}(w1); // 42
 
-        wrapper w2{'a'};
-        print(w2);           // a
-        printer<char>{}(w2); // a
+        // friend
+        wrapper<char> w2{'a'}; //
+        print(w2);             // a
+        printer<char>{}(w2);   // a
+
+        // ???
+        // print<char>(w1);     // error
+        // printer<char>{}(w1); // error
+
+        // ???
+        // print<int>(w2);      // error
+        // printer<int>{}(w2);  // error
     }
 
     {
         std::println("\n====================== using namespace n444 =============================");
         using namespace n444;
 
-        wrapper w1{42};
-        print(w1);           // 42
-        printer<int>{}(w1);  // 42
+        // friend
+        wrapper<int> w1{42};
+        print(w1);          // 42
+        printer<int>{}(w1); // 42
 
-        wrapper w2{'a'};
+        // not friend
+        // print<char>(w1);     // error
+        // printer<char>{}(w1); // error
+
+        // friend
+        wrapper<char> w2{'a'};
         print(w2);           // a
         printer<char>{}(w2); // a
+
+        // not friend
+        // print<int>(w2);      // error
+        // printer<int>{}(w2);  // error
     }
     {
         std::println("\n====================== using namespace n445 =============================");
         using namespace n445;
+
+        // granting friendship to a type template parameter
 
         executor e; //
         e.run();    // localhost:1234
