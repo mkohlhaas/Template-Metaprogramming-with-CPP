@@ -1,13 +1,42 @@
 #include <array>
+#include <cassert>
 #include <cstring>
+#include <cxxabi.h>
 #include <iostream>
 #include <ostream>
 #include <print>
 #include <string>
+#include <type_traits>
 #include <vector>
 
-template <class T>
-constexpr bool always_false = std::false_type::value;
+// Type Traits and Conditional Compilation
+
+#pragma GCC diagnostic ignored "-Wunused"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+std::string
+demangle(const char *mangled_name)
+{
+    std::string result;
+    std::size_t len    = 0;
+    int         status = 0;
+    char       *ptr    = __cxxabiv1::__cxa_demangle(mangled_name, nullptr, &len, &status);
+
+    if (status == 0)
+    {
+        result = ptr;
+    }
+    else
+    {
+        result = "demangle error";
+    }
+
+    ::free(ptr);
+
+    return result;
+}
+
+// Understanding and defining type traits
 
 namespace n501
 {
@@ -36,10 +65,14 @@ namespace n501
     };
 
     template <typename T>
+    inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
+
+    template <typename T>
     void
     process_real_number(T const value)
     {
-        static_assert(is_floating_point<T>::value);
+        // only allow this function if T is a floating point type
+        static_assert(is_floating_point_v<T>);
 
         std::println("processing a real number: {}", value);
     }
@@ -48,6 +81,8 @@ namespace n501
 namespace n502
 {
     using namespace std;
+
+    // widget
 
     struct widget
     {
@@ -61,6 +96,8 @@ namespace n502
             return os;
         }
     };
+
+    // gadget
 
     struct gadget
     {
@@ -77,6 +114,8 @@ namespace n502
         return os;
     }
 
+    // uses_write
+
     template <typename T>
     struct uses_write
     {
@@ -92,7 +131,8 @@ namespace n502
     template <typename T>
     inline constexpr bool uses_write_v = uses_write<T>::value;
 
-    // class template with anonymous template parameter
+    // serializer
+
     template <bool>
     struct serializer
     {
@@ -115,6 +155,8 @@ namespace n502
         }
     };
 
+    // API
+
     template <typename T>
     void
     serialize(ostream &os, T const &value)
@@ -123,83 +165,129 @@ namespace n502
     }
 } // namespace n502
 
+// Exploring SFINAE and its purpose
+
 namespace n503
 {
-    template <typename T>
-    auto
-    begin(T &c)
+    namespace
     {
-        return c.begin();
-    }
+        // begin
 
-    template <typename T, size_t N>
-    T *
-    begin(T (&arr)[N])
-    {
-        return arr;
-    }
+        template <typename T>
+        auto
+        begin(T &c)
+        {
+            return c.begin();
+        }
 
-    template <typename T>
-    void
-    increment(T &val)
-    {
-        // Substituting for T any type for which the post-fix operator++ is not implemented is a failure.
-        // This failure is an error and will not be ignored by the compiler!
-        val++;
-    }
+        template <typename T, size_t N>
+        T *
+        begin(T (&arr)[N])
+        {
+            return arr;
+        }
+    } // namespace
 
-    template <typename T, size_t N>
-    void
-    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 0] = nullptr)
+    namespace
     {
-        std::println("handle even array: {} elements", N);
-    }
+        // increment
 
-    template <typename T, size_t N>
-    void
-    handle(T (&arr [[maybe_unused]])[N], char (*)[N % 2 == 1] = nullptr)
+        template <typename T>
+        void
+        increment(T &val)
+        {
+            // Substituting for T any type for which the post-fix operator++ is not implemented is a failure.
+            // This failure is an error and will not be ignored by the compiler!
+            val++;
+        }
+    } // namespace
+
+    namespace
     {
-        std::println("handle odd array: {} elements", N);
-    }
+        // handle
+
+        // e.g. char (*)[N % 2 == 0] either creates char (*)[true] = char(*)[1] or char (*)[false] = char(*)[0].
+        // The latter - array of size 0 - is a SFINAE error.
+        // See https://en.cppreference.com/w/cpp/language/sfinae (lists type errors that are SFINAE errors)
+        //
+        // `= nullptr` is a default value
+
+        // char a[0];
+
+        template <typename T, size_t N>
+        void
+        handle(T (&arr)[N], char (*)[N % 2 == 0] = nullptr) // accepts array with even number of elements
+        {
+            std::println("handle even array: {} elements", N);
+        }
+
+        template <typename T, size_t N>
+        void
+        handle(T (&arr)[N], char (*)[N % 2 == 1] = nullptr) // accepts array with odd number of elements
+        {
+            std::println("handle odd array: {} elements", N);
+        }
+    } // namespace
 } // namespace n503
 
 namespace n504
 {
-    template <typename T>
-    struct foo
+    namespace
     {
-        using foo_type = T;
-    };
+        // foo
 
-    template <typename T>
-    struct bar
-    {
-        using bar_type = T;
-    };
+        template <typename T>
+        struct foo
+        {
+            using foo_type = T;
+        };
 
-    struct int_foo : foo<int>
-    {
-        // ...
-    };
-    struct int_bar : bar<int>
-    {
-        // ...
-    };
+        struct int_foo : foo<int>
+        {
+            // ...
+        };
+    } // namespace
 
-    template <typename T>
-    decltype(typename T::foo_type(), void())
-    handle(T const &)
+    namespace
     {
-        std::println("handle a foo");
-    }
+        // bar
 
-    template <typename T>
-    decltype(typename T::bar_type(), void())
-    handle(T const &)
+        template <typename T>
+        struct bar
+        {
+            using bar_type = T;
+        };
+
+        struct int_bar : bar<int>
+        {
+            // ...
+        };
+    } // namespace
+
+    namespace
     {
-        std::println("handle a bar");
-    }
+        // handle
+
+        template <typename T>
+        decltype(typename T::foo_type(), void()) // only accept types with an inner foo_type, return void
+        handle(T const &)
+        {
+            std::println("handle a foo");
+        }
+
+        template <typename T>
+        decltype(typename T::bar_type(), void()) // only accept types with an inner bar_type, return void
+        handle(T const &)
+        {
+            std::println("handle a bar");
+        }
+    } // namespace
 } // namespace n504
+
+// Enabling SFINAE with the enable_if type trait
+//
+// See attached document "Below report - Type Traits SFINAE and Compile-Time Reflection in C++14.pdf"
+// for explanation of `enable_if`.
 
 namespace n505
 {
@@ -208,20 +296,26 @@ namespace n505
     {
     };
 
+    // only for true we have a `type
     template <typename T>
     struct enable_if<true, T>
     {
         using type = T;
     };
 
-    template <typename T, enable_if<n502::uses_write_v<T>>::type * = nullptr>
+    template <bool B, typename T = void>
+    using enable_if_t = enable_if<B, T>::type;
+
+    // C++ allows unnamed function parameters (same for template parameters), e.g. void func(int * = nullptr);
+
+    template <typename T, enable_if_t<n502::uses_write_v<T>> * = nullptr>
     void
     serialize(std::ostream &os, T const &value)
     {
         value.write(os);
     }
 
-    template <typename T, enable_if<!n502::uses_write_v<T>>::type * = nullptr>
+    template <typename T, enable_if_t<not n502::uses_write_v<T>> * = nullptr>
     void
     serialize(std::ostream &os, T const &value)
     {
@@ -231,15 +325,17 @@ namespace n505
 
 namespace n506
 {
+    // specify the return type of a function
+
     template <typename T>
-    typename std::enable_if<n502::uses_write_v<T>>::type
+    typename std::enable_if_t<n502::uses_write_v<T>> // returns void (the default in enable_if)
     serialize(std::ostream &os, T const &value)
     {
         value.write(os);
     }
 
     template <typename T>
-    typename std::enable_if<!n502::uses_write_v<T>>::type
+    typename std::enable_if_t<not n502::uses_write_v<T>> // returns void (the default in enable_if)
     serialize(std::ostream &os, T const &value)
     {
         os << value;
@@ -248,16 +344,18 @@ namespace n506
 
 namespace n507
 {
+    // define a function parameter that has a default argument
+
     template <typename T>
     void
-    serialize(std::ostream &os, T const &value, typename std::enable_if<n502::uses_write_v<T>>::type * = nullptr)
+    serialize(std::ostream &os, T const &value, typename std::enable_if_t<n502::uses_write_v<T>> * = nullptr)
     {
         value.write(os);
     }
 
     template <typename T>
     void
-    serialize(std::ostream &os, T const &value, typename std::enable_if<!n502::uses_write_v<T>>::type * = nullptr)
+    serialize(std::ostream &os, T const &value, typename std::enable_if_t<not n502::uses_write_v<T>> * = nullptr)
     {
         os << value;
     }
@@ -265,8 +363,11 @@ namespace n507
 
 namespace n508
 {
-    // anonymous type variable with a default type value
-    template <typename T, typename = std::enable_if_t<std::is_integral_v<T>, T>>
+    // Default template arguments are not part of a function template’s signature!
+    //
+    //                  anonymous type variable with a default type value (void)
+    //                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
     struct integral_wrapper
     {
         T value;
@@ -286,6 +387,8 @@ namespace n508
         }
     };
 } // namespace n508
+
+// Using constexpr if
 
 namespace n509
 {
@@ -310,13 +413,13 @@ namespace n510
     constexpr unsigned int
     factorial()
     {
-        if constexpr (n > 1)
+        if constexpr (n < 2)
         {
-            return n * factorial<n - 1>();
+            return 1;
         }
         else
         {
-            return 1;
+            return n * factorial<n - 1>();
         }
     }
 } // namespace n510
@@ -329,8 +432,7 @@ namespace n511
     {
         if constexpr (std::is_floating_point_v<T>)
         {
-            // epsilon calculation
-            return std::abs(a - b) < 0.001;
+            return std::abs(a - b) < 0.001; // epsilon calculation
         }
         else
         {
@@ -339,19 +441,21 @@ namespace n511
     }
 } // namespace n511
 
+// Exploring the standard type traits
+
 namespace n512
 {
     template <typename T>
     void
     f()
     {
-        if constexpr (std::is_arithmetic_v<T>)
+        if constexpr (std::is_arithmetic_v<T>) // integral or a floating-point type
         {
             // ...
         }
         else
         {
-            static_assert(always_false<T>, "Must be arithmetic");
+            static_assert(false);
         }
     }
 } // namespace n512
@@ -366,13 +470,13 @@ namespace n513
         {
             return "null";
         }
-        else if constexpr (std::is_arithmetic_v<T>)
+        else if constexpr (std::is_arithmetic_v<T>) // integral or a floating-point type
         {
             return std::to_string(value);
         }
         else
         {
-            static_assert(always_false<T>);
+            static_assert(false);
         }
     }
 } // namespace n513
@@ -391,7 +495,8 @@ namespace n514
 
     struct tar
     {
-        int a = 0;
+        int a;
+
         tar() : a(0)
         {
         }
@@ -400,6 +505,8 @@ namespace n514
 
 namespace n515
 {
+    // passing by value
+
     template <typename T>
     std::string
     as_string(T value)
@@ -418,17 +525,22 @@ namespace n515
         }
         else
         {
-            static_assert(always_false<T>);
+            static_assert(false);
         }
     }
 } // namespace n515
 
 namespace n516
 {
+    // passing by r-value
+
     template <typename T>
     std::string
     as_string(T &&value)
     {
+        // For debugging:
+        // std::cout << __PRETTY_FUNCTION__ << '\n';
+
         if constexpr (std::is_null_pointer_v<T>)
         {
             return "null";
@@ -443,18 +555,24 @@ namespace n516
         }
         else
         {
-            static_assert(always_false<T>);
+            // For debugging:
+            // return "true";
+
+            static_assert(false);
         }
     }
 } // namespace n516
 
 namespace n517
 {
+    // passing by r-value
+
     template <typename T>
     std::string
-    as_string(T &&value)
+    as_string(T &&value)                               // passing l-value or r-value
     {
-        using value_type = std::decay_t<T>; // stripping reference, and cv-qualifiers
+        using value_type = std::remove_reference_t<T>; // stripping reference
+        // using value_type = std::decay_t<T>;         // stripping reference, and cv-qualifiers
 
         if constexpr (std::is_null_pointer_v<value_type>)
         {
@@ -470,7 +588,7 @@ namespace n517
         }
         else
         {
-            static_assert(always_false<T>);
+            static_assert(false);
         }
     }
 } // namespace n517
@@ -478,34 +596,8 @@ namespace n517
 namespace n518
 {
     template <typename T, size_t S>
-    using list_t = typename std::conditional<S == 1, T, std::vector<T>>::type;
+    using list_t = std::conditional_t<S == 1, T, std::vector<T>>;
 }
-
-namespace n519
-{
-    // anonymous type variable (template parameter)
-    template <typename, typename... Ts>
-    struct has_common_type : std::false_type
-    {
-    };
-
-    template <typename... Ts>
-    struct has_common_type<std::void_t<std::common_type_t<Ts...>>, Ts...> : std::true_type
-    {
-    };
-
-    template <typename... Ts>
-    constexpr bool has_common_type_v = sizeof...(Ts) < 2 || has_common_type<void, Ts...>::value;
-
-    template <typename... Ts, typename = std::enable_if_t<has_common_type_v<Ts...>>>
-    void
-    process(Ts &&...ts [[maybe_unused]])
-    {
-        static_assert(has_common_type_v<Ts...>, "Arguments must have a common type.");
-
-        std::println("{}", typeid(std::common_type_t<Ts...>).name());
-    }
-} // namespace n519
 
 namespace n520
 {
@@ -514,10 +606,13 @@ namespace n520
         template <bool b>
         struct copy_fn
         {
+
             template <typename InputIt, typename OutputIt>
             constexpr static OutputIt
             copy(InputIt first, InputIt last, OutputIt d_first)
             {
+                std::cout << "Generic Copy" << '\n';
+
                 while (first != last)
                 {
                     *d_first++ = *first++;
@@ -533,6 +628,8 @@ namespace n520
             constexpr static OutputIt *
             copy(InputIt *first, InputIt *last, OutputIt *d_first)
             {
+                std::cout << "Memory Copy" << '\n';
+
                 std::memmove(d_first, first, (last - first) * sizeof(InputIt));
                 return d_first + (last - first);
             }
@@ -553,6 +650,35 @@ namespace n520
     }
 } // namespace n520
 
+namespace n519
+{
+    namespace
+    {
+        template <typename, typename... Ts>
+        struct has_common_type : std::false_type
+        {
+        };
+
+        template <typename... Ts>
+        struct has_common_type<std::void_t<std::common_type_t<Ts...>>, Ts...> : std::true_type
+        {
+        };
+
+        template <typename... Ts>
+        constexpr bool has_common_type_v = sizeof...(Ts) < 2 || has_common_type<void, Ts...>::value;
+    } // namespace
+
+    template <typename... Ts, typename = std::enable_if_t<has_common_type_v<Ts...>>>
+    void
+    process(Ts &&...ts)
+    {
+        // instead of enable_if we could use static_assert
+        // static_assert(has_common_type_v<Ts...>, "Arguments must have a common type.");
+
+        std::println("{}", demangle(typeid(std::common_type_t<Ts...>).name()));
+    }
+} // namespace n519
+
 int
 main()
 {
@@ -560,34 +686,24 @@ main()
         std::println("\n====================== using namespace n501 =============================");
         using namespace n501;
 
-        // Type traits:
-        // 1. Enable us to INSPECT PROPERTIES of types
-        // 2. Perform TRANSFORMATIONS OF TYPES at compile-time,
-        //    such as adding or removing the const qualifier, or adding or removing pointer
-        //    or reference from a type.
-        //    These type traits are also called METAFUNCTIONS.
-
-        // Type traits are small class templates that contain a constant value whose value
-        // represents the answer to a question we ask about a type.
-
-        // The technique for building type traits that provide such information about types
-        // relies on template specialization.
-
-        // floating points
         static_assert(is_floating_point<float>::value);
         static_assert(is_floating_point<double>::value);
         static_assert(is_floating_point<long double>::value);
+
+        static_assert(is_floating_point_v<float>);
+        static_assert(is_floating_point_v<double>);
+        static_assert(is_floating_point_v<long double>);
 
         process_real_number(42.0);  // processing a real number: 42
         process_real_number(42.0f); // processing a real number: 42
         process_real_number(42.0L); // processing a real number: 42
 
+        // process_real_number(42);   // error: int (42) is not a floating point number
+        // process_real_number(true); // error: bool (true) is not a floating point number
+
         // non-floating points
         static_assert(!is_floating_point<int>::value);
         static_assert(!is_floating_point<bool>::value);
-
-        // process_real_number(42); // error: int (42) is not a floating point number
-        // process_real_number(true); // error: bool (true) is not a floating point number
     }
 
     {
@@ -597,11 +713,16 @@ main()
         widget w{1, "one"};
         gadget g{2, "two"};
 
+        // widget uses write()
         w.write(std::cout); // 1, one
 
+        // gadnget does not use write()
         // g.write(std::cout);   // error: No member named 'write' in 'n502::gadget'
-        std::cout << g;          // 2, two
 
+        // gadget uses <<
+        std::cout << g; // 2, two
+
+        // both use the serialize API (are treated the same way)
         serialize(std::cout, w); // 1, one
         serialize(std::cout, g); // 2, two
     }
@@ -612,11 +733,23 @@ main()
 
         // SFINAE = Substitution Failure Is Not An Error
 
-        std::array<int, 5> arr1{1, 2, 3, 4, 5};
+        // SFINAE stands for Substitution Failure Is Not An Error. When the compiler encounters
+        // the use of a function template, it substitutes the arguments in order to instantiate the
+        // template. If an error occurs at this point, it is NOT REGARDED AS ILL-INFORMED CODE, only as
+        // a DEDUCTION FAILURE. The function is removed from the overload set instead of causing an
+        // error. Only if there is no match in the overload set does an error occur.
+        //
+        // Could also be called: Matching Failure Is Not An Error:
+        // no match -> ignored (no error)
+        //    match -> add to function overload set
+
+        // C++ array
+        std::array arr1{1, 2, 3, 4, 5};
         std::println("{}", *n503::begin(arr1)); // 1
 
+        // C-style array
         int arr2[]{5, 4, 3, 2, 1};
-        std::println("{}", *begin(arr2));       // 5
+        std::println("{}", *n503::begin(arr2)); // 5
     }
 
     {
@@ -649,23 +782,21 @@ main()
         std::println("\n====================== using namespace n504 =============================");
         using namespace n504;
 
-        int_foo i_f;
-        int_bar i_b;
-        int     x = 0;
+        int_foo i_foo;
+        int_bar i_bar;
 
-        handle(i_f);           // handle a foo
-        handle(i_b);           // handle a bar
+        int x = 0;
+
+        handle(i_foo);         // handle a foo
+        handle(i_bar);         // handle a bar
 
         std::println("{}", x); // 0
-        // handle(x);          // error
+        // handle(x);          // error: doesn't have a foo_type or bar_type
     }
 
     {
         std::println("\n====================== using namespace n505 =============================");
         using namespace n502;
-
-        // std::enable_if is a metafunction to enable SFINAE
-        // and remove candidates from a function's overload set.
 
         widget w{1, "one"};
         gadget g{2, "two"};
@@ -703,10 +834,10 @@ main()
         integral_wrapper w1{42};   // OK
         floating_wrapper w2{42.0}; // OK
 
-        // integral_wrapper w3{ 42.0 }; // error
-        // integral_wrapper w4{ "42" }; // error
+        // integral_wrapper w3{42.0}; // error
+        // integral_wrapper w4{"42"}; // error
 
-        // floating_wrapper w5{ 42 };   // error
+        // floating_wrapper w5{42};   // error
         // floating_wrapper w6{"42"}; // error
     }
 
@@ -771,7 +902,6 @@ main()
         std::println("\n====================== using namespace n514 =============================");
         using namespace n514;
 
-        // std::println("{}", std::boolalpha);
         std::println("{}", std::is_trivial_v<foo>);            // true
         std::println("{}", std::is_trivial_v<bar>);            // false
         std::println("{}", std::is_trivial_v<tar>);            // false
@@ -796,17 +926,19 @@ main()
         std::println("\n====================== using namespace n516 =============================");
         using namespace n516;
 
+        // args are all r-values
         std::println("{}", as_string(nullptr)); // null
         std::println("{}", as_string(true));    // true
         std::println("{}", as_string('a'));     // 97
         std::println("{}", as_string(42));      // 42
         std::println("{}", as_string(42.0));    // 42.000000
 
+        // l-values cause problems (they are called as l-value references)
         // bool f = true;
-        // std::println("{}", as_string(f));
+        // std::println("{}", as_string(f)); // T = bool &
 
         // int n = 42;
-        // std::println("{}", as_string(n));
+        // std::println("{}", as_string(n)); // T = int &
     }
 
     {
@@ -841,15 +973,26 @@ main()
         // kick in. This would result in resolving the call to copy to the std::copy function
         // because the arguments we pass are found in the std namespace!
 
-        std::vector<int> v1{1, 2, 3, 4, 5};                       // vector of size 5
-        std::vector<int> v2(5);                                   // vector of size 5
+        std::vector<int> v1{1, 2, 3, 4, 5};
+        std::vector<int> v2(5);
 
-        n520::copy(std::begin(v1), std::end(v1), std::begin(v2)); // copy v1 into v2
+        n520::copy(std::begin(v1), std::end(v1), std::begin(v2)); // Generic Copy
 
-        int a1[5] = {1, 2, 3, 4, 5};                              // array of size 5
-        int a2[5];                                                // array of size 5
+        assert(v1[0] == v2[0]);
+        assert(v1[1] == v2[1]);
+        assert(v1[2] == v2[2]);
+        assert(v1[3] == v2[3]);
+        assert(v1[4] == v2[4]);
 
-        n520::copy(a1, a1 + 5, a2);                               // copy a1 into a2
+        int a1[5] = {1, 2, 3, 4, 5};
+        int a2[5];
+
+        n520::copy(a1, a1 + 5, a2); // Memory Copy
+        assert(a1[0] == a2[0]);
+        assert(a1[1] == a2[1]);
+        assert(a1[2] == a2[2]);
+        assert(a1[3] == a2[3]);
+        assert(a1[4] == a2[4]);
     }
 
     {
@@ -862,6 +1005,7 @@ main()
         process(1);           // int
         process(1, 2, 3);     // int
         process(1, 2.0, '3'); // double
+
         // process(1, 2.0, "3"); // error
     }
 }
