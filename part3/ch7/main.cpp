@@ -11,125 +11,155 @@
 #include <thread>
 #include <vector>
 
+// Patterns and Idioms
+
+// Dynamic versus static polymorphism
+
 namespace n701
 {
-    // polymorphic (game) classes
-
-    struct game_unit
+    namespace
     {
-        virtual void attack() = 0;
-    };
+        // polymorphic (game) classes (dynamic polymorphism)
 
-    struct knight : game_unit
-    {
+        struct game_unit
+        {
+            virtual void attack() = 0;
+        };
+
+        struct knight : game_unit
+        {
+            void
+            attack() override
+            {
+                std::println("knight draws sword");
+            }
+        };
+
+        struct mage : game_unit
+        {
+            void
+            attack() override
+            {
+                std::println("mage spells magic curse");
+            }
+        };
+
+        struct knight_mage : game_unit
+        {
+            void
+            attack() override
+            {
+                std::println("knight-mage draws magic sword");
+            }
+        };
+
         void
-        attack() override
+        fight(std::vector<game_unit *> const &units)
         {
-            std::println("knight draws sword");
+            for (auto unit : units)
+            {
+                unit->attack();
+            }
         }
-    };
+    } // namespace
 
-    struct mage : game_unit
+    namespace
     {
+        struct attack
+        {
+            int value;
+        };
+
+        struct defence
+        {
+            int value;
+        };
+
+        namespace
+        {
+            // Based on the operands for the +-operator, the compiler is selecting the appropriate overload.
+            // This is called STATIC POLYMORPHISM. (All this happens at compile time.)
+
+            attack
+            operator+(attack const &a, int value)
+            {
+                return attack{a.value + value};
+            }
+
+            // cross knight and mage
+            knight_mage
+            operator+(knight const &, mage const &)
+            {
+                return knight_mage{};
+            }
+        } // namespace
+    } // namespace
+
+    namespace
+    {
+        // Functions can also be overloaded.
+
         void
-        attack() override
+        increment(attack &a)
         {
-            std::println("mage spells magic curse");
+            a.value++;
         }
-    };
 
-    struct knight_mage : game_unit
-    {
         void
-        attack() override
+        increment(defence &d)
         {
-            std::println("knight-mage draws magic sword");
+            d.value++;
         }
-    };
 
-    void
-    fight(std::vector<game_unit *> const &units)
-    {
-        for (auto unit : units)
+        namespace
         {
-            unit->attack();
-        }
-    }
+            // We could replace both functions with a template.
 
-    struct attack
-    {
-        int value;
-    };
-
-    struct defence
-    {
-        int value;
-    };
-
-    // Based on the operands for the +-operator, the compiler is selecting the appropriate overload.
-    // This is called STATIC POLYMORPHISM. (All this happens at compile time.)
-
-    attack
-    operator+(attack const &a, int value)
-    {
-        return attack{a.value + value};
-    }
-
-    knight_mage
-    operator+(knight const &, mage const &)
-    {
-        return knight_mage{};
-    }
-
-    // Functions can also be overloaded.
-
-    void
-    increment(attack &a)
-    {
-        a.value++;
-    }
-
-    void
-    increment(defence &d)
-    {
-        d.value++;
-    }
-
-    // We could replace both functions with a template.
-    template <typename T>
-    void
-    increment(T &t)
-    {
-        t.value++;
-    }
+            template <typename T>
+            void
+            increment(T &t)
+            {
+                t.value++;
+            }
+        } // namespace
+    } // namespace
 
     // Summary:
     // Overloaded functions and templates are the mechanisms to implement static polymorphism.
 
 } // namespace n701
 
+// The Curiously Recurring Template Pattern
+
+// general form:
+// A: X<A>
+
 namespace n702
 {
-    // CRTP
-
-    template <typename T>
-    struct Base
+    namespace
     {
-        void
-        f()
+        template <typename T>
+        struct Base
         {
-            static_cast<T *>(this)->do_f();
-        }
-    };
+            void
+            f()
+            {
+                // this->do_f();                // error: No member named 'do_f' in 'Base<T>'
 
-    struct Derived : public Base<Derived>
-    {
-        void
-        do_f()
+                // calling function in derived class
+                static_cast<T *>(this)->do_f(); // upcast to 'Derived *'
+            }
+        };
+
+        struct Derived : public Base<Derived>   // CRTP
         {
-            std::println("Derived::f()");
-        }
-    };
+            void
+            do_f()
+            {
+                std::println("Derived::f()");
+            }
+        };
+    } // namespace
 
     template <typename T>
     void
@@ -141,40 +171,38 @@ namespace n702
 
 namespace n703
 {
-    // [1] There is a base class template that defines the (static) interface.
-    template <typename T>
-    struct game_unit
+    namespace
     {
-        // [3] Member functions of the base class call member functions of its type template parameter (which are the
-        //     derived(!) classes).
-        void
-        attack()
+        template <typename T>
+        struct game_unit
         {
-            static_cast<T *>(this)->do_attack();
-        }
-    };
+            void
+            attack()
+            {
+                static_cast<T *>(this)->do_attack(); // call function in derived class
+            }
+        };
 
-    // [2] Derived classes are THEMSELVES(!) the template argument for the base class template.
-    struct knight : game_unit<knight>
-    {
-        void
-        do_attack()
+        struct knight : game_unit<knight>
         {
-            std::println("draw sword");
-        }
-    };
+            void
+            do_attack()
+            {
+                std::println("draw sword");
+            }
+        };
 
-    // [2] Derived classes are themselves the template argument for the base class template.
-    struct mage : game_unit<mage>
-    {
-        void
-        do_attack()
+        struct mage : game_unit<mage>
         {
-            std::println("spell magic curse");
-        }
-    };
+            void
+            do_attack()
+            {
+                std::println("spell magic curse");
+            }
+        };
+    } // namespace
 
-    // fight() must be a template function now.
+    // must be a template function now
     template <typename T>
     void
     fight(std::vector<game_unit<T> *> const &units)
@@ -186,43 +214,53 @@ namespace n703
     }
 } // namespace n703
 
+// Limiting the object count with CRTP
+
 namespace n704
 {
-    // limiting number of instances of T to N
-    template <typename T, size_t N>
-    struct limited_instances
+    namespace
     {
-        static std::atomic<size_t> count;
-
-        limited_instances()
+        // limiting number of instances of T to N
+        template <typename T, size_t N>
+        struct limited_instances
         {
-            if (count >= N)
+            static std::atomic<size_t> count; // every instantiation has its own static count!
+
+            limited_instances()
             {
-                throw std::logic_error{"Too many instances"};
+                if (count >= N)
+                {
+                    throw std::logic_error{"Too many instances"};
+                }
+                ++count;
             }
-            ++count;
-        }
 
-        ~limited_instances()
+            ~limited_instances()
+            {
+                --count;
+            }
+        };
+
+        // init of non-const static data member
+        template <typename T, size_t N>
+        std::atomic<size_t> limited_instances<T, N>::count = 0;
+    } // namespace
+
+    namespace
+    {
+        struct excalibur : limited_instances<excalibur, 1>
         {
-            --count;
-        }
-    };
+            // ...
+        };
 
-    // initialization of non-const static data member
-    template <typename T, size_t N>
-    std::atomic<size_t> limited_instances<T, N>::count = 0;
-
-    struct excalibur : limited_instances<excalibur, 1>
-    {
-        // ...
-    };
-
-    struct book_of_magic : limited_instances<book_of_magic, 3>
-    {
-        // ...
-    };
+        struct book_of_magic : limited_instances<book_of_magic, 3>
+        {
+            // ...
+        };
+    } // namespace
 } // namespace n704
+
+// Adding functionality with CRTP
 
 namespace n705
 {
@@ -281,56 +319,68 @@ namespace n705
 
 namespace n706
 {
-    struct knight
+    namespace
     {
-        void
-        step_forth()
-        {
-            std::println("knight moves forward");
-        }
+        // classes
 
-        void
-        step_back()
+        struct knight
         {
-            std::println("knight moves back");
-        }
-    };
+            void
+            step_forth()
+            {
+                std::println("knight moves forward");
+            }
 
-    struct mage
+            void
+            step_back()
+            {
+                std::println("knight moves back");
+            }
+        };
+
+        struct mage
+        {
+            void
+            step_forth()
+            {
+                std::println("mage moves forward");
+            }
+
+            void
+            step_back()
+            {
+                std::println("mage moves back");
+            }
+        };
+    } // namespace
+
+    namespace
     {
+        // function templates
+
+        template <typename T>
         void
-        step_forth()
+        advance(T &t, size_t steps)
         {
-            std::println("mage moves forward");
+            while (steps--)
+            {
+                t.step_forth();
+            }
         }
 
+        template <typename T>
         void
-        step_back()
+        retreat(T &t, size_t steps)
         {
-            std::println("mage moves back");
+            while (steps--)
+            {
+                t.step_back();
+            }
         }
-    };
-
-    template <typename T>
-    void
-    advance(T &t, size_t steps)
-    {
-        while (steps--)
-        {
-            t.step_forth();
-        }
-    }
-
-    template <typename T>
-    void
-    retreat(T &t, size_t steps)
-    {
-        while (steps--)
-        {
-            t.step_back();
-        }
-    }
+    } // namespace
 } // namespace n706
+
+// Implementing the composite design pattern
 
 namespace n707
 {
@@ -365,6 +415,10 @@ namespace n707
         return os;
     }
 
+    // not used
+    // The requirement is that heroes could be grouped together to form parties.
+    // It should be possible for a hero to ally with a group, and for a group
+    // to ally with either a hero or an entire group.
     struct hero_party : std::vector<hero>
     {
         // ...
@@ -373,6 +427,9 @@ namespace n707
 
 namespace n708
 {
+    // A structural pattern called composite enables us to compose objects into larger
+    // structures and treat both individual objects and compositions uniformly.
+
     template <typename T>
     struct base_unit
     {
@@ -380,7 +437,6 @@ namespace n708
         void ally_with(U &other);
     };
 
-    // CRTP
     struct hero : base_unit<hero>
     {
         hero(std::string_view n) : name(n)
@@ -1699,17 +1755,26 @@ main()
     {
         std::println("\n====================== using namespace n701 =============================");
 
+        // What is polymorphism? It’s the ability of objects of different types to be treated as if they were of the
+        // same type.
+
+        // A class that declares or inherits a virtual function is called a polymorphic class.
+
         // - DYNAMIC POLYMORPHISM occurs at RUNTIME      with the help of INTERFACES           and VIRTUAL FUNCTIONS.
         // - STATIC  POLYMORPHISM occurs at COMPILE-TIME with the help of OVERLOADED FUNCTIONS and TEMPLATES.
+
+        // Dynamic polymorphism = LATE  binding
+        // Static polymorphism  = EARLY binding
 
         using namespace n701;
 
         knight k;
         mage   m;
-        fight({&k, &m});
+        fight({&k, &m}); // knight draws sword
+                         // mage spells magic curse
 
         knight_mage km = k + m;
-        km.attack();
+        km.attack();     // knight-mage draws magic sword
 
         attack a{42};
         a = a + 2;
@@ -1725,40 +1790,40 @@ main()
         using namespace n702;
 
         Derived d;
-        process(d);
+        process(d); // Derived::f()
     }
 
     {
         std::println("\n====================== using namespace n703 =============================");
-
-        // Can we get the benefits of dynamic polymorphism at compile time? Yes!
-        // -> Curiously Recurring Template Pattern (CRTP)
 
         using namespace n703;
 
         knight k;
         mage   m;
 
+        // fight({&k});      // error
+        // fight({&m});      // error
+
+        // have to specify template parameter T
         fight<knight>({&k}); // draw sword
         fight<mage>({&m});   // spell magic curse
-        // fight({&k, &m});  // error
+
+        // fight({&k, &m});  // error: What should T be?
     }
 
     {
         std::println("\n====================== using namespace n704 =============================");
-
-        // Limiting the object count with CRTP
 
         using namespace n704;
 
         try
         {
             excalibur e1;
-            excalibur e2; // will throw an exception
+            excalibur e2;                 // will throw an exception
         }
         catch (std::exception &e)
         {
-            std::println("{}", e.what());
+            std::println("{}", e.what()); // Too many instances
         }
 
         try
@@ -1766,34 +1831,44 @@ main()
             book_of_magic b1;
             book_of_magic b2;
             book_of_magic b3;
-            book_of_magic b4; // will throw an exception
+            book_of_magic b4;             // will throw an exception
         }
         catch (std::exception &e)
         {
-            std::println("{}", e.what());
+            std::println("{}", e.what()); // Too many instances
         }
     }
 
     {
         std::println("\n====================== using namespace n705 =============================");
 
-        // Adding functionality with CRTP
+        // OO-interface
 
         using namespace n705;
 
         knight k;
-        k.advance(3);
-        k.retreat(2);
+
+        k.advance(3); // knight moves forward
+                      // knight moves forward
+        k.retreat(2); // knight moves forward
+                      // knight moves back
+                      // knight moves back
 
         mage m;
-        m.advance(5);
-        m.retreat(3);
+        m.advance(5); // mage moves forward
+                      // mage moves forward
+                      // mage moves forward
+                      // mage moves forward
+                      // mage moves forward
+        m.retreat(3); // mage moves back
+                      // mage moves back
+                      // mage moves back
     }
 
     {
         std::println("\n====================== using namespace n706 =============================");
 
-        // Differnt implementation with function templates.
+        // functional-interface
 
         using namespace n706;
 
@@ -1818,9 +1893,10 @@ main()
         h1.ally_with(h2);
         h2.ally_with(h3);
 
-        std::cout << h1 << '\n';
-        std::cout << h2 << '\n';
-        std::cout << h3 << '\n';
+        std::cout << h1; // Arthur --> [Sir Lancelot]
+        std::cout << h2; // Sir Lancelot --> [Arthur]
+                         // Sir Lancelot --> [Sir Gawain]
+        std::cout << h3; // Sir Gawain --> [Sir Lancelot]
     }
 
     {
