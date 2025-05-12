@@ -260,8 +260,6 @@ namespace n704
     } // namespace
 } // namespace n704
 
-// Adding functionality with CRTP
-
 namespace n705
 {
     template <typename T>
@@ -380,8 +378,6 @@ namespace n706
     } // namespace
 } // namespace n706
 
-// Implementing the composite design pattern
-
 namespace n707
 {
     struct hero
@@ -415,7 +411,7 @@ namespace n707
         return os;
     }
 
-    // not used
+    // (not used)
     // The requirement is that heroes could be grouped together to form parties.
     // It should be possible for a hero to ally with a group, and for a group
     // to ally with either a hero or an entire group.
@@ -427,23 +423,26 @@ namespace n707
 
 namespace n708
 {
-    // A structural pattern called composite enables us to compose objects into larger
-    // structures and treat both individual objects and compositions uniformly.
+    // Actually we make hero and hero_party both iterables so we can treat them the same and
+    // derive them from a common base class.
+    //
+    // hero       = iterable of exactly one element
+    // hero_party = iterable of multiple elements/heros (implemented as a std::vector)
 
     template <typename T>
-    struct base_unit
+    struct base
     {
         template <typename U>
         void ally_with(U &other);
     };
 
-    struct hero : base_unit<hero>
+    struct hero : base<hero>
     {
         hero(std::string_view n) : name(n)
         {
         }
 
-        // making hero into an iterable
+        // making hero into an iterable (for-range-loop capable)
         hero *
         begin()
         {
@@ -453,7 +452,7 @@ namespace n708
         hero *
         end()
         {
-            return this + 1;
+            return this + 1; // there is only one hero in a hero ;-)
         }
 
       private:
@@ -461,25 +460,24 @@ namespace n708
         std::set<hero *> connections;
 
         template <typename U>
-        friend struct base_unit;
+        friend struct base;
 
         template <typename U>
-        friend std::ostream &operator<<(std::ostream &os, base_unit<U> &object);
+        friend std::ostream &operator<<(std::ostream &os, base<U> &object);
     };
 
-    // CRTP (adding functionality to std::vector)
-    struct hero_party : std::vector<hero>, base_unit<hero_party>
+    struct hero_party : std::vector<hero>, base<hero_party>
     {
     };
 
     template <typename T>
     template <typename U>
     void
-    base_unit<T>::ally_with(U &other)
+    base<T>::ally_with(U &other)
     {
-        for (hero &from : *static_cast<T *>(this))
+        for (hero &from : *static_cast<T *>(this)) // upcast base to hero or hero_party (this = base<T> *)
         {
-            for (hero &to : other)
+            for (hero &to : other)                 // make connections to hero or heros
             {
                 from.connections.insert(&to);
                 to.connections.insert(&from);
@@ -487,15 +485,16 @@ namespace n708
         }
     }
 
+    // print base (hero or hero_party)
     template <typename T>
     std::ostream &
-    operator<<(std::ostream &os, base_unit<T> &object)
+    operator<<(std::ostream &os, base<T> &object)
     {
-        for (hero &obj : *static_cast<T *>(&object))
+        for (hero &obj : *static_cast<T *>(&object)) // upcast object to hero or hero_party (content is both hero(s))
         {
-            for (hero *c : obj.connections)
+            for (hero *c : obj.connections)          // print hero's connections
             {
-                os << obj.name << " --> [" << c->name << "]" << '\n';
+                os << obj.name << " -> [" << c->name << "]" << '\n';
             }
         }
         return os;
@@ -512,6 +511,12 @@ namespace n709a
 
 namespace n709b
 {
+    // Helper type std::enabled_shared_from_this enables objects
+    // managed by a std::shared_ptr to generate more std::shared_ptr
+    // instances in a safe manner.
+
+    // The std::enable_shared_from_this class helps us create more shared_ptr
+    // objects from an existing one in a safe manner.
     struct building : std::enable_shared_from_this<building>
     {
         // ...
@@ -520,6 +525,8 @@ namespace n709b
 
 namespace n709c
 {
+    // several tasks execute sth. on the same obj (in this case a building)
+
     struct executor
     {
         void
@@ -554,6 +561,7 @@ namespace n709c
 
         ~building()
         {
+            // will be called only once bc of shared_from_this
             std::println("building destroyed");
         }
 
@@ -563,6 +571,9 @@ namespace n709c
             if (exec)
             {
                 // exec->execute([self = this]()            { self->do_upgrade(); }); // This won't work!
+
+                // another shared pointer to this building (the other one was created in main())
+                // -> keeps building alive
                 exec->execute([self = shared_from_this()]() { self->do_upgrade(); }); // OK!
             }
         }
@@ -579,8 +590,8 @@ namespace n709c
         {
             std::println("upgrading...");
             operational = false;
-
             std::println("upgraded");
+
             // using namespace std::chrono_literals;
             // std::this_thread::sleep_for(1000ms);
 
@@ -592,50 +603,6 @@ namespace n709c
         executor *exec        = nullptr;
     };
 } // namespace n709c
-
-namespace n710a
-{
-    struct hit_and_run
-    {
-        void
-        fight()
-        {
-            std::println("hit once hard then run");
-        }
-    };
-
-    struct last_man_standing
-    {
-        void
-        fight()
-        {
-            std::println("duel until one falls");
-        }
-    };
-
-    // mixin adds functionality to a class by inheritance (not CRTP)
-    template <typename Strategy>
-    struct knight : public Strategy
-    {
-        void
-        attack()
-        {
-            std::println("draw sword");
-            Strategy::fight();
-        }
-    };
-
-    template <typename Strategy>
-    struct mage : public Strategy
-    {
-        void
-        attack()
-        {
-            std::println("spell magic curse");
-            Strategy::fight();
-        }
-    };
-} // namespace n710a
 
 namespace n710b
 {
@@ -669,6 +636,7 @@ namespace n710b
         }
     };
 
+    // inherits from knight or mage (just the opposite what CRTP does)
     template <typename T>
     struct movable_unit : T
     {
@@ -692,8 +660,61 @@ namespace n710b
     };
 } // namespace n710b
 
+namespace n710a
+{
+    namespace
+    {
+        // Fighting strategies
+
+        struct hit_and_run
+        {
+            void
+            fight()
+            {
+                std::println("hit once hard then run");
+            }
+        };
+
+        struct last_man_standing
+        {
+            void
+            fight()
+            {
+                std::println("duel until one falls");
+            }
+        };
+    } // namespace
+
+    // mixin adds functionality to a class by inheritance (not CRTP)
+    // a knight can fight
+    template <typename Strategy>
+    struct knight : public Strategy
+    {
+        void
+        attack()
+        {
+            std::println("draw sword");
+            Strategy::fight();
+        }
+    };
+
+    // a mage can fight
+    template <typename Strategy>
+    struct mage : public Strategy
+    {
+        void
+        attack()
+        {
+            std::println("spell magic curse");
+            Strategy::fight();
+        }
+    };
+} // namespace n710a
+
 namespace n710c
 {
+    // fighting styles
+
     struct aggressive_style
     {
         void
@@ -712,14 +733,16 @@ namespace n710c
         }
     };
 
-    template <typename T>
-    struct lone_warrior : T
+    // type of warrior
+
+    template <typename Fighting_Style>
+    struct lone_warrior : Fighting_Style
     {
         void
         fight()
         {
             std::println("fighting alone");
-            T::fight();
+            Fighting_Style::fight();
         }
     };
 
@@ -734,20 +757,22 @@ namespace n710c
         }
     };
 
+    // virtual class
+
     struct game_unit
     {
         virtual void attack() = 0;
         virtual ~game_unit()  = default;
     };
 
-    template <typename T>
-    struct knight : T, game_unit
+    template <typename Type_Warrior_or_Fighting_Style>
+    struct knight : Type_Warrior_or_Fighting_Style, game_unit
     {
         void
         attack()
         {
             std::println("draw sword");
-            T::fight();
+            Type_Warrior_or_Fighting_Style::fight();
         }
     };
 
@@ -853,66 +878,134 @@ namespace n711b
     }
 } // namespace n711b
 
+namespace n712e
+{
+    // Classical C-style type erasure:
+    // basically this means using a lot of void* and reinterpret_casts! ;-)
+
+    namespace
+    {
+
+        struct knight
+        {
+            void
+            attack()
+            {
+                std::println("draw sword");
+            }
+        };
+
+        struct mage
+        {
+            void
+            attack()
+            {
+                std::println("spell magic curse");
+            }
+        };
+    } // namespace
+
+    namespace
+    {
+        // all types erased; only void pointers
+
+        void
+        fight_knight(void *k)
+        {
+            reinterpret_cast<knight *>(k)->attack();
+        }
+
+        void
+        fight_mage(void *m)
+        {
+            reinterpret_cast<mage *>(m)->attack();
+        }
+
+        using fight_fn                  = void (*)(void *);
+        using mapping_void_ptr_fight_fn = std::pair<void *, fight_fn>;
+
+        void
+        fight(std::vector<mapping_void_ptr_fight_fn> const &units)
+        {
+            for (auto &unit : units)
+            {
+                unit.second(unit.first);
+            }
+        }
+    } // namespace
+} // namespace n712e
+
 namespace n712a
 {
-    struct knight
+    // Type erasure using polymorphism and inheritance.
+
+    namespace
     {
-        void
-        attack()
+        struct knight
         {
-            std::println("draw sword");
-        }
-    };
+            void
+            attack()
+            {
+                std::println("draw sword");
+            }
+        };
 
-    struct mage
+        struct mage
+        {
+            void
+            attack()
+            {
+                std::println("spell magic curse");
+            }
+        };
+    } // namespace
+
+    namespace
     {
-        void
-        attack()
+        struct game_unit
         {
-            std::println("spell magic curse");
-        }
-    };
+            virtual void attack() = 0;
+            virtual ~game_unit()  = default;
+        };
 
-    struct game_unit
-    {
-        virtual void attack() = 0;
-        virtual ~game_unit()  = default;
-    };
-
-    struct knight_unit : game_unit
-    {
-        knight_unit(knight &u) : k(u)
+        struct knight_unit : game_unit
         {
-        }
+            knight_unit(knight &u) : k(u)
+            {
+            }
 
-        void
-        attack() override
+            void
+            attack() override
+            {
+                k.attack();
+            }
+
+          private:
+            knight &k;
+        };
+
+        struct mage_unit : game_unit
         {
-            k.attack();
-        }
+            mage_unit(mage &u) : m(u)
+            {
+            }
 
-      private:
-        knight &k;
-    };
+            void
+            attack() override
+            {
+                m.attack();
+            }
 
-    struct mage_unit : game_unit
-    {
-        mage_unit(mage &u) : m(u)
-        {
-        }
+          private:
+            mage &m;
+        };
+    } // namespace
 
-        void
-        attack() override
-        {
-            m.attack();
-        }
-
-      private:
-        mage &m;
-    };
-
+    // It can be argued that types have not been completely erased.
+    // Both knight and mage are game_unit and the fight function handles
+    // anything that is a game_unit.
     void
-    fight(std::vector<game_unit *> const &units)
+    fight(std::vector<game_unit *> const &units) // knight and mage types erased
     {
         for (auto u : units)
         {
@@ -923,23 +1016,28 @@ namespace n712a
 
 namespace n712b
 {
-    struct knight
-    {
-        void
-        attack()
-        {
-            std::println("draw sword");
-        }
-    };
+    // removing code duplication using templates
 
-    struct mage
+    namespace
     {
-        void
-        attack()
+        struct knight
         {
-            std::println("spell magic curse");
-        }
-    };
+            void
+            attack()
+            {
+                std::println("draw sword");
+            }
+        };
+
+        struct mage
+        {
+            void
+            attack()
+            {
+                std::println("spell magic curse");
+            }
+        };
+    } // namespace
 
     struct game_unit
     {
@@ -947,6 +1045,7 @@ namespace n712b
         virtual ~game_unit()  = default;
     };
 
+    // all types have been erased
     template <typename T>
     struct game_unit_wrapper : public game_unit
     {
@@ -976,37 +1075,23 @@ namespace n712b
 
 namespace n712c
 {
-    struct knight
-    {
-        void
-        attack()
-        {
-            std::println("draw sword");
-        }
-    };
-
-    struct mage
-    {
-        void
-        attack()
-        {
-            std::println("spell magic curse");
-        }
-    };
-
+    // Putting concept and model in a common class.
     struct game
     {
         // In the type erasure pattern, the abstract base class is called
         // a CONCEPT and the wrapper that inherits from it is called a MODEL.
 
-        // concept
+        // CONCEPT (the interface)
+        // everything is declared in terms of this concept (all types erased)
+        // duck typing: anything that can attack is a gameu_unit
+        // defines what a game_unit is (anything that can attack)
         struct game_unit
         {
             virtual void attack() = 0;
             virtual ~game_unit()  = default;
         };
 
-        // model
+        // MODEL (the implementation; inherits from concept)
         template <typename T>
         struct game_unit_wrapper : public game_unit
         {
@@ -1017,12 +1102,14 @@ namespace n712c
             void
             attack() override
             {
-                t.attack();
+                t.attack(); // just forward attack()
             }
 
           private:
-            T &t;
+            T &t;           // wrapper around this
         };
+
+        // API
 
         template <typename T>
         void
@@ -1044,30 +1131,40 @@ namespace n712c
       private:
         std::vector<std::unique_ptr<game_unit>> units;
     };
+
+    namespace
+    {
+        // knight and mage are game_units because they can attack()
+
+        struct knight
+        {
+            void
+            attack()
+            {
+                std::println("draw sword");
+            }
+        };
+
+        struct mage
+        {
+            void
+            attack()
+            {
+                std::println("spell magic curse");
+            }
+        };
+    } // namespace
+
 } // namespace n712c
 
 namespace n712d
 {
-    struct knight
-    {
-        void
-        attack()
-        {
-            std::println("draw sword");
-        }
-    };
-
-    struct mage
-    {
-        void
-        attack()
-        {
-            std::println("spell magic curse");
-        }
-    };
+    // General pattern
 
     struct unit
     {
+        // API
+
         // template constructor that enables us to create model objects from, e.g. knight and mage objects.
         template <typename T>
         unit(T &&obj) : unit_(std::make_shared<unit_model<T>>(std::forward<T>(obj)))
@@ -1080,13 +1177,14 @@ namespace n712d
             unit_->attack();
         }
 
+        // concept
         struct unit_concept
         {
             virtual void attack()   = 0;
             virtual ~unit_concept() = default;
         };
 
-        // model always inherits from concept
+        // model (inherits from concept)
         template <typename T>
         struct unit_model : public unit_concept
         {
@@ -1097,17 +1195,39 @@ namespace n712d
             void
             attack() override
             {
-                t.attack();
+                t.attack();                  // forward attack()
             }
 
           private:
-            T &t;
+            T &t;                            // unit_model is just a wrapper around a T
         };
 
       private:
-        std::shared_ptr<unit_concept> unit_;
+        std::shared_ptr<unit_concept> unit_; // a unit is a wrapper around a concept
     };
 
+    namespace
+    {
+        struct knight
+        {
+            void
+            attack()
+            {
+                std::println("draw sword");
+            }
+        };
+
+        struct mage
+        {
+            void
+            attack()
+            {
+                std::println("spell magic curse");
+            }
+        };
+    } // namespace
+
+    // defined in terms of units (type erased)
     void
     fight(std::vector<unit> &units)
     {
@@ -1118,51 +1238,6 @@ namespace n712d
     }
 } // namespace n712d
 
-namespace n712e
-{
-    struct knight
-    {
-        void
-        attack()
-        {
-            std::println("draw sword");
-        }
-    };
-
-    struct mage
-    {
-        void
-        attack()
-        {
-            std::println("spell magic curse");
-        }
-    };
-
-    void
-    fight_knight(void *k)
-    {
-        reinterpret_cast<knight *>(k)->attack();
-    }
-
-    void
-    fight_mage(void *m)
-    {
-        reinterpret_cast<mage *>(m)->attack();
-    }
-
-    using fight_fn              = void (*)(void *);
-    using mapping_void_fight_fn = std::pair<void *, fight_fn>;
-
-    void
-    fight(std::vector<mapping_void_fight_fn> const &units)
-    {
-        for (auto &unit : units)
-        {
-            unit.second(unit.first);
-        }
-    }
-} // namespace n712e
-
 namespace n713
 {
     class async_bool
@@ -1171,26 +1246,25 @@ namespace n713
 
       public:
         async_bool() = delete;
+
         async_bool(std::function<bool()> checkIt) : check(checkIt)
         {
         }
 
-        async_bool(bool val) : check([val]() { return val; })
+        async_bool(bool val) : check([val] { return val; })
         {
         }
 
         static async_bool
         yes()
         {
-            // https://stackoverflow.com/a/68522830/19369328
-            //                                      ^^
-            return async_bool{([]() { return true; }())};
+            return async_bool{[] { return true; }()};
         }
 
         static async_bool
         no()
         {
-            return async_bool{([]() { return false; }())};
+            return async_bool{[] { return false; }()};
         }
 
         bool
@@ -1210,6 +1284,11 @@ namespace n713
     };
 } // namespace n713
 
+// Typelists
+//
+// Today, perhaps many of the problems for which typelists represented the solution
+// can be also solved using variadic templates.
+
 namespace n714
 {
     template <typename... Ts>
@@ -1221,8 +1300,11 @@ namespace n714
     {
     };
 
+    // typical namespace name for implementation details
     namespace detail
     {
+        // length
+
         template <typename TL>
         struct length;
 
@@ -1231,6 +1313,8 @@ namespace n714
         {
             using type = std::integral_constant<std::size_t, sizeof...(Ts)>;
         };
+
+        // front_type
 
         template <typename TL>
         struct front_type;
@@ -1246,6 +1330,8 @@ namespace n714
         {
             using type = empty_type;
         };
+
+        // back_type
 
         template <typename TL>
         struct back_type;
@@ -1268,6 +1354,8 @@ namespace n714
             using type = empty_type;
         };
 
+        // push_back
+
         template <typename TL, typename T>
         struct push_back_type;
 
@@ -1277,6 +1365,8 @@ namespace n714
             using type = TL<Ts..., T>;
         };
 
+        // push_front
+
         template <typename TL, typename T>
         struct push_front_type;
 
@@ -1285,6 +1375,8 @@ namespace n714
         {
             using type = TL<T, Ts...>;
         };
+
+        // pop_front
 
         template <typename TL>
         struct pop_front_type;
@@ -1300,6 +1392,8 @@ namespace n714
         {
             using type = TL<>;
         };
+
+        // pop_back
 
         template <std::ptrdiff_t N, typename R, typename TL>
         struct pop_back_type;
@@ -1317,20 +1411,24 @@ namespace n714
         };
 
         template <>
-        struct pop_back_type<-1, typelist<>, typelist<>>
+        struct pop_back_type</***/ -1, typelist<>, typelist<>>
         {
             using type = typelist<>;
         };
 
+        // at
+
         template <std::size_t I, std::size_t N, typename TL>
         struct at_type;
 
+        // counting N up to I
         template <std::size_t I, std::size_t N, template <typename...> typename TL, typename T, typename... Ts>
         struct at_type<I, N, TL<T, Ts...>>
         {
             using type = std::conditional_t<I == N, T, typename at_type<I, N + 1, TL<Ts...>>::type>;
         };
 
+        // wrong index
         template <std::size_t I, std::size_t N>
         struct at_type<I, N, typelist<>>
         {
@@ -1338,16 +1436,23 @@ namespace n714
         };
     } // namespace detail
 
-    template <typename TL>
-    using length_t = detail::length<TL>::type;
+    // length_t
 
     template <typename TL>
-    constexpr std::size_t length_v = length_t<TL>::value;
+    using length_t = detail::length<TL>::type; // is an integral_constant
 
     static_assert(length_t<typelist<int, double, char>>::value == 3);
+
+    // length_v
+
+    template <typename TL>
+    inline constexpr std::size_t length_v = length_t<TL>::value;
+
     static_assert(length_v<typelist<int, double, char>> == 3);
     static_assert(length_v<typelist<int, double>> == 2);
     static_assert(length_v<typelist<int>> == 1);
+
+    // front_t
 
     template <typename TL>
     using front_t = detail::front_type<TL>::type;
@@ -1356,12 +1461,16 @@ namespace n714
     static_assert(std::is_same_v<front_t<typelist<int>>, int>);
     static_assert(std::is_same_v<front_t<typelist<int, double, char>>, int>);
 
+    // back_t
+
     template <typename TL>
     using back_t = detail::back_type<TL>::type;
 
     static_assert(std::is_same_v<back_t<typelist<>>, empty_type>);
     static_assert(std::is_same_v<back_t<typelist<int>>, int>);
     static_assert(std::is_same_v<back_t<typelist<int, double, char>>, char>);
+
+    // push_back_t
 
     template <typename TL, typename T>
     using push_back_t = detail::push_back_type<TL, T>::type;
@@ -1370,12 +1479,16 @@ namespace n714
     static_assert(std::is_same_v<push_back_t<typelist<char>, int>, typelist<char, int>>);
     static_assert(std::is_same_v<push_back_t<typelist<double, char>, int>, typelist<double, char, int>>);
 
+    // push_front_t
+
     template <typename TL, typename T>
     using push_front_t = detail::push_front_type<TL, T>::type;
 
     static_assert(std::is_same_v<push_front_t<typelist<>, int>, typelist<int>>);
     static_assert(std::is_same_v<push_front_t<typelist<char>, int>, typelist<int, char>>);
     static_assert(std::is_same_v<push_front_t<typelist<double, char>, int>, typelist<int, double, char>>);
+
+    // pop_front_t
 
     template <typename TL>
     using pop_front_t = detail::pop_front_type<TL>::type;
@@ -1384,6 +1497,8 @@ namespace n714
     static_assert(std::is_same_v<pop_front_t<typelist<char>>, typelist<>>);
     static_assert(std::is_same_v<pop_front_t<typelist<double, char>>, typelist<char>>);
 
+    // pop_back_t
+
     template <typename TL>
     using pop_back_t = detail::pop_back_type<static_cast<std::ptrdiff_t>(length_v<TL>) - 1, typelist<>, TL>::type;
 
@@ -1391,6 +1506,8 @@ namespace n714
     static_assert(std::is_same_v<pop_back_t<typelist<double>>, typelist<>>);
     static_assert(std::is_same_v<pop_back_t<typelist<double, char>>, typelist<double>>);
     static_assert(std::is_same_v<pop_back_t<typelist<double, char, int>>, typelist<double, char>>);
+
+    // at_t
 
     template <std::size_t I, typename TL>
     using at_t = detail::at_type<I, 0, TL>::type;
@@ -1488,6 +1605,8 @@ namespace n715
     static_assert(std::is_same_v<transformer<int, double>::output_types, typelist<int const, double const>>);
 } // namespace n715
 
+// Expression templates
+
 namespace n716
 {
     template <typename T>
@@ -1538,6 +1657,7 @@ namespace n716
         return result;
     }
 
+    // dot product
     template <typename T, typename U>
     auto
     operator*(vector<T> const &a, vector<U> const &b)
@@ -1553,6 +1673,7 @@ namespace n716
         return result;
     }
 
+    // scalar product
     template <typename T, typename S>
     auto
     operator*(S const &s, vector<T> const &v)
@@ -1752,6 +1873,8 @@ namespace n717
 int
 main()
 {
+    // Dynamic versus static polymorphism
+
     {
         std::println("\n====================== using namespace n701 =============================");
 
@@ -1784,6 +1907,8 @@ main()
         increment(d);
     }
 
+    // The Curiously Recurring Template Pattern
+
     {
         std::println("\n====================== using namespace n702 =============================");
 
@@ -1810,6 +1935,8 @@ main()
 
         // fight({&k, &m});  // error: What should T be?
     }
+
+    // Limiting the object count with CRTP
 
     {
         std::println("\n====================== using namespace n704 =============================");
@@ -1838,6 +1965,8 @@ main()
             std::println("{}", e.what()); // Too many instances
         }
     }
+
+    // Adding functionality with CRTP
 
     {
         std::println("\n====================== using namespace n705 =============================");
@@ -1881,6 +2010,11 @@ main()
         retreat(m, 3);
     }
 
+    // Implementing the composite design pattern
+
+    // Composite pattern enables to compose objects into larger structures and treat both
+    // individual objects and compositions uniformly.
+
     {
         std::println("\n====================== using namespace n707 =============================");
 
@@ -1902,38 +2036,43 @@ main()
     {
         std::println("\n====================== using namespace n708 =============================");
 
-        // Implementing the composite design pattern
-        // Composite pattern enables to compose objects into larger structures and treat both
-        // individual objects and compositions uniformly.
-
         using namespace n708;
 
-        hero h1("Arthur");
-        hero h2("Sir Lancelot");
+        hero hero1("Arthur");
+        hero hero2("Sir Lancelot");
 
-        hero_party p1;
-        hero_party p2;
+        hero_party party1;
+        hero_party party2;
 
-        p1.emplace_back("Bors");
-        p2.emplace_back("Cador");
-        p2.emplace_back("Constantine");
+        party1.emplace_back("Bors");
+        party2.emplace_back("Cador");
+        party2.emplace_back("Constantine");
 
-        // all combinations possible (this was the goal) treating heros and hero_parties the same
-        h1.ally_with(h2);
-        h1.ally_with(p1);
-        p1.ally_with(h2);
-        p1.ally_with(p2);
+        // All combinations possible; treating heros and hero_parties the same!
+        hero1.ally_with(hero2);
+        hero1.ally_with(party1);
+        party1.ally_with(hero2);
+        party1.ally_with(party2);
 
-        std::cout << h1 << '\n';
-        std::cout << h2 << '\n';
-        std::cout << p1 << '\n';
-        std::cout << p2 << '\n';
+        std::cout << hero1;  // Arthur       -> [Bors]
+                             // Arthur       -> [Sir Lancelot]
+
+        std::cout << hero2;  // Sir Lancelot -> [Bors]
+                             // Sir Lancelot -> [Arthur]
+
+        std::cout << party1; // Bors         -> [Cador]
+                             // Bors         -> [Constantine]
+                             // Bors         -> [Arthur]
+                             // Bors         -> [Sir Lancelot]
+
+        std::cout << party2; // Cador        -> [Bors]
+                             // Constatine   -> [Bors]
     }
+
+    // The CRTP in the standard library
 
     {
         std::println("\n====================== using namespace n709a ============================");
-
-        // The CRTP in the standard library
 
         using namespace n709a;
 
@@ -1951,6 +2090,11 @@ main()
         building *b = new building();
 
         std::shared_ptr<building> p1{b};
+
+        // std::shared_ptr<building> p2{b};                  // still not OK
+
+        // Member function shared_from_this creates more std::shared_ptr instances from an object,
+        // which all refer to the same instance of the object
         std::shared_ptr<building> p2{b->shared_from_this()}; // OK
     }
 
@@ -1959,48 +2103,60 @@ main()
 
         using namespace n709c;
 
-        executor e;
+        auto b = std::make_shared<building>(); // building created
 
-        std::shared_ptr<building> b = std::make_shared<building>();
+        executor e;
         b->set_executor(&e);
-        b->upgrade();
+        b->upgrade();                          // upgrading...
+                                               // upgraded
+                                               // building is functional
+                                               // building destroyed
     }
+
+    // Mixins
+
+    // The point of mixins is that they are supposed to add functionality to classes
+    // WITHOUT being a base class to them, which is the key to the CRTP pattern.
+    // Instead, mixins are supposed to inherit from the classes they add functionality to,
+    // which is the CRTP upside down.
 
     {
         std::println("\n====================== using namespace n710b ============================");
 
-        // Mixins
-        // We create instances of movable_unit<knight> and movable_unit<mage> instead
-        // of knight and mage as in the CRTP.
-
         using namespace n710b;
 
         movable_unit<knight> k;
-        k.advance(3);
-        k.retreat(2);
+        k.advance(3); // knight moves forward
+                      // knight moves forward
+                      // knight moves forward
+
+        k.retreat(2); // knight moves back
+                      // knight moves back
 
         movable_unit<mage> m;
-        m.advance(5);
-        m.retreat(3);
+        m.advance(5); // mage moves forward
+                      // mage moves forward
+                      // mage moves forward
+                      // mage moves forward
+                      // mage moves forward
+
+        m.retreat(3); // mage moves back
+                      // mage moves back
+                      // mage moves back
     }
 
     {
         std::println("\n====================== using namespace n710a ============================");
-
-        // Mixins
-        //
-        // The point of mixins is that they are supposed to add functionality to classes
-        // WITHOUT being a base class to them, which is the key to the CRTP pattern.
-        // Instead, mixins are supposed to inherit from the classes they add functionality to,
-        // which is the CRTP upside down.
 
         using namespace n710a;
 
         knight<last_man_standing> k;
         mage<hit_and_run>         m;
 
-        k.attack();
-        m.attack();
+        k.attack(); // draw sword
+                    // duel until one falls
+        m.attack(); // spell magic curse
+                    // hit once hard then run
     }
 
     {
@@ -2019,15 +2175,15 @@ main()
         // while keeping the complexity of the code at a
         // reduced level.
 
-        units.emplace_back(new knight<aggressive_style>());               // 1
-        units.emplace_back(new knight<moderate_style>());                 // 2
-        units.emplace_back(new mage<aggressive_style>());                 // 3
-        units.emplace_back(new mage<moderate_style>());                   // 4
-        units.emplace_back(new knight<lone_warrior<aggressive_style>>()); // 5
-        units.emplace_back(new knight<lone_warrior<moderate_style>>());   // 6
-        units.emplace_back(new knight<team_warrior<aggressive_style>>()); // 7
-        units.emplace_back(new knight<team_warrior<moderate_style>>());   // 8
-        units.emplace_back(new mage<lone_warrior<aggressive_style>>());   // 9
+        units.emplace_back(new knight<aggressive_style>());               //  1
+        units.emplace_back(new knight<moderate_style>());                 //  2
+        units.emplace_back(new mage<aggressive_style>());                 //  3
+        units.emplace_back(new mage<moderate_style>());                   //  4
+        units.emplace_back(new knight<lone_warrior<aggressive_style>>()); //  5
+        units.emplace_back(new knight<lone_warrior<moderate_style>>());   //  6
+        units.emplace_back(new knight<team_warrior<aggressive_style>>()); //  7
+        units.emplace_back(new knight<team_warrior<moderate_style>>());   //  8
+        units.emplace_back(new mage<lone_warrior<aggressive_style>>());   //  9
         units.emplace_back(new mage<lone_warrior<moderate_style>>());     // 10
         units.emplace_back(new mage<team_warrior<aggressive_style>>());   // 11
         units.emplace_back(new mage<team_warrior<moderate_style>>());     // 12
@@ -2040,25 +2196,22 @@ main()
         }
     }
 
+    // Type erasure
+
+    // The term type erasure describes a pattern in which type information is removed,
+    // allowing types that are not necessarily related to be treated in a generic way.
+
+    // True type erasure is achieved with templates!
+
     {
         std::println("\n====================== using namespace n712e ============================");
-
-        // Type erasure
-        //
-        // The term type erasure describes a pattern in which type information is removed,
-        // allowing types that are not necessarily related to be treated in a generic way.
-        //
-        // True type erasure is achieved with templates!
 
         using namespace n712e;
 
         knight k;
         mage   m;
 
-        // Classical C-style type erasure:
-        // basically this means using a lot of void* and reinterpret_casts! ;-)
-
-        std::vector<mapping_void_fight_fn> units{
+        std::vector<mapping_void_ptr_fight_fn> units{
             {&k, &fight_knight},
             {&m, &fight_mage},
         };
@@ -2068,8 +2221,6 @@ main()
 
     {
         std::println("\n====================== using namespace n712a ============================");
-
-        // Type erasure using polymorphism through inheritance.
 
         using namespace n712a;
 
@@ -2081,26 +2232,17 @@ main()
 
         std::vector<game_unit *> v{&ku, &mu};
 
-        // It can be argued that types have not been completely erased.
-        // Both knight and mage are game_unit and the fight function handles
-        // anything that is a game_unit.
         fight(v);
     }
 
     {
         std::println("\n====================== using namespace n712b ============================");
 
-        // removing code duplication using templates
-
         using namespace n712b;
 
         knight k;
         mage   m;
 
-        // game_unit_wrapper<knight> ku{k};
-        // game_unit_wrapper<mage>   mu{m};
-
-        // the same:
         game_unit_wrapper ku{k};
         game_unit_wrapper mu{m};
 
@@ -2110,8 +2252,6 @@ main()
 
     {
         std::println("\n====================== using namespace n712c ============================");
-
-        // Putting the abstract base class and wrapper class template within another class.
 
         using namespace n712c;
 
@@ -2127,8 +2267,6 @@ main()
 
     {
         std::println("\n====================== using namespace n712d ============================");
-
-        // General pattern (learn it!)
 
         using namespace n712d;
 
@@ -2196,13 +2334,15 @@ main()
         }
     }
 
+    // Tag dispatching
+
     {
         std::println("\n====================== using namespace n711a ============================");
 
-        // Tag dispatching
-        //
         // The term tag describes an empty class. A tag is only used to define a parameter - usually
         // the last - of a function to decide whether to select it at compile-time.
+
+        // An alternative to std::enable_if and SFINAE.
 
         // vector
         std::vector<int> v{1, 2, 3, 4, 5};
@@ -2293,6 +2433,7 @@ main()
 
         auto sv2 = v2 | rv::transform([&a](int val) { return a * val; });
 
+        // Not available:
         // auto v3 = rv::zip_with(std::plus<>{}, v1, sv2);
 
         for (auto e : sv2)
@@ -2305,9 +2446,6 @@ main()
         std::println("\n====================== using namespace n714 =============================");
 
         // Typelists
-        //
-        // Today, perhaps many of the problems for which typelists represented the solution
-        // can be also solved using variadic templates.
 
         using namespace n714;
     }
