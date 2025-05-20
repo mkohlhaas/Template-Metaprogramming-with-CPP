@@ -4,6 +4,12 @@
 #include <type_traits>
 #include <vector>
 
+// A CONSTRAINT is a modern way to define requirements on template parameters.
+// A CONSTRAINT is a predicate that evaluates to true or false at compile-time.
+// A CONCEPT is a set of named constraints
+
+// Understanding the need for concepts
+
 namespace n601
 {
     template <typename T>
@@ -37,6 +43,10 @@ namespace n603
 
 namespace n604
 {
+    // REQUIRES CLAUSE doesn't use curly braces
+    // A requires clause determines whether a function participates in overload resolution
+    // or not. This happens based on the value of a compile-time Boolean expression.
+
     template <typename T>
         requires std::is_arithmetic_v<T>
     T
@@ -48,9 +58,8 @@ namespace n604
 
 namespace n605
 {
-    // REQUIRES CLAUSE doesn't use curly braces
-    // A requires clause determines whether a function participates in overload resolution
-    // or not. This happens based on the value of a compile-time Boolean expression.
+    // different order but the same (matter of personal taste)
+
     template <typename T>
     T
     add(T const a, T const b)
@@ -60,35 +69,7 @@ namespace n605
     }
 } // namespace n605
 
-namespace n606
-{
-    // REQUIRES EXPRESSION uses curly braces
-    // A requires expression determines whether a set of one or more expressions is
-    // well-formed, without having any side effects on the behavior of the program. A
-    // requires expression is a Boolean expression that can be used with a requires clause.
-    template <typename T>
-    concept arithmetic = requires { std::is_arithmetic_v<T>; };
-
-    template <arithmetic T>
-    T
-    add(T const a, T const b)
-    {
-        return a + b;
-    }
-} // namespace n606
-
-namespace n607
-{
-    template <typename T>
-    concept arithmetic = std::is_arithmetic_v<T>;
-
-    template <arithmetic T>
-    T
-    add(T const a, T const b)
-    {
-        return a + b;
-    }
-} // namespace n607
+// Defining concepts
 
 namespace n608
 {
@@ -109,19 +90,65 @@ namespace n608
     }
 } // namespace n608
 
+namespace n606
+{
+    // REQUIRES EXPRESSION uses curly braces
+    // A requires expression determines whether a set of one or more expressions is
+    // well-formed, without having any side effects on the behavior of the program. A
+    // requires expression is a Boolean expression that can be used with a requires clause.
+    template <typename T>
+    concept arithmetic = requires { std::is_arithmetic_v<T>; };
+
+    template <arithmetic T>
+    T
+    add(T const a, T const b)
+    {
+        return a + b;
+    }
+
+    template <typename T>
+        requires std::is_arithmetic_v<T>
+    T
+    mul(T const a, T const b)
+    {
+        return a * b;
+    }
+} // namespace n606
+
+namespace n607
+{
+    // simple requirement (doesn't use `requires` keyword)
+    template <typename T>
+    concept arithmetic = std::is_arithmetic_v<T>;
+
+    template <arithmetic T>
+    T
+    add(T const a, T const b)
+    {
+        return a + b;
+    }
+} // namespace n607
+
 namespace n610
 {
+    // old style
     template <typename T, typename U = void>
     struct is_container : std::false_type
     {
     };
 
     template <typename T>
-    struct is_container<
-        T, std::void_t<typename T::value_type, typename T::size_type, typename T::allocator_type, typename T::iterator,
-                       typename T::const_iterator, decltype(std::declval<T>().size()),
-                       decltype(std::declval<T>().begin()), decltype(std::declval<T>().end()),
-                       decltype(std::declval<T>().cbegin()), decltype(std::declval<T>().cend())>> : std::true_type
+    struct is_container<T, std::void_t<typename T::value_type,               //
+                                       typename T::size_type,                //
+                                       typename T::allocator_type,           //
+                                       typename T::iterator,                 //
+                                       typename T::const_iterator,           //
+                                       decltype(std::declval<T>().size()),   //
+                                       decltype(std::declval<T>().begin()),  //
+                                       decltype(std::declval<T>().end()),    //
+                                       decltype(std::declval<T>().cbegin()), //
+                                       decltype(std::declval<T>().cend())>>  //
+        : std::true_type
     {
     };
 
@@ -137,18 +164,20 @@ namespace n610
 
 namespace n611
 {
+    // with concepts
+    // note naming (`container` instead of `is_container` bc it's used like a data type)
     template <typename T>
     concept container = requires(T t) {
-        typename T::value_type;
-        typename T::size_type;
-        typename T::allocator_type;
-        typename T::iterator;
-        typename T::const_iterator;
-        t.size();
-        t.begin();
-        t.end();
-        t.cbegin();
-        t.cend();
+        typename T::value_type;     // type requirement
+        typename T::size_type;      // ..
+        typename T::allocator_type; // ..
+        typename T::iterator;       // ..
+        typename T::const_iterator; // type requirement
+        t.size();                   // simple requirement
+        t.begin();                  // ..
+        t.end();                    // ..
+        t.cbegin();                 // ..
+        t.cend();                   // simple requirement
     };
 
     struct foo
@@ -163,19 +192,30 @@ namespace n611
     }
 } // namespace n611
 
+// Exploring requires expressions
+
+// - simple requirements
+// - type requirements
+// - compound requirements
+// - nested requirements
+
+// Simple requirements
+
 namespace n612
 {
+    // syntax: requires (parameter-list) { requirement-seq }
+
     template <typename T>
-    concept arithmetic = requires { std::is_arithmetic_v<T>; };
+    concept arithmetic = requires { std::is_arithmetic_v<T>; }; // empty parameter list can be omitted
 
     template <typename T>
     concept addable = requires(T a, T b) { a + b; };
 
     template <typename T>
     concept logger = requires(T t) {
-        t.error("just");
-        t.warning("a");
-        t.info("demo");
+        t.error("just"); // Takes a single parameter of `const char*` or some type that can be constructed from it.
+        t.warning("a");  // The actual values passed as arguments have no importance (they are never performed).
+        t.info("demo");  // They are only checked for type correctness.
     };
 
     template <logger T>
@@ -192,14 +232,14 @@ namespace n612
         {
             // ...
         }
-        void
 
+        void
         warning(std::string_view text [[maybe_unused]])
         {
             // ...
         }
-        void
 
+        void
         info(std::string_view text [[maybe_unused]])
         {
             // ...
@@ -213,14 +253,14 @@ namespace n612
         {
             // ...
         }
-        void
 
+        void
         warning(std::string_view text [[maybe_unused]], bool = false)
         {
             // ...
         }
-        void
 
+        void
         info(std::string_view text [[maybe_unused]], bool) // bool has no default value!
         {
             // ...
@@ -228,78 +268,96 @@ namespace n612
     };
 } // namespace n612
 
+// Type requirements
+
 namespace n613
 {
-    template <typename T>
-    concept KVP = requires {
-        typename T::key_type;   // specify type requirements with typename
-        typename T::value_type; //
-    };
-
-    template <typename T, typename V>
-    struct key_value_pair
+    namespace
     {
-        using key_type   = T;
-        using value_type = V;
+        template <typename T>
+        concept KVP = requires {
+            typename T::key_type;   // type requirement
+            typename T::value_type; // ..
+        };
 
-        key_type   key;
-        value_type value;
-    };
+        template <typename T, typename V>
+        struct key_value_pair
+        {
+            using key_type   = T;
+            using value_type = V;
 
-    template <typename T>
-        requires std::is_arithmetic_v<T>
-    struct container
+            key_type   key;
+            value_type value;
+        };
+    } // namespace
+
+    namespace
     {
-        // ...
-    };
+        template <typename T>
+            requires std::is_arithmetic_v<T>
+        struct container
+        {
+            // ...
+        };
 
-    template <typename T>
-    concept containerizeable = requires { typename container<T>; };
+        template <typename T>
+        concept containerizeable = requires { typename container<T>; };
 
+    } // namespace
 } // namespace n613
+
+// Compound requirements
 
 namespace n614
 {
-    template <typename T>
-    void
-    f(T) noexcept
+    namespace
     {
-        // ...
-        // doesn't throw errors
-        // ...
-    }
+        template <typename T>
+        void
+        f(T) noexcept
+        {
+            // ...
+            // doesn't throw errors
+            // ...
+        }
 
-    template <typename T>
-    void
-    g(T)
+        template <typename T>
+        void
+        g(T)
+        {
+            // ...
+            // could throw an error
+            // ...
+        }
+    } // namespace
+
+    namespace
     {
-        // ...
-        // could throw an error
-        // ...
-    }
+        // We want to check an expression for exceptions and/or return types.
+        // syntax: { expression } [noexcept] [-> type_constraint];
+        // (both noexcept and type_constraint are optional)
+        template <typename F, typename... Args>
+        concept NonThrowing = requires(F &&func, Args... args) {
+            { func(args...) } noexcept; // checking for noexcept specifier
+        };
 
-    template <typename F, typename... Args>
-    concept NonThrowing = requires(F &&func, Args... args) {
-        // Checking expressions - general form:
-        // { expression } [noexcept] [-> type_constraint];
-        { func(args...) } noexcept; // checking for noexcept specifier
-    };
-
-    template <typename F, typename... Args>
-        requires NonThrowing<F, Args...>
-    void
-    invoke(F &&func, Args... args)
-    {
-        func(args...);
-    }
+        template <typename F, typename... Args>
+            requires NonThrowing<F, Args...>
+        void
+        invoke(F &&func, Args... args)
+        {
+            func(args...);
+        }
+    } // namespace
 } // namespace n614
 
 namespace n615
 {
+    // checking for return values (must be a type constraint; not the actual return type)
     template <typename T>
     concept timer = requires(T t) {
         { t.start() } -> std::same_as<void>;            // start() returns void
-        { t.stop() } -> std::convertible_to<long long>; // stop returns anything convertible to long long
+        { t.stop() } -> std::convertible_to<long long>; // stop() returns anything convertible to long long
     };
 
     struct timerA
@@ -357,16 +415,19 @@ namespace n615
 
 } // namespace n615
 
+// Nested requirements
+
 namespace n616
 {
+    // std::conjunction_v performs a logical AND on the sequence of traits.
     template <typename T, typename... Ts>
     inline constexpr bool are_same_v = std::conjunction_v<std::is_same<T, Ts>...>;
 
     template <typename... T>
-    concept HomogenousRange = requires(T... t) {
-        (... + t);
-        requires are_same_v<T...>;
-        requires sizeof...(T) > 1;
+    concept HomogenousRange = requires(T... t) { // `requires`
+        (... + t);                               // simple requirement (no `requires`)
+        requires are_same_v<T...>;               // nested requirement: `requires` inside `requires`
+        requires sizeof...(T) > 1;               // nested requirement: `requires` inside `requires`
     };
 
     template <typename... T>
@@ -377,6 +438,10 @@ namespace n616
         return (... + t);
     }
 } // namespace n616
+
+// Composing constraints
+
+// with && (conjunction) and || (disjunction); short-circuited
 
 namespace n617
 {
@@ -397,8 +462,6 @@ namespace n618
     template <typename T>
     concept Signed = std::is_signed_v<T>;
 
-    // Composing constraints with && (conjunction) and || (disjunction)
-    // Conjunctions and disjunctions are short-circuited.
     template <typename T>
     concept SignedIntegral = Integral<T> && Signed<T>;
 
@@ -452,35 +515,35 @@ namespace n621
     template <typename T>
         requires A<T> || B<T>
     void
-    f()
+    f1()
     {
         // ...
     }
-
-    // template <typename T>
-    //     requires(A<T> || B<T>)
-    // void
-    // f()
-    // {
-    //    // ...
-    // }
 
     template <typename T>
-        requires A<T> && (!A<T> || B<T>) // A && B -> false
-    void f()
+        requires(A<T> || B<T>)
+    void
+    f2()
     {
         // ...
     }
 
+    // Logical Expressions
+    //
     // When used inside a cast expression or a logical NOT, the && and || tokens define a logical expression!
     // The entire expression is first checked for correctness, and then its Boolean value is determined.
-    // Both expressions need to be wrapped inside another set of parentheses!
 
-    // logical operators
+    template <typename T>
+        requires A<T> && (!A<T> || B<T>) // logical expression: will always be false
+    void f3()
+    {
+        // ...
+    }
+
     template <typename T>
         requires(!(A<T> || B<T>))
     void
-    f()
+    f4()
     {
         // ...
     }
@@ -488,7 +551,7 @@ namespace n621
     template <typename T>
         requires(static_cast<bool>(A<T> || B<T>))
     void
-    f()
+    f5()
     {
         // ...
     }
@@ -500,7 +563,7 @@ namespace n622
     // Here's a workaround:
 
     template <typename... T>
-    //  requires std::is_integral_v<T> && ...  // error: this is not allowed in a conjunction
+    //  requires std::is_integral_v<T> && ...  // error: this is not allowed
         requires(std::is_integral_v<T> && ...) // now it's a fold expression of type-traits! (No short-circuiting!)
     auto
     add(T... args)
@@ -511,9 +574,11 @@ namespace n622
 
 namespace n623
 {
+    // we just give the thing a name (concept = named constraint)
     template <typename T>
-    concept Integral = std::is_integral_v<T>;
+    concept Integral = std::is_integral_v<T>; // RHS = boolean value
 
+    // and now it works
     template <typename... T>
         requires(Integral<T> && ...) // fold with concepts creates a conjunction (with short-circuiting!)
     auto
@@ -522,6 +587,8 @@ namespace n623
         return (args + ...);
     }
 } // namespace n623
+
+// Learning about the ordering of templates with constraints
 
 namespace n624
 {
@@ -637,6 +704,8 @@ namespace n629
     }
 } // namespace n629
 
+// Constraining non-template member functions
+
 namespace n630
 {
     template <typename T>
@@ -675,7 +744,8 @@ namespace n631b
 
         // before C++20 (using SFINAE)
         template <typename U,
-                  typename = std::enable_if_t<std::is_copy_constructible_v<U> && std::is_convertible_v<U, T>>>
+                  typename = std::enable_if_t<std::is_copy_constructible_v<U> //
+                                              && std::is_convertible_v<U, T>>>
         wrapper(U const &v) : value(v)
         {
         }
@@ -706,7 +776,7 @@ namespace n632a
         // ...
     }
 
-    // Non-templated function cannot have a requires clause
+    // Non-templated function cannot have a requires clause!
     // void
     // handle(long v)
     //     requires(sizeof(long) > sizeof(int))
@@ -731,8 +801,11 @@ namespace n632b
     }
 } // namespace n632b
 
+// Constraining class templates
+
 namespace n633a
 {
+    // std::integral is a predefined concept
     template <std::integral T>
     struct wrapper
     {
@@ -769,11 +842,14 @@ namespace n633b
     };
 } // namespace n633b
 
+// Constraining variable templates and template aliases
+
 namespace n634
 {
+    // std::floating_point is a predefined concept
     template <std::floating_point T>
     constexpr T PI = T(3.1415926535897932385L);
-}
+} // namespace n634
 
 namespace n635a
 {
@@ -788,49 +864,7 @@ namespace n635b
     using integral_vector = std::vector<T>;
 }
 
-namespace n636a
-{
-    // In C++20 you can use the auto specifier in the function parameter list.
-    // This has the effect of transforming the function into a template function.
-    // Such a function using auto for function parameters is called an ABBREVIATED FUNCTION TEMPLATE.
-
-    // abbreviated function template
-    // primary
-    auto
-    add(auto a, auto b)
-    {
-        return a + b;
-    }
-
-    // specialization
-    template <>
-    auto
-    add(char const *a, char const *b)
-    {
-        return std::string(a) + std::string(b);
-    }
-} // namespace n636a
-
-namespace n636b
-{
-    // constrained abbreviated function template
-    auto
-    add(std::integral auto a, std::integral auto b)
-    {
-        return a + b;
-    }
-} // namespace n636b
-
-namespace n636c
-{
-    // constrained auto can also be used for variadic function templates
-
-    auto
-    add(std::integral auto... args)
-    {
-        return (args + ...);
-    }
-} // namespace n636c
+// Learning more ways to specify constraints
 
 namespace n637a
 {
@@ -851,6 +885,8 @@ namespace n637b
     // confusing syntax (requires requires ...); prefer n637a
 
     template <typename T>
+    //                "anonymous concept"
+    //           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         requires requires(T a, T b) { a + b; } // requires clause with requires expression
     auto
     add(T a, T b)
@@ -858,6 +894,61 @@ namespace n637b
         return a + b;
     }
 } // namespace n637b
+
+// Using concepts to constrain auto parameters
+
+namespace n636a
+{
+    // In C++20 you can use the auto specifier in the function parameter list.
+    // This has the effect of transforming the function into a template function.
+    // Such a function using auto for function parameters is called an ABBREVIATED FUNCTION TEMPLATE.
+
+    // abbreviated function template
+    auto
+    add(auto a, auto b)
+    {
+        return a + b;
+    }
+
+    // basically the same
+    template <>
+    auto
+    add(char const *a, char const *b)
+    {
+        return std::string(a) + std::string(b);
+    }
+} // namespace n636a
+
+namespace n636b
+{
+    // constrained abbreviated function template (using concepts)
+    auto
+    add(std::integral auto a, std::integral auto b)
+    {
+        return a + b;
+    }
+} // namespace n636b
+
+namespace n636c
+{
+    // constrained auto can also be used for variadic function templates
+
+    auto
+    add(std::integral auto... args)
+    {
+        return (args + ...);
+    }
+} // namespace n636c
+
+namespace n636d
+{
+    // constrained auto with generic lambdas
+    auto sum = [](std::integral auto a, std::integral auto b) { return a + b; };
+
+    // constrained auto with template(d) lambdas
+    auto twice = []<std::integral T>(T a) { return a + a; };
+
+} // namespace n636d
 
 int
 main()
@@ -872,7 +963,7 @@ main()
         std::println("{}", add(42.0, 1.0));   // 43
         std::println("{}", add("42"s, "1"s)); // 421
 
-        // add("42", "1");   // error: cannot add two pointers
+        // add("42", "1");                    // error: cannot add two pointers
     }
 
     {
@@ -884,8 +975,8 @@ main()
         std::println("{}", add(42, 1));     // 43
         std::println("{}", add(42.0, 1.0)); // 43
 
-        // add("42"s, "1"s); // error: no matching overloaded function found
-        // add("42", "1");   // error: no matching overloaded function found
+        // add("42"s, "1"s);                   // error: no matching overloaded function found
+        // add("42", "1");                     // error: no matching overloaded function found
     }
 
     {
@@ -897,8 +988,8 @@ main()
         std::println("{}", add(42, 1));     // 43
         std::println("{}", add(42.0, 1.0)); // 43
 
-        // add("42"s, "1"s); // error: Arithmetic type required
-        // add("42", "1");   // error: Arithmetic type required
+        // add("42"s, "1"s);                // error: Arithmetic type required
+        // add("42", "1");                  // error: Arithmetic type required
     }
 
     {
@@ -928,6 +1019,22 @@ main()
     }
 
     {
+        std::println("\n====================== using namespace n608 =============================");
+
+        using namespace n608;
+        using namespace std::string_literals;
+
+        std::println("{}", add(42, 1));     // 43
+        std::println("{}", add(42.0, 1.0)); // 43
+
+        std::println("{}", mul(42, 1));     // 42
+        std::println("{}", mul(42.0, 1.0)); // 42
+
+        // add("42"s, "1"s); // error: the associated constraints are not satisfied
+        // add("42", "1");   // error: the associated constraints are not satisfied
+    }
+
+    {
         std::println("\n====================== using namespace n606 =============================");
 
         // A concept is a set of named constraints.
@@ -940,6 +1047,9 @@ main()
 
         std::println("{}", add(42, 1));     // 43
         std::println("{}", add(42.0, 1.0)); // 43
+
+        std::println("{}", mul(42, 1));     // 42
+        std::println("{}", mul(42.0, 1.0)); // 42
 
         // add("42"s, "1"s); // error: the associated constraints are not satisfied
         // add("42", "1");   // error: the associated constraints are not satisfied
@@ -959,27 +1069,11 @@ main()
     }
 
     {
-        std::println("\n====================== using namespace n608 =============================");
-
-        using namespace n608;
-        using namespace std::string_literals;
-
-        std::println("{}", add(42, 1));     // 43
-        std::println("{}", add(42.0, 1.0)); // 43
-
-        std::println("{}", mul(42, 1));     // 42
-        std::println("{}", mul(42.0, 1.0)); // 42
-
-        // add("42"s, "1"s); // error: the associated constraints are not satisfied
-        // add("42", "1");   // error: the associated constraints are not satisfied
-    }
-
-    {
         std::println("\n====================== using namespace n610 =============================");
 
         using namespace n610;
 
-        static_assert(!is_container_v<foo>);
+        static_assert(not is_container_v<foo>);
         static_assert(is_container_v<std::vector<foo>>);
     }
 
@@ -988,7 +1082,7 @@ main()
 
         using namespace n611;
 
-        static_assert(!container<foo>);
+        static_assert(not container<foo>);
         static_assert(container<std::vector<foo>>);
 
         // process(foo{});                         // error
@@ -1013,6 +1107,7 @@ main()
         using namespace n614;
 
         invoke(f<int>, 42);
+
         // invoke(g<int>, 42); // error
     }
 
@@ -1023,10 +1118,11 @@ main()
         using namespace std;
 
         static_assert(KVP<key_value_pair<int, string>>);
-        static_assert(!KVP<pair<int, string>>); // std::pair's inner types are called first_type, second_type
+        static_assert(not KVP<pair<int, string>>);   // std::pair's inner types are called first_type, second_type;
+                                                     // not key_type, value_type
 
-        static_assert(containerizeable<int>);
-        static_assert(!containerizeable<string>);
+        static_assert(not containerizeable<string>); // string is not an arithmetic type
+        static_assert(containerizeable<int>);        // int is an arithmetic type
     }
 
     {
@@ -1034,10 +1130,12 @@ main()
 
         using namespace n615;
 
+        // are timers
         static_assert(timer<timerA>);
         static_assert(timer<timerB>);
 
-        static_assert(!timer<timerC>);
+        // is not a timer
+        static_assert(not timer<timerC>);
     }
 
     {
@@ -1047,9 +1145,9 @@ main()
 
         static_assert(HomogenousRange<int, int>);
 
-        static_assert(!HomogenousRange<int>);
-        static_assert(!HomogenousRange<int, double>);
-        static_assert(!HomogenousRange<float, double>);
+        static_assert(not HomogenousRange<int>);
+        static_assert(not HomogenousRange<int, double>);
+        static_assert(not HomogenousRange<float, double>);
 
         std::println("{}", add(1, 2));     // 3
         std::println("{}", add(1.0, 2.0)); // 3
@@ -1075,6 +1173,8 @@ main()
         using namespace n618;
 
         std::println("{}", decrement(5)); // 4
+
+        // std::println("{}", decrement("foo")); // error
     }
 
     {
@@ -1098,7 +1198,13 @@ main()
 
         using namespace n621;
 
-        // f<1>();
+        f1<int>();
+        f2<int>();
+        f4<std::string>();
+        f5<int>();
+
+        // f3<int>(); // error
+        // f4<int>(); // error
     }
 
     {
@@ -1106,7 +1212,9 @@ main()
 
         using namespace n622;
 
-        std::println("{}", add(1, 2, 3)); // 6
+        std::println("{}", add(1, 2, 3));       // 6
+        std::println("{}", add(1, 2, 3, 4, 5)); // 15
+
         // add(1, 42.0);
     }
 
@@ -1176,7 +1284,7 @@ main()
         using namespace n629;
 
         std::println("{}", add((short)1, (short)2)); // 3
-        std::println("{}", add(1, 2));               // 3 (!?)
+        std::println("{}", add(1, 2));               // 3
     }
 
     {
@@ -1186,7 +1294,7 @@ main()
 
         wrapper<int> a [[maybe_unused]]{42};
 
-        // error
+        // error: 42 not convertible to string_view
         // if (a == 42)
         // {
         //     // ...
@@ -1270,6 +1378,7 @@ main()
         using namespace n634;
 
         std::println("{}", PI<double>);
+
         // std::println("{}", PI<int>); // error: Constraints not satisfied for variable template 'PI' [with T = int]
     }
 
@@ -1281,8 +1390,22 @@ main()
         using namespace n635a;
 
         integral_vector<int> v1{1, 2, 3};
+
         // error: Constraints not satisfied for alias template 'integral_vector' [with T = double]
         // integral_vector<double> v2{1.0, 2.0, 3.0};
+    }
+
+    {
+        std::println("\n====================== using namespace n635b ============================");
+
+        // Constraining template aliases
+
+        using namespace n635b;
+
+        integral_vector<int> v1{1, 2, 3};
+
+        // Constraints not satisfied for alias template 'integral_vector' [with T = double]
+        // integral_vector<double> v2 {1.0, 2.0, 3.0};
     }
 
     {
@@ -1303,18 +1426,6 @@ main()
         using namespace n637b;
 
         std::println("{}", add(1, 2)); // 3
-    }
-
-    {
-        std::println("\n====================== using namespace n635b ============================");
-
-        // Constraining template aliases
-
-        using namespace n635b;
-
-        integral_vector<int> v1{1, 2, 3};
-        // Constraints not satisfied for alias template 'integral_vector' [with T = double]
-        // integral_vector<double> v2 {1.0, 2.0, 3.0};
     }
 
     {
@@ -1339,6 +1450,7 @@ main()
 
         // with constraints
         std::println("{}", add(4, 2)); // 6
+
         // std::println("{}", add(4.2, 0)); // error
     }
 
@@ -1348,6 +1460,16 @@ main()
         using namespace n636c;
 
         add(1, 2, 3);
+
         // add(1.0, 2.0, 3.0); // error
+    }
+
+    {
+        std::println("\n====================== using namespace n636d ============================");
+
+        using namespace n636d;
+
+        std::println("{}", sum(1, 2)); // 3
+        std::println("{}", twice(2));  // 4
     }
 }
