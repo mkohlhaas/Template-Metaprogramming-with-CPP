@@ -186,7 +186,7 @@ namespace n611
 
     template <container C>
     void
-    process(C &&c [[maybe_unused]])
+    process(C &&)
     {
         // ...
     }
@@ -218,9 +218,9 @@ namespace n612
         t.info("demo");  // They are only checked for type correctness.
     };
 
-    template <logger T>
+    template <logger Logger>
     void
-    log_error(T &logger [[maybe_unused]])
+    log_error(Logger &)
     {
         // ...
     }
@@ -228,19 +228,19 @@ namespace n612
     struct console_logger
     {
         void
-        error(std::string_view text [[maybe_unused]])
+        error(std::string_view)
         {
             // ...
         }
 
         void
-        warning(std::string_view text [[maybe_unused]])
+        warning(std::string_view)
         {
             // ...
         }
 
         void
-        info(std::string_view text [[maybe_unused]])
+        info(std::string_view)
         {
             // ...
         }
@@ -249,19 +249,19 @@ namespace n612
     struct stream_logger
     {
         void
-        error(std::string_view text [[maybe_unused]], bool = false)
+        error(std::string_view, bool = false)
         {
             // ...
         }
 
         void
-        warning(std::string_view text [[maybe_unused]], bool = false)
+        warning(std::string_view, bool = false)
         {
             // ...
         }
 
         void
-        info(std::string_view text [[maybe_unused]], bool) // bool has no default value!
+        info(std::string_view, bool) // bool has no default value!
         {
             // ...
         }
@@ -771,7 +771,7 @@ namespace n631c
 namespace n632a
 {
     void
-    handle(int v [[maybe_unused]])
+    handle(int)
     {
         // ...
     }
@@ -788,7 +788,7 @@ namespace n632a
 namespace n632b
 {
     void
-    handle(long v [[maybe_unused]])
+    handle(long)
     {
         if constexpr (sizeof(long) > sizeof(int))
         {
